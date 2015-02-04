@@ -1,17 +1,20 @@
-function splashDynamics(cloud,airfoil,KS,indSplash)
-% Function to compute the splashing dynamics
-% INPUTS: cloud, airfoil, and indices of splashing particles
+function splashDynamics(cloud,airfoil)
 
 % CALCULATE SPLASHING MODE DYNAMICS ***************************************
+indSplash = cloud.splash; % Indices of cloud.impinge which have splashed
+indStateSplash = cloud.impinge(indSplash); % Splash indices for state variables
+indexTrackSplash = cloud.index(indStateSplash); % Index trackers
+
 origSplash = [];
 if ~isempty(indSplash)
     % Pull out quantities for the splashing mode
-    xSplash = x(indSplash); ySplash = y(indSplash); uSplash = u(indSplash); vSplash = v(indSplash);
-    rdSplash = rd(indSplash); tSplash = t(indSplash); KSplash = K(indSplash);
-    KsSplash = fs(indSplash)*Ks0; vnormsqSplash = vnormsq(indSplash); vtangSplash = vtang(indSplash);
-    txSplash = tx(indSplash); tySplash = ty(indSplash);
-    pxSplash = x(indSplash); pySplash = y(indSplash);
-    sCoordSplash = airfoil.XYtoScoords(pxSplash,pySplash);
+    xSplash = cloud.x(indStateSplash); ySplash = cloud.y(indStateSplash); uSplash = cloud.u(indStateSplash); vSplash = cloud.v(indStateSplash);
+    rdSplash = cloud.rd(indStateSplash); tSplash = cloud.time(indStateSplash); rhol = cloud.rhol;
+    
+    KSplash = cloud.K(indSplash); KsSplash = cloud.fs(indSplash)*cloud.Ks0;
+    vnormsqSplash = cloud.normvelsq(indSplash); vtangSplash = cloud.tangvel(indSplash);
+    [~,~,~,~,txSplash,tySplash] = airfoil.findPanel(xSplash,ySplash);
+    sCoordSplash = airfoil.XYtoScoords(xSplash,ySplash);
     % Calculate impingement mass loss parameters for splashing mode
     TH = abs(pi/2 - airfoil.findTH(xSplash,ySplash,uSplash,vSplash));
     a = 1-0.3*sin(TH);
@@ -84,10 +87,10 @@ if ~isempty(indSplash)
         indS2 = indS1+NUMNEWTOTAL-1;
         indSnew = [indS1:1:indS2]';
         cloud.addParticle(state);
-        set(cloud,'parentind',cloud.index(splash));
+        set(cloud,'parentind',indexTrackSplash);
         set(cloud,'childind',indSnew);
         % Record splashing of original droplets
-        indtmp = find(cloud.index(splash) <= cloud.originalNumParticles);
+        indtmp = find(indexTrackSplash <= cloud.originalNumParticles);
         origSplash = sCoordSplash(indtmp);
         set(airfoil,'originalImpingeScoordSplash',origSplash);
     end
