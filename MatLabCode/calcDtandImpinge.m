@@ -25,9 +25,14 @@ for i=1:particles
         [~,~,nx,ny,~,~] = airfoil.findPanel(xq(i),yq(i));
         normvel = vel(1)*nx+vel(2)*ny;
         if normvel<0
-            % If we have impinged on the airfoil surface, stop advecting
-            dt(i,1) = 0;
-            set(cloud,'impinge',i);
+            % NOTE: dt will be reset to dt=0 for splash/spread impingement
+            % modes separately in their respective modules!
+            dt(i,1) = 0.2*sqrt(area)/norm(vel);
+            % Only retain new impingement indices
+            impinge = setdiff(i,cloud.impingeTotal);
+            if ~isempty(impinge)
+                set(cloud,'impinge',impinge);
+            end
         else
             % If not, set local time step
             dt(i,1) = 0.2*sqrt(area)/norm(vel);
@@ -42,5 +47,9 @@ for i=1:particles
 end
 % Set local timesteps
 set(cloud,'dt',dt);
+% Set timesteps of splash/spread impingements to zero
+if ~isempty(cloud.impingeTotal)
+    set(cloud,'dt',[cloud.impingeTotal, zeros(length(cloud.impingeTotal),1)]);
+end
 
 end

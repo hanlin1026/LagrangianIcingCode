@@ -76,6 +76,8 @@ toc
 
 indend = 1500;
 indstop = floor(indend/10);
+impimp = cloud.impingeTotal(cloud.impingeTotal<=particles);
+impsplash = cloud.parentind;
 
 % Colormap scheme
 cmap = jet(100);
@@ -86,7 +88,9 @@ for i=1:indstop
     ind=10*i;
     figure(10); hold on; plot(x(:,1),y(:,1),'k');
     scatter(STATE{ind}(:,1),STATE{ind}(:,2),3,'b','filled');
-    xlim([-.1 1]); ylim([-.55 .55]); 
+    scatter(STATE{ind}(impimp,1),STATE{ind}(impimp,2),3,'go');
+    scatter(STATE{ind}(impsplash,1),STATE{ind}(impsplash,2),3,'ro');
+    xlim([-.1 .4]); ylim([-.25 .25]); 
     F(i) = getframe;
     pause(.01); clf;
 end

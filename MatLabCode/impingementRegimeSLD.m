@@ -10,12 +10,14 @@ splashDynamics(cloud,airfoil);
 bounceDynamics(cloud,airfoil);
 spreadDynamics(cloud,airfoil);
 
-% Delete old parent splashed and spread droplets
+% Set airfoil "film"
 set(airfoil,'FILM',[airfoil.FILMsplash; airfoil.FILMspread]);
+%{
+% Delete parent splash particles
 indSplash = cloud.splash; % Indices of cloud.impinge which have splashed
 indStateSplash = cloud.impinge(indSplash); % Splash indices for state variables
 if ~isempty(indStateSplash)
     cloud.deleteParticle(indStateSplash);
 end
-
+%}
 end

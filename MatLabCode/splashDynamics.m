@@ -24,6 +24,10 @@ if ~isempty(indSplash)
     m0 = (4/3)*pi*rdSplash.^3;
     ms = ms_m0.*m0;
     mStick = rhol*(m0 - ms);
+    % Update parent particle properties: set dt=0, update mass (i.e. radius)
+    set(cloud,'dt',[indexTrackSplash, zeros(length(indexTrackSplash),1)]);
+    rStick = (mStick./(rhol*(4/3)*pi)).^(1/3);
+    set(cloud,'rd',[indexTrackSplash, rStick]);
     % Calculate splashed droplet size
     rnew = {};
     state = [];
@@ -38,7 +42,7 @@ if ~isempty(indSplash)
             mu = log(rm);
             dropsize = linspace(0.05*rm,rdSplash(i),1000)';
             CUMDIST = 0.5 + 0.5*erf((1/sqrt(2*var))*(log(dropsize)-mu));
-            mCHILD = 0; 
+            mCHILD = 0;
             mPARENT = ms(i)*rhol;
             numnew = 0;
             % Draw child particles until mass is conserved
@@ -75,7 +79,8 @@ if ~isempty(indSplash)
             state = [state; [sx sy vSplashDrop(:,1) vSplashDrop(:,2) sr st]];
             NUMNEWTOTAL = NUMNEWTOTAL + numnew;
         else
-            % No splashing actually occurs, per model limits
+            % No splashing actually occurs, per model limits (i.e. simple
+            % deposition)
             
         end
         % Add mass which has "stuck" to airfoil

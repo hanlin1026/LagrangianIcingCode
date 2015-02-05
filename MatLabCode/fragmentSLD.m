@@ -25,7 +25,7 @@ indFRAG = ind_prob;
 
 % Discount particles which have already impinged on the airfoil surface
 % from fracturing
-indIMPINGE = cloud.impinge;
+indIMPINGE = cloud.impingeTotal;
 tmpind = setdiff(ind_prob,indIMPINGE);
 ind_prob = tmpind;
 
@@ -64,15 +64,19 @@ if ~isempty(ind_prob)
         yFRAG = y(ind_prob(i))*ones(length(rFRAG),1);
         timeFRAG = cloud.time(ind_prob(i))*ones(length(rFRAG),1);
         % Add new SLD particles to the cloud with relevant state properties
-        for j=1:num_children
+        for j=1:num_children-1
             state = [xFRAG(j) yFRAG(j) uFRAG(j) vFRAG(j) rFRAG(j) timeFRAG(j)];
             cloud.addParticle(state);
         end
+        % Record last child particle in the place of the original one
+        set(cloud,'u',[uFRAG(num_children), ind_prob(i)]);
+        set(cloud,'v',[vFRAG(num_children), ind_prob(i)]);
+        set(cloud,'rd',[ind_prob(i), rFRAG(num_children)]);
     end
     % Record indices of old fractured parent droplets
     set(cloud,'fracture',[]); set(cloud,'fracture',ind_prob);
     % Delete old fractured parent droplets
-    cloud.deleteParticle(ind_prob);
+    %cloud.deleteParticle(ind_prob);
 
 end
 

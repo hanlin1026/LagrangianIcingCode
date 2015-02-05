@@ -11,7 +11,8 @@ classdef SLDcloud < hgsetget
         rhol=[]; % Density
         index=[]; % Numeric index
         fracture=[]; % '0' if not, '1' if yes
-        impinge=[]; % '0' if not, '1' if yes
+        impinge=[]; % Indices of currently impinging particles
+        impingeTotal=[]; % Indices of all impinged particles, past and present
         bounce=[]; spread = []; splash = []; % Impingement regime indices for impinged particles
         parentind=[]; % Numeric indices of parents to splash particles
         childind={}; % Numeric indices of child particles of a splash
@@ -129,6 +130,10 @@ classdef SLDcloud < hgsetget
             set(cloud,'splash',[]); set(cloud,'splash',splash);
             set(cloud,'normvelsq',[]); set(cloud,'normvelsq',vnormsq);
             set(cloud,'tangvel',[]); set(cloud,'tangvel',vtang);
+            % Update impingeTotal
+            splashSpread = [cloud.index(indimp(spread)); cloud.index(indimp(splash))];
+            impingeNew = setdiff(splashSpread,cloud.impingeTotal);
+            set(cloud,'impingeTotal',impingeNew);
         end
         
         function cloud = deleteParticle(cloud,ind)
@@ -186,8 +191,17 @@ classdef SLDcloud < hgsetget
             end
         end
         
-        function cloud = set.rd(cloud,rd)
-            cloud.rd = rd;
+        function cloud = set.rd(cloud,vars)
+            if isempty(vars)
+                % Clear rd
+                cloud.rd = [];
+            elseif size(vars,2)==2
+                % Set specific indexed elements of rd
+                cloud.rd(vars(:,1)) = vars(:,2);
+            else
+                % Set all of rd
+                cloud.rd = vars;
+            end
         end
         
         function cloud = set.time(cloud,time)
@@ -219,6 +233,14 @@ classdef SLDcloud < hgsetget
             else
                 % Append multiple elements
                 cloud.impinge = [cloud.impinge; vars];
+            end
+        end
+        
+        function cloud = set.impingeTotal(cloud,vars)
+            if isempty(vars)
+                cloud.impingeTotal = cloud.impingeTotal;
+            else
+                cloud.impingeTotal = [cloud.impingeTotal; vars];
             end
         end
         
@@ -264,8 +286,17 @@ classdef SLDcloud < hgsetget
             end
         end
         
-        function cloud = set.dt(cloud,dt)
-            cloud.dt = dt;
+        function cloud = set.dt(cloud,vars)
+            if isempty(vars)
+                % Clear dt
+                cloud.dt = [];
+            elseif size(vars,2)==2
+                % Set specific indexed elements of dt
+                cloud.dt(vars(:,1)) = vars(:,2);
+            else
+                % Set all of dt
+                cloud.dt = vars;
+            end
         end
         
         function cloud = set.parentind(cloud,ind)
