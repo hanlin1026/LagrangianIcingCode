@@ -28,12 +28,7 @@ classdef SLDcloud < hgsetget
         Kb0;
         normvelsq=[];
         tangvel = [];
-        % Cloud parameters
-        LWC;
-        rdAvg;
-        % Average spacing distance and time between particles
-        dSpacingAvg;
-        dtSpacingAvg;
+
     end 
     
     methods
@@ -54,10 +49,6 @@ classdef SLDcloud < hgsetget
             cloud.sigma = 75.64e-3; % Surface tension of water at 0 deg C against air
             cloud.T = 270; % Temperature (K) for SLD's (estimate, slightly below freezing)
             
-            rdAvg = mean(cloud.rd);
-            cloud.dSpacingAvg = dSpacingAvg;
-            cloud.rdAvg = rdAvg;
-            cloud.dtSpacingAvg = dtSpacingAvg;
         end
         
         function cloud = addParticle(cloud,state)
@@ -170,20 +161,7 @@ classdef SLDcloud < hgsetget
             set(cloud,'impinge',[]); set(cloud,'impinge',newImpinge);
             
         end
-        
-        function cloud = calcNewParticles(cloud)
-            % Function to calculate new particles entering computational
-            % domain
-            
-            
-            
-            
-        end
-        
-        
-        
-        
-        
+
         function cloud = set.x(cloud,x)
             cloud.x = x;
         end

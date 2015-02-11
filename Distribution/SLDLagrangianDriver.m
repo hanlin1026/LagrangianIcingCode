@@ -16,14 +16,6 @@ Rd = 50e-6; % m
 LWC = 0.4e-3; % kg/m^3
 Uinf = mach*340; % m/s
 
-% Calculate average spacing between particles (assuming all particles are
-% distributed in a uniform square lattice in 2D (not 3D) space, and
-% matching the distribution to the LWC appropriately)
-mdAvg = 4/3*pi*(Rd^3)*rhol;
-nAvg = LWC/mdAvg;
-dSpacingAvg = 1/(nAvg^(1/2)-1);
-dtSpacingAvg = dSpacingAvg/(Uinf*cos(alpha*pi/180));
-
 % Initialize fluid object
 scalars = [pinf;R;Tinf;rhoinf;Ubar;rhol];
 fluid = Fluid(scalars,meshfile,solnfile);
@@ -56,10 +48,10 @@ u0 = ug + 0.01*ug.*unifrnd(-1,1,[particles,1]);
 v0 = vg + 0.01*vg.*unifrnd(-1,1,[particles,1]);
 
 % Initialize SLD cloud
-cloud = SLDcloud([x0 y0 u0 v0 rd0 time0 [1:particles]'],rhol,particles,dSpacingAvg,dtSpacingAvg);
+cloud = SLDcloud([x0 y0 u0 v0 rd0 time0 [1:particles]'],rhol,particles);
 
-% Calculate length of box needed for continuous injection of particles
-formInjectionBox(cloud,airfoil,fluid);
+% Call subroutine to calculate local timesteps and impinging particles
+calcDtandImpinge(cloud,airfoil,fluid);
 
 %% Collection efficiency
 
