@@ -24,7 +24,7 @@ x = fluid.x; y = fluid.y;
 ind = find(x(:,1)<=1);
 ax = x(ind,1); ay = y(ind,1);
 airfoil = Airfoil([ax,ay]);
-
+%%
 % Calculate impingement limits using Rd = average Rd
 xL = -0.5; Yhit = -0.1;
 Ymiss = 0.3;
@@ -50,8 +50,7 @@ v0 = vg + 0.01*vg.*unifrnd(-1,1,[particles,1]);
 % Initialize SLD cloud
 cloud = SLDcloud([x0 y0 u0 v0 rd0 time0 [1:particles]'],rhol,particles);
 
-% Call subroutine to calculate local timesteps and impinging particles
-calcDtandImpinge(cloud,airfoil,fluid);
+% Create and initialize injection domain
 
 %% Collection efficiency
 
