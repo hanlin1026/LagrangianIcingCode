@@ -2,8 +2,10 @@ classdef InjectionDomain < hgsetget
     % Class defining the injection domain
     
     properties
-        % Bounds of the injection domain
+        % Injection domain bounds and area
         XY_bounds;
+        area;
+        rhol;
         % Parameters for the number density PDF defined over the domain f(x,u,R,e)
         % Separate PDFs for xy,u,v,R,e (assuming these are all independent)
         fxy; % Space
@@ -43,12 +45,23 @@ classdef InjectionDomain < hgsetget
             end
             domain.calcInjectionDomain(dx,Ravg,fluid,airfoil);
             
-            % Set spatial PDF as uniform in space over the trapezoidal domain
             xy = domain.XY_bounds;
             xv = [xy(1:2,1); xy(4,1); xy(3,1)];
             yv = [xy(1:2,2); xy(4,2); xy(3,2)];
-            % Calculate area...
+            % Calculate area of trapezoidal domain
+            xREC = linspace(min(xy(:,1)),max(xy(:,1)),500)';
+            yREC = linspace(min(xy(:,2)),max(xy(:,2)),500)';
+            dx = xREC(2)-xREC(1);
+            dy = yREC(2)-yREC(1);
+            [XX,YY] = meshgrid(xREC,yREC);
+            X = XX(:); Y = YY(:);
+            area = sum(inpolygon(X,Y,xv,yv))*(dx*dy);
+            domain.area = area;
+            
+            % Set spatial PDF as uniform in space over the trapezoidal domain
             domain.fxy = @(xq,yq) inpolygon(xq,yq,xv,yv)./area;
+            % Set fluid density of droplets
+            domain.rhol = fluid.rhol;
             
         end
         
@@ -90,7 +103,7 @@ classdef InjectionDomain < hgsetget
             domain.XY_bounds = [x0 y0; cloud.x cloud.y];
         end
         
-        function func = setPDF(domain,strType,params)
+        function pdf = setPDF(domain,strType,params)
             % Function to return PDF of a specified type
             % INPUTS:
             %   'strType' = string specifying PDF type
@@ -100,35 +113,39 @@ classdef InjectionDomain < hgsetget
                 % 'params' = [mu sigma]
                 mu = params(1);
                 sigma = params(2);
-                func = @(x) 1/sigma/sqrt(2*pi)*exp(-0.5*(x-mu).^2./(sigma^2));
+                xsamp = linspace(mu-3*sigma,mu+3*sigma,1000)';
+                func = 1/sigma/sqrt(2*pi)*exp(-0.5*(xsamp-mu).^2./(sigma^2));
             elseif strcmp(strType,'Uniform')
                 % 'params' = [minx maxx]
                 minx = params(1);
                 maxx = params(2);
                 normalize = maxx-minx;
-                func = @(x) (heaviside(x-minx) - heaviside(x-maxx)).*(1/normalize);
+                xsamp = linspace(minx,maxx,1000)';
+                func = (heaviside(xsamp-minx) - heaviside(xsamp-maxx)).*(1/normalize);
             end
+            pdf = [xsamp, func];
         end
         
-        function domain = integratePDF(domain,I,xmin,xmax,ymin,ymax)
-            % Function to compute total mass of domain
+        function integral = integratePDF(domain,strI,fluid)
+            % Function to compute an integral over the domain, weighted by
+            % the number density function
             % INPUTS:
-            %   'I': function handle defining the integrand
-            %   'xmin,xmax,ymin,ymax': vectors defining an (x,y)
-            %   parameterization of the trapezoidal boundary
-            
-            % Compute (x,y) parameterization of the trapezoidal domain
-            
+            %   'strI': string defining type of integrand
+            %   'fluid': object defining properties of fluid
+                
+            rhol = domain.rhol;
+            if strcmp(strI,'Mass')
+                R = domain.fR(:,1); fR = domain.fR(:,2);
+                Integrand = 4/3*pi*rhol*(R.^3);
+                I_mass = trapz(R,Integrand.*fR);
+                u = domain.fu(:,1); fu = domain.fu(:,2); I_u = trapz(u,fu);
+                v = domain.fv(:,1); fv = domain.fv(:,2); I_v = trapz(v,fv);
+                e = domain.fe(:,1); fe = domain.fe(:,2); I_e = trapz(e,fe);
+                integral = domain.NDOM.*I_mass.*I_u.*I_v.*I_e;
+            end
             
         end
         
-        function domain = samplePDF(domain,samples)
-            % Function to sample the number density PDF f(x,u,R,e)
-            % INPUTS:
-            %   'samples': number of desired samples
-            
-            
-        end
         
         
     end
