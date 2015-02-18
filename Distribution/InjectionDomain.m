@@ -22,11 +22,7 @@ classdef InjectionDomain < hgsetget
         % Parameters for sampling f(x,u,R,e) over the domain
         samples;
         simTime;
-        x = []; y = [];
-        u = []; v = [];
-        R = []; e = [];
         nDroplet = [];
-        t = [];
     end
     
     methods
@@ -62,18 +58,22 @@ classdef InjectionDomain < hgsetget
             R = domain.fR(:,1); fR = domain.fR(:,2);
             Integrand = 4/3*pi*domain.rhol*(R.^3);
             md_avg = trapz(R,Integrand.*fR);
-            % Calculate average number of total droplets in the simulation
+            % Calculate average number of droplets in the injection domain
             % (assumes differential thickness of domain = one MVD)
             ThicknessSlice = 2*domain.R_avg;
             VolSlice = ThicknessSlice*domain.area;
-            I_t = simTime/domain.dtTraverse_avg;
-            domain.numDroplets_avg = I_t*LWC_avg*VolSlice/md_avg;
+            domain.numDroplets_avg = LWC_avg*VolSlice/md_avg;
             % Set spatial PDF as uniform in space over the trapezoidal
             % domain, scaled by the average number of particles
-            domain.fxy = @(xq,yq) domain.num_avg*inpolygon(xq,yq,xv,yv)./domain.area;
+            xy = domain.XY_bounds;
+            xv = [xy(1:2,1); xy(4,1); xy(3,1)];
+            yv = [xy(1:2,2); xy(4,2); xy(3,2)];
+            domain.fxy = @(xq,yq) domain.numDroplets_avg*inpolygon(xq,yq,xv,yv)./domain.area;
+            % Scale temporal PDF s.t. integral is tSim/dtTraverse
+            domain.ft(:,2) = domain.ft(:,2)*simTime/domain.dtTraverse_avg;
         end
         
-        function sampleRealization(numClumps)
+        function sampleRealization(domain,numClumps)
             % Function to create a realization based on desired number of
             % particle clumps and simulation time
             % INPUTS:
@@ -81,13 +81,42 @@ classdef InjectionDomain < hgsetget
             %   simTime: desired time of simulation
             
             % Code to draw random samples from (x,u,R,e;t)
-            % ...
+            minx = min(domain.XY_bounds(:,1)); maxx = max(domain.XY_bounds(:,2));
+            miny = min(domain.XY_bounds(:,2)); maxy = max(domain.XY_bounds(:,2));
+            samplesXY = []; fxyEval = [];
+            while size(samplesXY,1) < numClumps
+                xy = unifrnd([minx miny],[maxx maxy]);
+                xyEval = domain.fxy(xy(1),xy(2));
+                if xyEval ~= 0
+                    fxyEval = [fxyEval; xyEval];
+                    samplesXY = [samplesXY; xy];
+                end
+            end
+            fu1 = domain.fu(1,1); fu2 = domain.fu(end,1);
+            fv1 = domain.fv(1,1); fv2 = domain.fv(end,1);
+            fR1 = domain.fR(1,1); fR2 = domain.fR(end,1);
+            fe1 = domain.fe(1,1); fe2 = domain.fe(end,1);
+            ft1 = domain.ft(1,1); ft2 = domain.ft(end,1);
+            s0 = repmat([fu1 fv1 fR1 fe1 ft1],numClumps,1);
+            sf = repmat([fu2 fv2 fR2 fe2 ft2],numClumps,1);
+            samples = [samplesXY, unifrnd(s0,sf,numClumps,5)];
             % Code to evaluate f(x,u,R,e;t) at sample points
-            % ...
-            
-            dV = domain.numDroplets_avg/sum(fEval.*mEval);
-            domain.nDroplet = fEval.*dV;
-            
+            fuEval = interp1(domain.fu(:,1),domain.fu(:,2),samples(:,3));
+            fvEval = interp1(domain.fv(:,1),domain.fv(:,2),samples(:,4));
+            fREval = interp1(domain.fR(:,1),domain.fR(:,2),samples(:,5));
+            feEval = interp1(domain.fe(:,1),domain.fe(:,2),samples(:,6));
+            ftEval = interp1(domain.ft(:,1),domain.ft(:,2),samples(:,7));
+            fEval = fxyEval.*fuEval.*fvEval.*fREval.*feEval.*ftEval;
+            mEval = 4/3*pi*domain.rhol.*samples(:,5).^3;
+            % Determine number of droplets per clump by balancing mass
+            domain.calcAvgMass();
+            dV = domain.mass_avg/sum(fEval.*mEval);
+            nDroplet = fEval.*dV;
+            samples = samples;
+            % Cut out samples with fractional numbers of droplets
+            ind = find(nDroplet>1);
+            domain.nDroplet = nDroplet(ind);
+            domain.samples = samples(ind,:);
         end
         
         function calcInjectionDomain(domain,fluid,airfoil)
@@ -128,7 +157,7 @@ classdef InjectionDomain < hgsetget
                 % 'params' = [mu sigma]
                 mu = params(1);
                 sigma = params(2);
-                xsamp = linspace(mu-5*sigma,mu+5*sigma,3000)';
+                xsamp = linspace(mu-3*sigma,mu+3*sigma,3000)';
                 func = 1/sigma/sqrt(2*pi)*exp(-0.5*(xsamp-mu).^2./(sigma^2));
             elseif strcmp(strType,'Uniform')
                 % 'params' = [minx maxx]
@@ -159,17 +188,39 @@ classdef InjectionDomain < hgsetget
         end
         
         function calcAvgMass(domain)
-            % Function to compute the average mass of the injection domain
+            % Function to compute the average total mass of the simulation
             % INPUTS:
             %   'strI': string defining type of integrand
             
             rhol = domain.rhol;
-            I_xy = domain.num_avg;
+            I_xy = domain.numDroplets_avg;
             I_u = 1; I_v = 1; I_e = 1;
+            I_t = domain.simTime/domain.dtTraverse_avg;
             R = domain.fR(:,1); fR = domain.fR(:,2);
             Integrand = 4/3*pi*rhol*(R.^3);
             I_mass = trapz(R,Integrand.*fR);
-            domain.mass_avg = I_mass.*I_xy.*I_u.*I_v.*I_e;
+            domain.mass_avg = I_mass.*I_xy.*I_u.*I_v.*I_e.*I_t;
+            
+        end
+        
+        function dispSampleStatistics(domain)
+            % Function to display sample statistics
+            
+            samples = domain.samples;
+            % xy
+            figure(10); subplot(2,4,1); plot(domain.XY_bounds(:,1),domain.XY_bounds(:,2),'o');
+            hold on; plot(samples(:,1),samples(:,2),'r.');
+            % u,v,R,e,t
+            fX = {domain.fu(:,1),domain.fv(:,1),domain.fR(:,1),domain.fe(:,1),domain.ft(:,1)};
+            fY = {domain.fu(:,2),domain.fv(:,2),domain.fR(:,2),domain.fe(:,2),domain.ft(:,2)};
+            for i=3:7
+                figure(10); subplot(2,4,i-1); bar(samples(:,i),domain.nDroplet);
+                hold on; plot(fX{i-2},fY{i-2});
+            end
+            % mR
+            figure(10); subplot(2,4,7); bar(samples(:,5).^3*4/3*pi*domain.rhol,domain.nDroplet);
+            hold on; plot(fX{3}.^3*4/3*pi*domain.rhol,fY{3})
+            
             
         end
         
