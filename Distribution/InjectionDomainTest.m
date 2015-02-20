@@ -27,6 +27,6 @@ strPDFTypes = {'Gaussian','Gaussian','Gaussian','Gaussian','Uniform'};
 simTime = 60*10;
 PDFparams = [20 2; 10 1; 50e-6 10e-6; 0 2; 0 simTime];
 domain = InjectionDomain(strPDFTypes,PDFparams,fluid,airfoil,LWC,simTime);
-nClumps = 10000;
+nClumps = 100;
 domain.sampleRealization(nClumps);
 domain.dispSampleStatistics();

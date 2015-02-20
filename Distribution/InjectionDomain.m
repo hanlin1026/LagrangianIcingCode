@@ -113,10 +113,11 @@ classdef InjectionDomain < hgsetget
             dV = domain.mass_avg/sum(fEval.*mEval);
             nDroplet = fEval.*dV;
             samples = samples;
-            % Cut out samples with fractional numbers of droplets
-            ind = find(nDroplet>1);
-            domain.nDroplet = nDroplet(ind);
-            domain.samples = samples(ind,:);
+            % Round the number of particles per clump to nearest integer
+            ind = find(nDroplet<1);
+            nDroplet(ind) = 1;
+            domain.nDroplet = round(nDroplet);
+            domain.samples = samples;
         end
         
         function calcInjectionDomain(domain,fluid,airfoil)
@@ -220,6 +221,9 @@ classdef InjectionDomain < hgsetget
             % mR
             figure(10); subplot(2,4,7); bar(samples(:,5).^3*4/3*pi*domain.rhol,domain.nDroplet);
             hold on; plot(fX{3}.^3*4/3*pi*domain.rhol,fY{3})
+            % Cumulative distribution of nDroplets
+            [N,bins] = hist(domain.nDroplet,1:max(domain.nDroplet));
+            figure(10); subplot(2,4,8); plot(bins,cumsum(N)./sum(N))
             
             
         end
