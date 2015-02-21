@@ -7,9 +7,9 @@ classdef SLDcloud < hgsetget
         u=[]; v=[]; % Velocity
         time=[]; % Time
         rd=[]; % Radius
+        Temp=[]; % Temperature
         dt=[]; % Timestep
         rhol=[]; % Density
-        index=[]; % Numeric index
         fracture=[]; % '0' if not, '1' if yes
         impinge=[]; % Indices of currently impinging particles
         impingeTotal=[]; % Indices of all impinged particles, past and present
@@ -18,6 +18,7 @@ classdef SLDcloud < hgsetget
         childind={}; % Numeric indices of child particles of a splash
         particles; % Number of total current particles
         originalNumParticles; % Number of original particles
+        numDroplets; % Number of droplets per clump
         % Impingement Parameters
         sigma;
         T;
@@ -40,8 +41,9 @@ classdef SLDcloud < hgsetget
             cloud.u(:,1) = state0(:,3);
             cloud.v(:,1) = state0(:,4);
             cloud.rd(:,1) = state0(:,5);
-            cloud.time(:,1) = state0(:,6);
-            cloud.index = state0(:,7);
+            cloud.Temp(:,1) = state0(:,6);
+            cloud.numDroplets(:,1) = state0(:,7);
+            cloud.time(:,1) = state0(:,8);
             cloud.rhol = rhol;
             cloud.particles = particles;
             cloud.originalNumParticles = particles;
@@ -61,15 +63,9 @@ classdef SLDcloud < hgsetget
             cloud.u(i:i+numnew-1,1) = state(:,3);
             cloud.v(i:i+numnew-1,1) = state(:,4);
             cloud.rd(i:i+numnew-1,1) = state(:,5);
-            cloud.time(i:i+numnew-1,1) = state(:,6);
-            if size(state,2)==7
-                cloud.index(i:i+numnew-1,1) = state(:,7);
-            else
-                ind1 = max(cloud.index)+1;
-                ind2 = ind1+numnew-1;
-                indnew = [ind1:1:ind2]';
-                cloud.index(i:i+numnew-1,1) = indnew;
-            end
+            cloud.Temp(i:i+numnew-1,1) = state(:,6);
+            cloud.numDroplets(i:i+numnew-1,1) = state(:,7);
+            cloud.time(i:i+numnew-1,1) = state(:,8);
             % Update total number of particles
             cloud.particles = cloud.particles+numnew;
         end
@@ -84,8 +80,8 @@ classdef SLDcloud < hgsetget
             rd = cloud.rd(indimp); t = cloud.time(indimp); dt = cloud.dt(indimp); rhol = cloud.rhol;
 
             sigma = cloud.sigma; % Surface tension of water at 0 deg C against air
-            T = cloud.T; % Temperature (K) for SLD's (estimate, slightly below freezing)
-            mul = (2.414e-5)*10^(247.8/(T-140)); % Estimate of mu_water (N*s/m^2)
+            T = cloud.Temp; % Temperature (K) for SLD's (estimate, slightly below freezing)
+            mul = (2.414e-5)*10^(247.8./(T-140)); % Estimate of mu_water (N*s/m^2)
 
             % Find local points of impingement, normal vectors
             [~,~,nx,ny,tx,ty] = airfoil.findPanel(x,y);
@@ -132,7 +128,7 @@ classdef SLDcloud < hgsetget
             set(cloud,'normvelsq',[]); set(cloud,'normvelsq',vnormsq);
             set(cloud,'tangvel',[]); set(cloud,'tangvel',vtang);
             % Update impingeTotal
-            splashSpread = [cloud.index(indimp(spread)); cloud.index(indimp(splash))];
+            splashSpread = [indimp(spread); indimp(splash)];
             impingeNew = setdiff(splashSpread,cloud.impingeTotal);
             set(cloud,'impingeTotal',impingeNew);
         end
@@ -150,8 +146,6 @@ classdef SLDcloud < hgsetget
             % Update total number of particles and indices
             numdel = length(ind);
             cloud.particles = cloud.particles - numdel;
-            %set(cloud,'index',[]); set(cloud,'index',[1:cloud.particles]');
-            cloud.index(ind) = [];
             % Fix index trackers due to particles being deleted
             newBounce = cloud.resetVector(cloud.bounce,ind);
             set(cloud,'bounce',[]); set(cloud,'bounce',newBounce);
@@ -321,7 +315,7 @@ classdef SLDcloud < hgsetget
         function state = getState(cloud)
             % Function to return all current state variables
             
-            state = [cloud.x cloud.y cloud.u cloud.v cloud.rd cloud.time cloud.index];
+            state = [cloud.x cloud.y cloud.u cloud.v cloud.rd cloud.Temp cloud.numDroplets cloud.time];
         end
         
         function newVector = resetVector(cloud,oldVector,deleteInd)

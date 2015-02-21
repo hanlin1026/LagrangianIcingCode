@@ -2,3 +2,6 @@
 Figures/*
 Literature/*
 *.fig
+*.aux
+*.log
+*.synctex.gz

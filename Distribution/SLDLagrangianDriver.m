@@ -4,7 +4,6 @@
 meshfile = 'MESH.P3D';
 solnfile = 'q103.0.50E+01.bin';
 [~,~,~,~,~,~,mach,alpha,~,~] = readp3d(meshfile,solnfile);
-
 % Dimensional reference quantities
 pinf = 1.01325e5; % N/m^2
 R = 287.058; % J/kg/K
@@ -15,7 +14,6 @@ rhol = 1000; % kg/m^3
 Rd = 50e-6; % m
 LWC = 0.4e-3; % kg/m^3
 Uinf = mach*340; % m/s
-
 % Initialize fluid object
 scalars = [pinf;R;Tinf;rhoinf;Ubar;rhol];
 fluid = Fluid(scalars,meshfile,solnfile);
@@ -24,33 +22,14 @@ x = fluid.x; y = fluid.y;
 ind = find(x(:,1)<=1);
 ax = x(ind,1); ay = y(ind,1);
 airfoil = Airfoil([ax,ay]);
-%%
-% Calculate impingement limits using Rd = average Rd
-xL = -0.5; Yhit = -0.1;
-Ymiss = 0.3;
-yLimUP = impingementLimitsSLD(Rd,fluid,airfoil,xL,Ymiss,Yhit,'UP');
-Ymiss = -0.3;
-yLimDOWN = impingementLimitsSLD(Rd,fluid,airfoil,xL,Ymiss,Yhit,'DOWN');
-
-% Calculate initial positions based on impingement limits and average
-% spacing between particles
-tsteps = 1500;
-particles = ceil((yLimUP-yLimDOWN)/dSpacingAvg);
-x0 = xL*ones(particles,1);
-y0 = linspace(yLimDOWN,yLimUP,particles)';
-% Initialize radius, time
-rd0 = Rd*ones(particles,1);
-time0 = zeros(particles,1);
-% Initialize velocities to local cell velocities
-xq = x0; yq = y0;
-[pg,ug,vg] = interpFluid(fluid,xq,yq);
-u0 = ug + 0.01*ug.*unifrnd(-1,1,[particles,1]);
-v0 = vg + 0.01*vg.*unifrnd(-1,1,[particles,1]);
-
-% Initialize SLD cloud
-cloud = SLDcloud([x0 y0 u0 v0 rd0 time0 [1:particles]'],rhol,particles);
-
-% Create and initialize injection domain
+% Initialize domain and associated distribution functions
+strPDFTypes = {'Gaussian','Gaussian','Gaussian','Gaussian','Uniform'};
+simTime = 60*10;
+PDFparams = [20 2; 10 1; 50e-6 10e-6; 0 2; 0 simTime];
+domain = InjectionDomain(strPDFTypes,PDFparams,fluid,airfoil,LWC,simTime);
+nClumps = 100;
+domain.sampleRealization(nClumps);
+domain.dispSampleStatistics();
 
 %% Collection efficiency
 

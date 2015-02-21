@@ -1,0 +1,196 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{fancyhdr}
+\usepackage{indentfirst}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{subfigmat}
+\usepackage{bm, amssymb, amsmath, array, pdfpages}
+\usepackage{listings}
+
+\usepackage{titlesec}
+
+\graphicspath{{Figures/}}
+
+% define some commands to maintain consistency
+ \newcommand{\pkg}[1]{\texttt{#1}}
+ \newcommand{\cls}[1]{\textsf{#1}}
+ \newcommand{\file}[1]{\texttt{#1}}
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+\newcommand{\adgremark}[1]{\textcolor{blue}{[ADG: #1]}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\CLmax}{{C_L}_\text{max}}
+\newcommand{\LDmax}{L/D_\text{max}}
+\newcommand{\alphamax}{\alpha_\text{max}}
+\def\ip<#1,#2>{\left\langle #1,#2\right\rangle}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% MODIFICATIONS TO ALLOW HEADER ON THE TITLE PAGE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\makeatletter
+% Copied from article.cls
+\renewcommand\maketitle{\par
+  \begingroup
+    \renewcommand\thefootnote{\@fnsymbol\c@footnote}%
+    \def\@makefnmark{\rlap{\@textsuperscript{\normalfont\@thefnmark}}}%
+    \long\def\@makefntext##1{\parindent 1em\noindent
+            \hb@xt@1.8em{%
+                \hss\@textsuperscript{\normalfont\@thefnmark}}##1}%
+    \if@twocolumn
+      \ifnum \col@number=\@ne
+        \@maketitle
+      \else
+        \twocolumn[\@maketitle]%
+      \fi
+    \else
+      \newpage
+      \global\@topnum\z@   % Prevents figures from going at top of page.
+      \@maketitle
+    \fi
+    \thispagestyle{fancy}\@thanks % was {empty}
+  \endgroup
+  \setcounter{footnote}{0}%
+  \global\let\thanks\relax
+  \global\let\maketitle\relax
+  \global\let\@maketitle\relax
+  \global\let\@thanks\@empty
+  \global\let\@author\@empty
+  %\global\let\@date\@empty
+  \global\let\@title\@empty
+  \global\let\title\relax
+  \global\let\author\relax
+  %\global\let\date\relax
+  \global\let\and\relax
+}
+% end of copy
+\makeatother
+
+\newcommand*{\vertbar}{\rule[1ex]{0.5pt}{2.5ex}}
+\newcommand*{\horzbar}{\rule[.5ex]{2.5ex}{0.5pt}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TITLE, DATE, AUTHOR, HEADERS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{document}
+\pagestyle{fancy}
+\lhead{\textit{\bf Notes: A Lagrangian Spray Model for Airfoil Icing}}
+\rhead{\bf February 2015} %empty
+\title{\LARGE \bf
+Notes: A Lagrangian Spray Model for Airfoil Icing}
+\author{Anthony DeGennaro}
+\date{July 2014}
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ANTHONY DEGENNARO'S PROPOSAL
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction and Motivation}
+The purpose of these notes is to describe the ongoing development of a wing ice accretion code 
+which applies techniques from the liquid spray community to improve on existing methods.
+
+It is well-known that individual droplets in the air can significantly affect ice accretion on wings.
+As an example, an ATR-72 crashed in Roselawn, Indiana in 1994; it is speculated that this incident 
+was largely due to Supercooled-Liquid Droplets (SLDs) in the air. This crash has led to a revamping 
+of the FAA regulations on flight conditions to explicitly consider freezing drizzle/rain.
+
+Existing computational codes for icing generally do {\it not} track each individual droplet impinging 
+on the wing throughout the course of a simulation. The reason for this is simple: there are too many 
+droplets for this to be computationally feasible. We can demonstrate this easily with a back of the 
+envelope calculation: assuming the liquid water content (LWC) of the air to be 0.3 g/m$^3$, the 
+airspeed to be 100 m/s, and the mean volumetric diameter (MVD) of the liquid droplets to be 50 $\mu$m, 
+this gives a free-stream flux of about 500 million particles per square meter per second. Since wing icing 
+simulations can frequently last 5-10 minutes or longer, one is faced with the proposition of tracking (potentially)
+billions of particles over the course of one simulation (this is not even accounting for new droplets created 
+through the process of droplet splashing and breakup).
+
+Existing methods deal with this problem in a few ways. First, many methods do not employ a Lagrangian 
+approach; rather, they treat the liquid/air as a two-phase continuum and use Eulerian formulations, which 
+automatically circumvents the need to track all particles. Regardless, most methods assume that the 
+liquid mass impinging on the wing surface can be modeled as a continuum (the so-called ``collection 
+efficiency"). Because of this assumption, there is no need to advect the billions of particles one would 
+do in a fully time-resolved Lagrangian simulation; instead, one need only advect an initial ``sheet" of 
+particles, observe how that sheet impinges on the wing surface, and calculate a mass flux ratio that way. 
+Of course, another notable assumption here is that the collection efficiency does not vary over the 
+course of the simulation, even though the droplet properties may be randomly distributed.
+
+Both of these solutions lead to fast simulations at the expense of ignoring (1) the statistical effect of 
+having droplet properties which are randomly distributed and (2) the effect on the ice shape of individual 
+droplets. This is where we hope to make a contribution. Borrowing from methods used in the spray 
+community, we formulate the icing problem probabilistically, by equipping the freestream droplet 
+properties with a probability density function. We then formulate a Lagrangian in which the advected 
+particles are actually ``clumps" of droplets. This keeps the number of parcels tracked in each simulation 
+relatively low. In order to investigate the statistical effects of the droplet distribution, one need only generate 
+a multirealization ensemble of simulations. We also hope to develop a thermodynamic model that governs the 
+behavior of the individual droplets as they impinge and freeze on the surface; this would potentially help 
+towards investigating the effect of individual droplets on ice shape.
+
+
+\section{Brief Sketch of Method}
+Writing the interpolation matrix as $\bf \Phi_{X}$, and the vector of response surface values 
+as $\bf Y$, we have the regression problem $\bf \Phi_{X}^T c = Y$. Note that ${\bf \Phi_X} \in \mathbb{R}^{K \times Q}$ 
+and ${\bf Y} \in \mathbb{R}^{Q \times 1}$.
+
+A least-squares solution of this system would involve calculating the psuedo-inverse: $\bf c = Y (\Phi_{X}^T)^{\dagger}$. 
+
+First, we show how to reduce the dimensionality of the calculation through a QR factorization. Define:
+\begin{equation}
+{\bf \Phi_{XY}} = 
+\begin{bmatrix}
+\bf \Phi_X \\
+\bf Y^T
+\end{bmatrix}
+\in \mathbb{R}^{(K+1) \times Q}
+\end{equation}
+We use the QR factorization to write $\bf \Phi_{XY}^T = QR = QL^T$ with: 
+\begin{equation}
+\bf L = 
+\begin{bmatrix}
+\bf L_{11} & \bf 0 \\
+\bf L_{21} & \bf L_{22}
+\end{bmatrix}
+\end{equation}
+
+This gives us $\bf (\Phi_X)^T = Q [ L_{11} \;\;\; 0 ]^T $ and $\bf Y = Q [ L_{21} \;\;\; L_{22} ]^T  $. Thus:
+\begin{equation}
+\begin{aligned}
+\bf c = Y (\Phi_{X}^T)^{\dagger} &= \left \lbrace \bf Q
+\begin{bmatrix}
+\bf L_{21}^T \\
+\bf L_{22}^T
+\end{bmatrix} \right \rbrace
+\left \lbrace \bf Q
+\begin{bmatrix}
+\bf L_{11}^T \\
+\bf 0
+\end{bmatrix} \right \rbrace ^{\dagger} \\
+& = 
+\left \lbrace \bf Q
+\begin{bmatrix}
+\bf L_{21}^T \\
+\bf L_{22}^T
+\end{bmatrix} \right \rbrace
+\left \lbrace
+\begin{bmatrix}
+\bf L_{11}^{-T} & \bf 0
+\end{bmatrix} \bf Q^T
+\right \rbrace \\
+& = 
+\bf Q 
+\begin{bmatrix}
+\bf L_{21}^T L_{11}^{-T} \;\;\;\;\; 0 \\
+\bf L_{22}^T L_{11}^{-T} \;\;\;\;\; 0
+\end{bmatrix} \bf Q^T
+\end{aligned}
+\end{equation}
+
+This matrix has a transpose which is upper block triangular, and so its eigenvalues 
+are given as the union of those of the transposed diagonal blocks, which are zeros together with 
+the eigenvalues of $\bf (L_{11}^{-1}) L_{21} $.
+
+
+
+\end{document}
