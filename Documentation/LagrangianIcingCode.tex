@@ -164,8 +164,10 @@ for fine resolution, this number may be less than unity; for coarse resolution, 
 
 At each location, any variation in the state values is presumed to be small within the small volume, and so we collapse 
 any local uncertainty in the state values into a delta function, and conserve local mass by 
-simply creating a certain number of identical particles. To be explicit, conservation of total mass for all time in a volume 
-$V$ gives:
+simply creating a certain number of identical particles, giving rise to what are effectively particle ``clumps". 
+To be explicit, consider a computational domain consisting of 
+an airfoil and its grid. Droplets will enter this computational domain by appearing at different times inside a domain 
+of injection $V$, which is fixed in space. Conservation of total mass for all time in the injection domain gives:
 \begin{equation}
 \label{mass}
 \sum_i^M N_i m_i = \int_V \left(\frac{4}{3} \pi \rho R^3\right) f dV dt
@@ -186,64 +188,79 @@ If we neglect shattering or coalescence of droplets, then the droplet numbers ar
 and the local number of particles at each of the $M$ sample locations). We can state conservation of local 
 droplet numbers in each of our sample locations by $M$ conservation equations:
 \begin{equation}
-\frac{\partial f({\bf X_i},t)}{\partial t} + \nabla_{\bf X} \cdot \left(\dot {\bf X} \; f({\bf X_i},t) \right) = 0 \; \; \; , \;\;\; i=1...M
+\frac{\partial N_i}{\partial t} + \nabla_{\bf X} \cdot \left(\dot {\bf X} N_i \right) = 0 \; \; \; , \;\;\; i=1...M
 \end{equation}
-These partial differential equations are hyperbolic, and the trajectories may be found by solving for the characteristics. 
-These are given by equations which closely resemble a Lagrangian method on individual droplets:
+These partial differential equations are hyperbolic, and their trajectories govern the paths of our particle clumps.
+The trajectories may be found by solving for the characteristics, which closely resemble a Lagrangian method on individual droplets:
 \begin{equation}
 \begin{aligned}
-\dot{\bf x} & = {\bf u}  \\
-\dot{\bf u} & = \sum_i \frac{1}{m} {\bf F_i} \\
-\dot{\bf R} & = -\frac{\dot{m}_{\text{evap}}}{4 \pi \rho R^2} \\
-\dot{\bf e} & = \frac{\dot{m}_{\text{evap}}}{m} \left( e - e_{\text{surf}} + \frac{\dot{q}}{\dot{m}_{\text{evap}}}\right) + \frac{B}{\rho}
+\dot{\bf x}_i & = {\bf u}_i  \\
+\dot{\bf u}_i & = \sum_j \frac{1}{m_i} {\bf F_j}_i \\
+\dot{R}_i & = -\frac{\dot{m}_i}{4 \pi \rho R_i^2} \\
+\dot{e}_i & = \frac{\dot{m}_i}{m_i} \left( e_i - e_{\text{surf}} + \frac{\dot{q}_i}{\dot{m}_i}\right) + \frac{B_i}{\rho}
 \end{aligned}
 \end{equation}
-where, $\bf{F_i}$ represents a force on a droplet, 
+where ${\bf F_j}_i$ represents the $j^{th}$ force on the droplet associated with parcel $i$, $\dot{m}_i$ is the mass loss 
+in a parcel due to evaporation, $e_{\text{surf}}$ is the internal energy of the liquid on the surface of impingement, 
+$\dot{q_i}$ is the heat loss due to evaporization, and $B_i$ represents energy flux to the volume occupied by the liquid if gas filled 
+that volume.
 
+So, the method described here for advecting a distribution of particles is technically a method of characteristics approach 
+to a multicontinua formulation (where each of the continua are represented by the individual ``chunks" of droplets); it is, strictly 
+speaking, not a Lagrangian discrete particle method.
 
-
-
-
-
-
-
-
-
-\newpage
-\section{Crap}
-
-This gives us $\bf (\Phi_X)^T = Q [ L_{11} \;\;\; 0 ]^T $ and $\bf Y = Q [ L_{21} \;\;\; L_{22} ]^T  $. Thus:
+\section{Examples}
+Here we briefly show some examples on sampling a particle distribution as described earlier. The first step involves formulating 
+the actual distribution function $f({\bf X},t)$. Here, we make the reasonable assumption that $f({\bf X},t)$ can be written as the 
+product of several independent distributions: 
+\begin{equation}
+f({\bf X},t) = f_{{\bf x}}({\bf x})f_{{\bf u}}({\bf u})f_R(R)f_e(e)f_t(t)
+\end{equation}
+We are free to construct our distribution function in any way we choose, and so, for simplicity, we 
+assume in this example that the droplets are distributed uniformly in space and time, and normally in velocity, radius, and 
+energy. We also assume that the distributions separately integrate in the following way:
 \begin{equation}
 \begin{aligned}
-\bf c = Y (\Phi_{X}^T)^{\dagger} &= \left \lbrace \bf Q
-\begin{bmatrix}
-\bf L_{21}^T \\
-\bf L_{22}^T
-\end{bmatrix} \right \rbrace
-\left \lbrace \bf Q
-\begin{bmatrix}
-\bf L_{11}^T \\
-\bf 0
-\end{bmatrix} \right \rbrace ^{\dagger} \\
-& = 
-\left \lbrace \bf Q
-\begin{bmatrix}
-\bf L_{21}^T \\
-\bf L_{22}^T
-\end{bmatrix} \right \rbrace
-\left \lbrace
-\begin{bmatrix}
-\bf L_{11}^{-T} & \bf 0
-\end{bmatrix} \bf Q^T
-\right \rbrace \\
-& = 
-\bf Q 
-\begin{bmatrix}
-\bf L_{21}^T L_{11}^{-T} \;\;\;\;\; 0 \\
-\bf L_{22}^T L_{11}^{-T} \;\;\;\;\; 0
-\end{bmatrix} \bf Q^T
+\int f_{\bf x}({\bf x}) d{\bf x} & = N_{\mathcal{D}}  \\
+\int f_{\bf t}(t) dt & = \left. T_{\text{sim}} \middle/ \Delta t_{\mathcal{D}} \right. \\
+\int f_{\bf{u}}({\bf u}) d{\bf u} = \int f_R(R) dR = \int f_e(e) de & = 1
 \end{aligned}
 \end{equation}
+where $N_{\mathcal{D}}$ is the average number of droplets in the injection domain $\mathcal{D}$ at any time, $T_{\text{sim}}$ 
+is the duration of the simulation, and $\Delta t_{\mathcal{D}}$ is the average time it takes for a droplet to traverse 
+the entire injection domain $\mathcal{D}$. This way, our expression for the average number of droplets in the entire simulation 
+nicely turns out to be:
+\begin{equation}
+N_{\text{sim}} = \int f({\bf X},t) d{\bf X} dt = N_{\mathcal{D}} T_{\text{sim}}/\Delta t_{\mathcal{D}}
+\end{equation}
+which is just the product of the average number of particles in the injection domain at any point in time and how many times (on average) 
+the entire injection domain empties and must be completely refilled.
+
+We determine the injection domain by calculating the impingement limits for a particle which is of average size at two different 
+locations upstream of the airfoil. This ensures that most of the parcels we advect will actually impinge on the airfoil. $\Delta t_{\mathcal{D}}$ 
+can be estimated as the length of the injection domain divided by the freestream velocity. The average number of particles in 
+$\mathcal{D}$ can be estimated from the Liquid Water Content (LWC) of the air.
+
+If we set LWC = $0.4$ g/m$^3$, the freestream velocity to $U = 100$ m/s, the average droplet radius to $\overline{R} = 50 \; \mu$m, and the 
+length of the simulation to $T_{\text{sim}} = 10$ minutes, then the total number of droplets is $N_{\text{sim}} \approx 450,000$. 
+
+Below, we 
+show the cumulative distribution of the number of droplets per parcel assuming several different desired numbers of parcels. We also 
+show the resulting statistics of a sample realization in each case. As one can clearly see, there is a trade-off between resolution of the 
+statistics of the realization, and the number of parcels one has to track. It is also clear that as the number of parcels is increased towards 
+the total number of droplets in the simulation, all parcels converge toward having a single droplet each, and this method becomes a 
+regular Lagrangian Monte Carlo method.
+\begin{figure}
+\centering
+\includegraphics[width=.5\textwidth] {CDFClump.eps}
+\caption{CDF for the number of droplets per parcel for $M$ = 100, 1000, 10000.}
+\end{figure}
+
+
+
+
+
+
 
 
 
