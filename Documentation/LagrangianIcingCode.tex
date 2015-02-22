@@ -128,31 +128,89 @@ a multirealization ensemble of simulations. We also hope to develop a thermodyna
 behavior of the individual droplets as they impinge and freeze on the surface; this would potentially help 
 towards investigating the effect of individual droplets on ice shape.
 
-
-\section{Brief Sketch of Method}
-Writing the interpolation matrix as $\bf \Phi_{X}$, and the vector of response surface values 
-as $\bf Y$, we have the regression problem $\bf \Phi_{X}^T c = Y$. Note that ${\bf \Phi_X} \in \mathbb{R}^{K \times Q}$ 
-and ${\bf Y} \in \mathbb{R}^{Q \times 1}$.
-
-A least-squares solution of this system would involve calculating the psuedo-inverse: $\bf c = Y (\Phi_{X}^T)^{\dagger}$. 
-
-First, we show how to reduce the dimensionality of the calculation through a QR factorization. Define:
+\newpage
+\section{Probabilistic Framework}
+We begin our approach with a probabilistic framework governing the distribution of droplet properties. 
+Specifically, we assume that the number density of droplets may be written as a function of the droplet 
+properties: $f({\bf x}, {\bf u}, R, e; t)$. Here, ${\bf x}$ denotes position, ${\bf u}$ velocity, $R$ radius, $e$ 
+energy, and $t$ time. If we define $N$ as the number of droplets, then:
 \begin{equation}
-{\bf \Phi_{XY}} = 
-\begin{bmatrix}
-\bf \Phi_X \\
-\bf Y^T
-\end{bmatrix}
-\in \mathbb{R}^{(K+1) \times Q}
+\label{dN}
+dN(t_0) = f({\bf x_0}, {\bf u_0}, R_0, e_0; t_0) \; dV
 \end{equation}
-We use the QR factorization to write $\bf \Phi_{XY}^T = QR = QL^T$ with: 
+gives the average number of droplets 
+located inside an infinitesimal hypervolume $dV$ about the location $({\bf x_0}, {\bf u_0}, R_0, e_0; t_0)$ 
+(here, average is meant in the sense of the mean over a multirealization ensemble). Hence, $f$ is a 
+distribution function, whose integral gives the number of droplets in a hypervolume of parameter space:
 \begin{equation}
-\bf L = 
-\begin{bmatrix}
-\bf L_{11} & \bf 0 \\
-\bf L_{21} & \bf L_{22}
-\end{bmatrix}
+N_{V}(t_0) = \int_{V} f({\bf x}, {\bf u}, R, e; t_0) \; d{\bf x} \; d{\bf u} \; dR \; de
 \end{equation}
+Similarly, the droplet number density at some location and time ${\bf x_0}, t_0$ is given by the integral:
+\begin{equation}
+n({\bf x_0}, t_0) = \int f({\bf x_0}, {\bf u}, R, e; t_0) \; d{\bf u} \; dR \; de
+\end{equation}
+We may obtain ensemble average properties as moments of our distribution function; for any droplet 
+property $\phi$, we have:
+\begin{equation}
+\overline{\phi({\bf x_0},t_0)} = \frac{1}{n({\bf x_0}, t_0)} \int \phi \; f \; d{\bf u} \; dR \; de 
+\end{equation}
+
+\section{Sampling Technique}
+We now describe a method for generating realizations from $f$. Clearly, it is impractical to do a ``straightforward"
+Monte Carlo sampling of $f$, since this would generate a prohibitively large number of droplets. Instead, we can do 
+the following. Consider a finite number $M$ samples of the distribution space. For each of these locations, we may 
+approximate the local number of droplets in a small volume centered at that location from Eq.(\ref{dN}). Note that, 
+for fine resolution, this number may be less than unity; for coarse resolution, it may be much greater than unity. 
+
+At each location, any variation in the state values is presumed to be small within the small volume, and so we collapse 
+any local uncertainty in the state values into a delta function, and conserve local mass by 
+simply creating a certain number of identical particles. To be explicit, conservation of total mass for all time in a volume 
+$V$ gives:
+\begin{equation}
+\label{mass}
+\sum_i^M N_i m_i = \int_V \left(\frac{4}{3} \pi \rho R^3\right) f dV dt
+\end{equation}
+And, from Eq.(\ref{dN}), we approximate the number of local particles as:
+\begin{equation}
+\label{number}
+N_k({\bf X}_k,t) \approx f({\bf X}_k,t) \Delta V
+\end{equation}
+Where, for brevity, ${\bf X}_k = ({\bf x}_k, {\bf u}_k, R_k, e_k)$ denotes the vector of droplet properties at some time at sample $k$.
+We can now solve for the volume size $\Delta V$ from Eq.(\ref{mass}-\ref{number}), giving:
+\begin{equation}
+\Delta V = \left. \int_V \left(\frac{4}{3} \pi \rho R^3\right) f dV dt \middle/ \sum_i^M f({\bf X}_i) m_i \right.
+\end{equation}
+
+\section{Advection Method}
+If we neglect shattering or coalescence of droplets, then the droplet numbers are conserved (both the total number 
+and the local number of particles at each of the $M$ sample locations). We can state conservation of local 
+droplet numbers in each of our sample locations by $M$ conservation equations:
+\begin{equation}
+\frac{\partial f({\bf X_i},t)}{\partial t} + \nabla_{\bf X} \cdot \left(\dot {\bf X} \; f({\bf X_i},t) \right) = 0 \; \; \; , \;\;\; i=1...M
+\end{equation}
+These partial differential equations are hyperbolic, and the trajectories may be found by solving for the characteristics. 
+These are given by equations which closely resemble a Lagrangian method on individual droplets:
+\begin{equation}
+\begin{aligned}
+\dot{\bf x} & = {\bf u}  \\
+\dot{\bf u} & = \sum_i \frac{1}{m} {\bf F_i} \\
+\dot{\bf R} & = -\frac{\dot{m}_{\text{evap}}}{4 \pi \rho R^2} \\
+\dot{\bf e} & = \frac{\dot{m}_{\text{evap}}}{m} \left( e - e_{\text{surf}} + \frac{\dot{q}}{\dot{m}_{\text{evap}}}\right) + \frac{B}{\rho}
+\end{aligned}
+\end{equation}
+where, $\bf{F_i}$ represents a force on a droplet, 
+
+
+
+
+
+
+
+
+
+
+\newpage
+\section{Crap}
 
 This gives us $\bf (\Phi_X)^T = Q [ L_{11} \;\;\; 0 ]^T $ and $\bf Y = Q [ L_{21} \;\;\; L_{22} ]^T  $. Thus:
 \begin{equation}
@@ -187,9 +245,7 @@ This gives us $\bf (\Phi_X)^T = Q [ L_{11} \;\;\; 0 ]^T $ and $\bf Y = Q [ L_{21
 \end{aligned}
 \end{equation}
 
-This matrix has a transpose which is upper block triangular, and so its eigenvalues 
-are given as the union of those of the transposed diagonal blocks, which are zeros together with 
-the eigenvalues of $\bf (L_{11}^{-1}) L_{21} $.
+
 
 
 
