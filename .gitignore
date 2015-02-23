@@ -5,3 +5,4 @@ Literature/*
 *.aux
 *.log
 *.synctex.gz
+Documentation/*eps-converted-to.pdf
