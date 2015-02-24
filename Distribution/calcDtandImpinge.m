@@ -6,10 +6,19 @@ function calcDtandImpinge(cloud,airfoil,fluid)
 
 x = fluid.x; y = fluid.y; NS = fluid.NS;
 dt = [];
-% Get total number of current particles
-particles = cloud.particles;
-% Nearest neighbor grid point search over all particles
-xq = cloud.x; yq = cloud.y; uq = cloud.u; vq = cloud.v;
+% Find parcels which are have already entered the injection domain
+tGLOB = cloud.tGLOB; t = cloud.time;
+indT = find(t<=tGLOB);
+cloud.indT = indT;
+% Find parcels which have already impinged/stuck to airfoil and except them
+indStick = cloud.impingeTotal;
+indAdv = setdiff(indT,indStick);
+cloud.indAdv = indAdv;
+% Nearest neighbor grid point search over those particles currently in the
+% simulation which have not impinged/stuck to airfoil
+xq = cloud.x(indAdv); yq = cloud.y(indAdv); 
+uq = cloud.u(indAdv); vq = cloud.v(indAdv);
+particles = size(xq,1);
 ind = knnsearch(NS,[xq,yq]);
 % Clear impinge index tracker
 set(cloud,'impinge',[]);
@@ -24,12 +33,12 @@ for i=1:particles
         % Calculate normal velocity to make sure impingement is occuring
         [~,~,nx,ny,~,~] = airfoil.findPanel(xq(i),yq(i));
         normvel = vel(1)*nx+vel(2)*ny;
-        if normvel<0
+        if normvel<0.1
             % NOTE: dt will be reset to dt=0 for splash/spread impingement
             % modes separately in their respective modules!
             dt(i,1) = 0.2*sqrt(area)/norm(vel);
             % Only retain new impingement indices
-            impinge = setdiff(i,cloud.impingeTotal);
+            impinge = setdiff(indAdv(i),cloud.impingeTotal);
             if ~isempty(impinge)
                 set(cloud,'impinge',impinge);
             end
@@ -46,11 +55,22 @@ for i=1:particles
     end
 end
 % Set global timestep as minimum of dt
-dt(:) = min(dt);
-set(cloud,'dt',dt);
+dtNZ = dt(dt~=0);
+if isempty(dtNZ)
+% If we are in 'dead region' between next impinging particle, fast forward
+% in time at a specified rate while advecting no particles
+    dt = zeros(length(indAdv),1);
+    dtINTER = 0.01;
+    set(cloud,'dt',dt);
+    set(cloud,'tGLOB',cloud.tGLOB+dtINTER);
+else
+    dt(:) = min(dtNZ);
+    set(cloud,'dt',dt);
+end
+%{
 % Set timesteps of splash/spread impingements to zero
 if ~isempty(cloud.impingeTotal)
     set(cloud,'dt',[cloud.impingeTotal, zeros(length(cloud.impingeTotal),1)]);
 end
-
+%}
 end

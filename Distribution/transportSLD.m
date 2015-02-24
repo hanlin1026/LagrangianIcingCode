@@ -5,12 +5,14 @@ function transportSLD(cloud,fluid)
 
 Tinf = fluid.Tinf;
 % Find parcels which are have already entered the injection domain
-tGLOB = cloud.tGLOB; t = cloud.time;
-indT = find(t<=tGLOB);
+indAdv = cloud.indAdv;
 
 % Pull out state variables of those particles currently in the simulation
-x = cloud.x(indT); y = cloud.y(indT); u = cloud.u(indT); v = cloud.v(indT); 
-rd = cloud.rd(indT); dt = cloud.dt; rhol = cloud.rhol;
+x = cloud.x(indAdv); y = cloud.y(indAdv); u = cloud.u(indAdv); v = cloud.v(indAdv); 
+rd = cloud.rd(indAdv); dt = cloud.dt; rhol = cloud.rhol;
+
+% Exempt those particles which have passed the airfoil from further advection
+dt(x>=1) = 0;
 
 % Interpolate fluid properties at particle positions
 [pg,ug,vg] = fluid.interpFluid(x,y);
@@ -35,7 +37,10 @@ unp1 = ug + exp(-dt./tau).*(u-ug) + (1-exp(-dt./tau)).*tau.*g(1);
 vnp1 = vg + exp(-dt./tau).*(v-vg) + (1-exp(-dt./tau)).*tau.*g(2);
 
 % Update particle states
-set(cloud,'x',xnp1); set(cloud,'y',ynp1); set(cloud,'u',unp1); set(cloud,'v',vnp1);
-set(cloud,'tGLOB',tGLOB+dt);
+xNEW = cloud.x; xNEW(indAdv) = xnp1; yNEW = cloud.y; yNEW(indAdv) = ynp1;
+uNEW = cloud.u; uNEW(indAdv) = unp1; vNEW = cloud.v; vNEW(indAdv) = vnp1;
+set(cloud,'x',xNEW); set(cloud,'y',yNEW); set(cloud,'u',uNEW); set(cloud,'v',vNEW);
+dtGLOB = max(dt);
+set(cloud,'tGLOB',cloud.tGLOB+dtGLOB);
 
 end

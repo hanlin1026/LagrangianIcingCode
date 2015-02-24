@@ -1,4 +1,4 @@
-function [STATE,totalImpinge,impinge,s,beta] = calcCollectionEfficiency(rdAvg,airfoil,fluid,domain,strImpMod)
+function [STATE,totalImpinge,impinge,s,beta] = calcCollectionEfficiency(airfoil,fluid,domain,strImpMod)
 % Function to calculate the collection efficiency of an airfoil
 
 % Initialize a cloud using domain realization
@@ -11,8 +11,10 @@ disp('Advecting test particles between limits...');
 totalImpinge = 0;
 impinge = [];
 STATE = {};
-t = 0; simTime = domain.simTime;
-maxiter = 2000;
+t = cloud.tGLOB; simTime = domain.simTime;
+tSAMP = 1; tREFRESH = 0.03; tRATE = 0.001;
+iter = 1;
+figure(1); plot(airfoil.X,airfoil.Y); axis([-.5 1 -.3 .3]);
 if strcmp(strImpMod,'NoImpingement')
     % Calculate collection efficiency without impingement module
     while totalImpinge<particles && t<simTime
@@ -21,11 +23,30 @@ if strcmp(strImpMod,'NoImpingement')
         % Advect particles one time step
         transportSLD(cloud,fluid);
         % Compute bookkeeping of which parcels have impinged
-        cloud.computeImpingementParameters();
-        % Save state variables
+        if ~isempty(cloud.impinge)
+            cloud.computeImpingementParams(airfoil);
+            bounceDynamics(cloud,airfoil);
+        end
         totalImpinge = size(cloud.impingeTotal,1);
-        STATE{t} = cloud.getState();
-        t = t+1
+        % Save state variables every 0.1 sec
+        %{
+        cmap = jet(10);
+        if mod(cloud.tGLOB,tREFRESH)<0.0001
+            figure(1); clf; plot(airfoil.X,airfoil.Y); axis([-.5 1 -.3 .3]);
+        end
+        if floor(tSAMP/tRATE)>=1
+            state = cloud.getState();
+            numT = size(state,1);
+            part = [state(:,1), state(:,2)];
+            %figure(1); clf; plot(airfoil.X,airfoil.Y); axis([-.5 1 -.3 .3]);
+            figure(1); hold on; scatter(part(:,1),part(:,2),[],cmap(mod(numT-1,10)+1,:),'filled');
+            tMARK = cloud.tGLOB;
+        end
+        tSAMP = t-tMARK;
+        %}
+        t = cloud.tGLOB;
+        iter = iter+1;
+        t
     end
     % Record mass deposited on the airfoil surface
     indStick = cloud.impingeTotal;
@@ -56,11 +77,12 @@ end
 % Calculate collection efficiency
 disp('Calculating collection efficiency...');
 if strcmp(strImpMod,'NoImpingement')
+    STATE = cloud.getState();
     % Plot airfoil and impinged parcels
     impinge = sort(cloud.impinge);
     xq = cloud.x(impinge);
     yq = cloud.y(impinge);
-    s = airfoil.XYtoScoords(xq,yq);
+    s = airfoil.XYtoScoords(xq,yq); 
     figure(1); hold on; scatter(STATE{1}(impinge,1),STATE{1}(impinge,2),'MarkerFaceColor','k');
     figure(1); hold on; scatter(cloud.x(impinge),cloud.y(impinge),'MarkerFaceColor','k');
     % Calculate total impinged mass in each of the surface bins

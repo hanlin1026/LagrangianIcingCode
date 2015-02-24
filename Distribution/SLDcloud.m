@@ -12,6 +12,8 @@ classdef SLDcloud < hgsetget
         % Other parameters (time step, fracture, impingement, etc.)
         tGLOB; % Current global time of the simulation
         dt; % Timestep (single global value for time-resolved simulation)
+        indT; % Indices of particles currently in the simulation
+        indAdv; % Indices of particles currently in simulation being advected
         rhol=[]; % Density
         fracture=[]; % '0' if not, '1' if yes
         impinge=[]; % Indices of currently impinging particles
@@ -35,7 +37,7 @@ classdef SLDcloud < hgsetget
     end 
     
     methods
-        function cloud = SLDcloud(state0,rhol,particles,dSpacingAvg,dtSpacingAvg)
+        function cloud = SLDcloud(state0,rhol,particles)
             % Constructor: state = (x0,y0,u0,v0,r0,temp0,t0,nDrop0)
             
             cloud.x(:,1) = state0(:,1);
@@ -47,6 +49,7 @@ classdef SLDcloud < hgsetget
             cloud.time(:,1) = state0(:,7);
             cloud.numDroplets(:,1) = state0(:,8);
             
+            cloud.tGLOB = min(cloud.time);
             cloud.rhol = rhol;
             cloud.particles = particles;
             cloud.originalNumParticles = particles;
@@ -80,11 +83,11 @@ classdef SLDcloud < hgsetget
             % Pull out state variables of all particles which have impinged
             indimp = cloud.impinge;
             x = cloud.x(indimp); y = cloud.y(indimp); u = cloud.u(indimp); v = cloud.v(indimp);
-            rd = cloud.rd(indimp); t = cloud.time(indimp); dt = cloud.dt(indimp); rhol = cloud.rhol;
-
+            rd = cloud.rd(indimp); t = cloud.time(indimp); rhol = cloud.rhol;
+            T = cloud.Temp(indimp); % Temperature (K) for SLD's (estimate, slightly below freezing)
+            
             sigma = cloud.sigma; % Surface tension of water at 0 deg C against air
-            T = cloud.Temp; % Temperature (K) for SLD's (estimate, slightly below freezing)
-            mul = (2.414e-5)*10^(247.8./(T-140)); % Estimate of mu_water (N*s/m^2)
+            mul = (2.414e-5)*10.^(247.8./(T-140)); % Estimate of mu_water (N*s/m^2)
 
             % Find local points of impingement, normal vectors
             [~,~,nx,ny,tx,ty] = airfoil.findPanel(x,y);
@@ -323,8 +326,8 @@ classdef SLDcloud < hgsetget
         
         function state = getState(cloud)
             % Function to return all current state variables
-            
-            state = [cloud.x cloud.y cloud.u cloud.v cloud.rd cloud.Temp cloud.time cloud.numDroplets];
+            indT = cloud.indT;
+            state = [cloud.x(indT) cloud.y(indT) cloud.u(indT) cloud.v(indT) cloud.rd(indT) cloud.Temp(indT) cloud.time(indT) cloud.numDroplets(indT)];
         end
         
         function newVector = resetVector(cloud,oldVector,deleteInd)

@@ -12,10 +12,9 @@ yL = Ynew;
 [pg,ug,vg] = fluid.interpFluid(Xnew,Ynew);
 x = fluid.x; y = fluid.y; rhol = fluid.rhol; 
 Rd = rdAvg;
-Unew = ug + 0.01*ug*unifrnd(-1,1);
-Vnew = vg + 0.01*vg*unifrnd(-1,1);
-dSpacingAvg = 1; dtSpacingAvg = 1; % This is irrelevant for our calculations here
-cloud = SLDcloud([Xnew Ynew Unew Vnew Rd 0 1],rhol,1,dSpacingAvg,dtSpacingAvg);
+Unew = ug + 0.001*ug*unifrnd(-1,1);
+Vnew = vg + 0.001*vg*unifrnd(-1,1);
+cloud = SLDcloud([Xnew Ynew Unew Vnew Rd 0 0 0],rhol,1);
 
 % Iterative procedure to find upper limit
 TOL = 1e-4;
@@ -37,9 +36,9 @@ while abs(Ymiss-Yhit)>TOL
         Xnew = xL; Ynew = 0.5*(Ymiss+Yhit);
         
         [pg,ug,vg] = fluid.interpFluid(Xnew,Ynew);
-        Unew = ug + 0.01*ug*unifrnd(-1,1);
-        Vnew = vg + 0.01*vg*unifrnd(-1,1);
-        cloud = SLDcloud([Xnew Ynew Unew Vnew Rd 0 1],rhol,1,dSpacingAvg,dtSpacingAvg);
+        Unew = ug + 0.001*ug*unifrnd(-1,1);
+        Vnew = vg + 0.001*vg*unifrnd(-1,1);
+        cloud = SLDcloud([Xnew Ynew Unew Vnew Rd 0 0 0],rhol,1);
         
         yL = Ynew;
         iter=1;
@@ -52,9 +51,9 @@ while abs(Ymiss-Yhit)>TOL
         Xnew = xL; Ynew = 0.5*(Ymiss+Yhit);
         
         [pg,ug,vg] = fluid.interpFluid(Xnew,Ynew);
-        Unew = ug + 0.01*ug*unifrnd(-1,1);
-        Vnew = vg + 0.01*vg*unifrnd(-1,1);
-        cloud = SLDcloud([Xnew Ynew Unew Vnew Rd 0 1],rhol,1,dSpacingAvg,dtSpacingAvg);
+        Unew = ug + 0.001*ug*unifrnd(-1,1);
+        Vnew = vg + 0.001*vg*unifrnd(-1,1);
+        cloud = SLDcloud([Xnew Ynew Unew Vnew Rd 0 0 0],rhol,1);
         
         yL = Ynew;
         iter=1;
@@ -67,15 +66,6 @@ end
 
 % Output result to airfoil and determine s-coordinates of limit
 airfoil.setLim(hitLocx,hitLocy,limstr);
-
-
-
-
-
-
-
-
-
 
 
 end

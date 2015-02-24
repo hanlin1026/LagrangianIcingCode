@@ -25,17 +25,19 @@ airfoil = Airfoil([ax,ay]);
 % Initialize domain and associated distribution functions
 strPDFTypes = {'Gaussian','Gaussian','Gaussian','Gaussian','Uniform'};
 simTime = 60*10;
-PDFparams = [20 2; 10 1; 50e-6 10e-6; 0 2; 0 simTime];
+uDIST = Uinf*cos(alpha/180)*[1 0.02];
+vDIST = Uinf*sin(alpha/180)*[1 0.1];
+PDFparams = [uDIST; vDIST; 50e-6 10e-6; 0 2; 0 simTime];
 domain = InjectionDomain(strPDFTypes,PDFparams,fluid,airfoil,LWC,simTime);
-nClumps = 100;
+nClumps = 1000;
 domain.sampleRealization(nClumps);
 domain.dispSampleStatistics();
 
 %% Collection efficiency
 
 STATE = {};
-strImpMod = 'Impingement';
-[STATE,totalImpinge,impinge,s,beta] = calcCollectionEfficiency(cloud.rdAvg,airfoil,fluid,strImpMod);
+strImpMod = 'NoImpingement';
+[STATE,totalImpinge,impinge,s,beta] = calcCollectionEfficiency(airfoil,fluid,domain,strImpMod);
 airfoil.calcStagPt(fluid);
 figure; plot(s-airfoil.stagPt*ones(length(s),1),beta);
 

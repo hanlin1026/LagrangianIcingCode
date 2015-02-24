@@ -10,7 +10,7 @@ pCENT = [x(ind); y(ind)];
 xLOC = [xq;yq] - pCENT;
 
 surfaceFlag=0;
-if ind-n <= 0 % Are we on the airfoil surface?
+if ind-2*n <= 0 % Are we on the airfoil surface?
 % YES...
     surfaceFlag=1;
     % Is the query point above or below the nearest grid point?
