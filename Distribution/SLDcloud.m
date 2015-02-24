@@ -5,10 +5,13 @@ classdef SLDcloud < hgsetget
         % Vectors (NOT arrays) of current (NOT also past) state information
         x=[]; y=[]; % Position
         u=[]; v=[]; % Velocity
-        time=[]; % Time
         rd=[]; % Radius
         Temp=[]; % Temperature
-        dt=[]; % Timestep
+        time=[]; % Times at which parcels enter the injection domain
+        numDroplets=[]; % Number of droplets per clump
+        % Other parameters (time step, fracture, impingement, etc.)
+        tGLOB; % Current global time of the simulation
+        dt; % Timestep (single global value for time-resolved simulation)
         rhol=[]; % Density
         fracture=[]; % '0' if not, '1' if yes
         impinge=[]; % Indices of currently impinging particles
@@ -18,7 +21,6 @@ classdef SLDcloud < hgsetget
         childind={}; % Numeric indices of child particles of a splash
         particles; % Number of total current particles
         originalNumParticles; % Number of original particles
-        numDroplets; % Number of droplets per clump
         % Impingement Parameters
         sigma;
         T;
@@ -34,7 +36,7 @@ classdef SLDcloud < hgsetget
     
     methods
         function cloud = SLDcloud(state0,rhol,particles,dSpacingAvg,dtSpacingAvg)
-            % Constructor: state = (x0,y0,u0,v0,r0,t0,ind0)
+            % Constructor: state = (x0,y0,u0,v0,r0,temp0,t0,nDrop0)
             
             cloud.x(:,1) = state0(:,1);
             cloud.y(:,1) = state0(:,2);
@@ -42,8 +44,9 @@ classdef SLDcloud < hgsetget
             cloud.v(:,1) = state0(:,4);
             cloud.rd(:,1) = state0(:,5);
             cloud.Temp(:,1) = state0(:,6);
-            cloud.numDroplets(:,1) = state0(:,7);
-            cloud.time(:,1) = state0(:,8);
+            cloud.time(:,1) = state0(:,7);
+            cloud.numDroplets(:,1) = state0(:,8);
+            
             cloud.rhol = rhol;
             cloud.particles = particles;
             cloud.originalNumParticles = particles;
@@ -64,8 +67,8 @@ classdef SLDcloud < hgsetget
             cloud.v(i:i+numnew-1,1) = state(:,4);
             cloud.rd(i:i+numnew-1,1) = state(:,5);
             cloud.Temp(i:i+numnew-1,1) = state(:,6);
-            cloud.numDroplets(i:i+numnew-1,1) = state(:,7);
-            cloud.time(i:i+numnew-1,1) = state(:,8);
+            cloud.time(i:i+numnew-1,1) = state(:,7);
+            cloud.numDroplets(i:i+numnew-1,1) = state(:,8);
             % Update total number of particles
             cloud.particles = cloud.particles+numnew;
         end
@@ -142,6 +145,8 @@ classdef SLDcloud < hgsetget
             cloud.u(ind) = [];
             cloud.v(ind) = [];
             cloud.rd(ind) = [];
+            cloud.Temp(ind) = [];
+            cloud.numDroplets(ind) = [];
             cloud.time(ind) = [];
             % Update total number of particles and indices
             numdel = length(ind);
@@ -312,10 +317,14 @@ classdef SLDcloud < hgsetget
             
         end
         
+        function cloud = set.tGLOB(cloud,val)
+            cloud.tGLOB = val;
+        end
+        
         function state = getState(cloud)
             % Function to return all current state variables
             
-            state = [cloud.x cloud.y cloud.u cloud.v cloud.rd cloud.Temp cloud.numDroplets cloud.time];
+            state = [cloud.x cloud.y cloud.u cloud.v cloud.rd cloud.Temp cloud.time cloud.numDroplets];
         end
         
         function newVector = resetVector(cloud,oldVector,deleteInd)

@@ -1,46 +1,39 @@
-function [STATE,totalImpinge,impinge,s,beta] = calcCollectionEfficiency(rdAvg,airfoil,fluid,strImpMod)
+function [STATE,totalImpinge,impinge,s,beta] = calcCollectionEfficiency(rdAvg,airfoil,fluid,domain,strImpMod)
 % Function to calculate the collection efficiency of an airfoil
 
-% Calculate impingement limits of the airfoil
-disp('Calculating impingement limits...');
-xL = -0.5; Yhit = -0.1;
-Ymiss = 0.3;
-yLimUP = impingementLimitsSLD(rdAvg,fluid,airfoil,xL,Ymiss,Yhit,'UP');
-Ymiss = -0.3;
-yLimDOWN = impingementLimitsSLD(rdAvg,fluid,airfoil,xL,Ymiss,Yhit,'DOWN');
-
-% Create cloud of particles between limits
-particles = 100;
-dy = (yLimUP-yLimDOWN)/(particles-1);
-y0 = linspace(yLimDOWN,yLimUP,particles)';
-x0 = xL*ones(particles,1);
-[pg,ug,vg] = fluid.interpFluid(x0,y0);
-u0 = ug + 0*ug.*unifrnd(-1,1,[particles,1]);
-v0 = vg + 0*vg.*unifrnd(-1,1,[particles,1]);
-rd0 = fluid.Rd*ones(particles,1);
-time0 = zeros(particles,1);
+% Initialize a cloud using domain realization
+particles = domain.numParcels;
 rhol = fluid.rhol;
-cloud = SLDcloud([x0 y0 u0 v0 rd0 time0 [1:particles]'],rhol,particles);
+cloud = SLDcloud([domain.samples, domain.nDroplet],rhol,particles);
 
 % Advect particles (with/without fracture or impingement submodules)
 disp('Advecting test particles between limits...');
 totalImpinge = 0;
 impinge = [];
 STATE = {};
-t = 1;
+t = 0; simTime = domain.simTime;
 maxiter = 2000;
 if strcmp(strImpMod,'NoImpingement')
     % Calculate collection efficiency without impingement module
-    while totalImpinge<particles && t<maxiter
+    while totalImpinge<particles && t<simTime
         % Call subroutine to calculate local timesteps and impinging particles
         calcDtandImpinge(cloud,airfoil,fluid);
         % Advect particles one time step
         transportSLD(cloud,fluid);
+        % Compute bookkeeping of which parcels have impinged
+        cloud.computeImpingementParameters();
         % Save state variables
-        totalImpinge = size(cloud.impinge,1);
+        totalImpinge = size(cloud.impingeTotal,1);
         STATE{t} = cloud.getState();
         t = t+1
     end
+    % Record mass deposited on the airfoil surface
+    indStick = cloud.impingeTotal;
+    xStick = cloud.x(indStick); yStick = cloud.y(indStick); 
+    RStick = cloud.rd(indStick); nStick = cloud.numDroplets(indStick);
+    sStick = airfoil.XYtoScoords(xStick,yStick);
+    mStick = (4/3*pi*rhol)*(RStick.^3).*nStick;
+    set(airfoil,'FILM',[sStick, mStick]);
 elseif strcmp(strImpMod,'Impingement')
     % Calculate collection efficiency with impingement module
     while totalImpinge<particles && t<maxiter
@@ -63,13 +56,26 @@ end
 % Calculate collection efficiency
 disp('Calculating collection efficiency...');
 if strcmp(strImpMod,'NoImpingement')
+    % Plot airfoil and impinged parcels
     impinge = sort(cloud.impinge);
     xq = cloud.x(impinge);
     yq = cloud.y(impinge);
     s = airfoil.XYtoScoords(xq,yq);
     figure(1); hold on; scatter(STATE{1}(impinge,1),STATE{1}(impinge,2),'MarkerFaceColor','k');
     figure(1); hold on; scatter(cloud.x(impinge),cloud.y(impinge),'MarkerFaceColor','k');
-    beta = dy./(s(2:end)-s(1:end-1));
+    % Calculate total impinged mass in each of the surface bins
+    bins = 100;
+    sBin = linspace(min(s_imp),max(s_imp),bins+1)';
+    ds = sBin(2)-sBin(1);
+    for i=1:bins
+        mBin(i,1) = sum(mStick(sStick>sBin(i) & sStick<sBin(i+1)));
+    end
+    % Calculate total mass flux through the injection domain screen
+    R = cloud.rd; nDrop = cloud.numDroplets;
+    mTOT = sum((4/3*pi*rhol)*(R.^3).*nDrop);
+    dy = domain.XY_bounds(1,2) - domain.XY_bounds(2,2);
+    % Calculate collection efficiency
+    beta = (mBin/ds).*(dy/mTOT);
     beta(end+1) = beta(end);
 elseif strcmp(strImpMod,'Impingement')
     % Original mass that was in each of the advected tubes

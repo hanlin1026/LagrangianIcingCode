@@ -23,6 +23,7 @@ classdef InjectionDomain < hgsetget
         samples;
         simTime;
         nDroplet = [];
+        numParcels;
     end
     
     methods
@@ -118,6 +119,7 @@ classdef InjectionDomain < hgsetget
             nDroplet(ind) = 1;
             domain.nDroplet = round(nDroplet);
             domain.samples = samples;
+            domain.numParcels = numClumps;
         end
         
         function calcInjectionDomain(domain,fluid,airfoil)

@@ -1,7 +1,7 @@
 function calcDtandImpinge(cloud,airfoil,fluid)
 % Function which does the following:
 % (1) calculate which cell is occupied by all droplets
-% (2) set local time steps based on the cell volumes
+% (2) set global time step based on cell volumes
 % (3) determine and track which droplets have impinged on the airfoil
 
 x = fluid.x; y = fluid.y; NS = fluid.NS;
@@ -45,7 +45,8 @@ for i=1:particles
         dt(i,1) = 0.2*sqrt(area)/norm(vel);
     end
 end
-% Set local timesteps
+% Set global timestep as minimum of dt
+dt(:) = min(dt);
 set(cloud,'dt',dt);
 % Set timesteps of splash/spread impingements to zero
 if ~isempty(cloud.impingeTotal)
