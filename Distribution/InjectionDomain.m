@@ -32,24 +32,28 @@ classdef InjectionDomain < hgsetget
             % Constructor
             % INPUTS:
             %   strPDFTypes: Vector of strings for 'setPDF'
-            %   PDFparams: 2-column array of parameters for 'setPDF'
+            %   PDFparams: cell of parameters for 'setPDF'
             %   LWC_avg: ensemble average for LWC
             
             % Set PDFs for u,v,R,e
-            domain.fu = domain.setPDF(strPDFTypes(1),PDFparams(1,:));
-            domain.fv = domain.setPDF(strPDFTypes(2),PDFparams(2,:));
-            domain.fR = domain.setPDF(strPDFTypes(3),PDFparams(3,:));
-            domain.fe = domain.setPDF(strPDFTypes(4),PDFparams(4,:));
-            domain.ft = domain.setPDF(strPDFTypes(5),PDFparams(5,:));
+            if (strcmp(strPDFTypes(1),'Implicit')==0 || strcmp(strPDFTypes(2),'Implicit')==0)
+                domain.fu = domain.setPDF(strPDFTypes(1),PDFparams{1});
+                domain.fv = domain.setPDF(strPDFTypes(2),PDFparams{2});
+            end
+            domain.fR = domain.setPDF(strPDFTypes(3),PDFparams{3});
+            domain.fe = domain.setPDF(strPDFTypes(4),PDFparams{4});
+            domain.ft = domain.setPDF(strPDFTypes(5),PDFparams{5});
             domain.LWC_avg = LWC_avg;
             domain.simTime = simTime;
             % Set fluid density of droplets
             domain.rhol = fluid.rhol;
             % Calculate bounds of injection domain and avg time to traverse
             if strcmp(strPDFTypes(3),'Gaussian')==1
-                Ravg = PDFparams(3,1);
+                Ravg = PDFparams{3}(1);
             elseif strcmp(strPDFTypes(3),'Uniform')==1
-                Ravg = 0.5*(PDFparams(3,1)+PDFparams(3,2));
+                Ravg = 0.5*(PDFparams{3}(1)+PDFparams{3}(2));
+            elseif strcmp(strPDFTypes(3),'Custom')==1
+                Ravg = trapz(domain.fR(:,1),domain.fR(:,1).*domain.fR(:,2));
             end
             domain.R_avg = Ravg;
             domain.calcInjectionDomain(fluid,airfoil);
@@ -74,7 +78,7 @@ classdef InjectionDomain < hgsetget
             domain.ft(:,2) = domain.ft(:,2)*simTime/domain.dtTraverse_avg;
         end
         
-        function sampleRealization(domain,numClumps)
+        function sampleRealization(domain,numClumps,fluid)
             % Function to create a realization based on desired number of
             % particle clumps and simulation time
             % INPUTS:
@@ -92,6 +96,14 @@ classdef InjectionDomain < hgsetget
                     fxyEval = [fxyEval; xyEval];
                     samplesXY = [samplesXY; xy];
                 end
+            end
+            if (isempty(domain.fu) || isempty(domain.fv))
+                % (u,v) PDFs are some perturbation of the gas velocities
+                [~,ug,vg] = fluid.interpFluid(samplesXY(:,1),samplesXY(:,2));
+                meanU = mean(ug); sigU = sqrt(var(ug));
+                meanV = mean(vg); sigV = sqrt(var(vg));
+                domain.fu = domain.setPDF('Gaussian',[meanU sigU]);
+                domain.fv = domain.setPDF('Gaussian',[meanV sigV]);
             end
             fu1 = domain.fu(1,1); fu2 = domain.fu(end,1);
             fv1 = domain.fv(1,1); fv2 = domain.fv(end,1);
@@ -127,23 +139,31 @@ classdef InjectionDomain < hgsetget
             % INPUTS: 
             %   fluid,airfoil: fluid and airfoil objects
             
-            Ravg = domain.R_avg;
+            RMAX = max(domain.fR(:,1));
             % Determine impingement limits in y-direction at x0
-            xL = -0.5; Yhit = -0.1;
-            Ymiss = 0.3;
-            yLimUP = impingementLimitsSLD(Ravg,fluid,airfoil,xL,Ymiss,Yhit,'UP');
+            xL = -0.5; 
+            Yhit = -0.05; Ymiss = 0.3;
+            yLimUP = impingementLimitsSLD(RMAX,fluid,airfoil,xL,Ymiss,Yhit,'UP');
             Ymiss = -0.3;
-            yLimDOWN = impingementLimitsSLD(Ravg,fluid,airfoil,xL,Ymiss,Yhit,'DOWN');
+            yLimDOWN = impingementLimitsSLD(RMAX,fluid,airfoil,xL,Ymiss,Yhit,'DOWN');
             x1 = [xL; yLimUP];
             x2 = [xL; yLimDOWN];
             % Determine impingement limits in y-direction at x = x0-1
-            xL = xL-1; Yhit = -0.25;
-            Ymiss = 0.3;
-            yLimUP = impingementLimitsSLD(Ravg,fluid,airfoil,xL,Ymiss,Yhit,'UP');
-            Ymiss = -0.35;
-            yLimDOWN = impingementLimitsSLD(Ravg,fluid,airfoil,xL,Ymiss,Yhit,'DOWN');
+            xL = xL-1; 
+            Yhit = -0.25; Ymiss = 0.3;
+            yLimUP = impingementLimitsSLD(RMAX,fluid,airfoil,xL,Ymiss,Yhit,'UP');
+            Ymiss = -0.35; Yhit = -0.10;
+            yLimDOWN = impingementLimitsSLD(RMAX,fluid,airfoil,xL,Ymiss,Yhit,'DOWN');
             x3 = [xL; yLimUP];
             x4 = [xL; yLimDOWN];
+            % Widen y-Boundaries by a certain amount
+            k = 0;
+            yRange = x1(2)-x2(2);
+            x1(2) = x1(2) + k*yRange;
+            x2(2) = x2(2) - k*yRange;
+            yRange = x3(2)-x4(2);
+            x3(2) = x3(2) + k*yRange;
+            x4(2) = x4(2) - k*yRange;
             % Save new boundaries of particles
             domain.XY_bounds = [x1'; x2'; x3'; x4'];
             % Estimate time to traverse domain
@@ -169,6 +189,14 @@ classdef InjectionDomain < hgsetget
                 normalize = maxx-minx;
                 xsamp = linspace(minx,maxx,1000)';
                 func = (heaviside(xsamp-minx) - heaviside(xsamp-maxx)).*(1/normalize);
+            elseif strcmp(strType,'Custom')
+                % 'params' = [X f(X)]
+                minx = params(1,1);
+                maxx = params(end,1);
+                xsamp = linspace(minx,maxx,1000)';
+                ysamp = interp1(params(:,1),params(:,2),xsamp);
+                normalize = trapz(xsamp,ysamp);
+                func = ysamp./normalize;
             end
             pdf = [xsamp, func];
         end

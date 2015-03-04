@@ -1,0 +1,14 @@
+#!/bin/bash
+# parallel job using 48 processors. and runs for 4 hours (max)
+#PBS -l nodes=1:ppn=1
+# sends mail if process aborts, when it begins, and 
+# when it ends (abe). Make sure you define your email 
+# address.
+#PBS -m abe
+#PBS -M yourNetID@princeton.edu
+
+
+cd /home/eric/Anthony/SecondIcingUQStudy/FLO103Runs/CleanAirfoil
+/home/eric/Mesh2D/GAIR/gair
+/home/eric/Mesh2D/HYPERG/hyperg
+/home/eric/Flo103/flo103_sa < /home/eric/Anthony/SecondIcingUQStudy/FLO103Runs/CleanAirfoil/naca.d > horn.out

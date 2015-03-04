@@ -10,6 +10,7 @@ classdef SLDcloud < hgsetget
         time=[]; % Times at which parcels enter the injection domain
         numDroplets=[]; % Number of droplets per clump
         % Other parameters (time step, fracture, impingement, etc.)
+        FLAGtimeResolve; % '0' if no time resolution, '1' if time resolved
         tGLOB; % Current global time of the simulation
         dt; % Timestep (single global value for time-resolved simulation)
         indT; % Indices of particles currently in the simulation
@@ -37,7 +38,7 @@ classdef SLDcloud < hgsetget
     end 
     
     methods
-        function cloud = SLDcloud(state0,rhol,particles)
+        function cloud = SLDcloud(state0,rhol,particles,FLAGtimeResolve)
             % Constructor: state = (x0,y0,u0,v0,r0,temp0,t0,nDrop0)
             
             cloud.x(:,1) = state0(:,1);
@@ -49,6 +50,11 @@ classdef SLDcloud < hgsetget
             cloud.time(:,1) = state0(:,7);
             cloud.numDroplets(:,1) = state0(:,8);
             
+            if strcmp(FLAGtimeResolve,'TimeResolved')
+                cloud.FLAGtimeResolve = 1;
+            else
+                cloud.FLAGtimeResolve = 0;
+            end
             cloud.tGLOB = min(cloud.time);
             cloud.rhol = rhol;
             cloud.particles = particles;

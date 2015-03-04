@@ -60,7 +60,7 @@ for i=1:100
     figure(3); hold on; plot(xSMOOTH,ySMOOTH,'k');
     BETA{i} = [sCENT,beta];
 end
-%save('BETA_23012_BIN27.mat','BETA');
+save('BETA_23012_BIN27.mat','BETA');
 
 %% Simulation
 
