@@ -3,6 +3,14 @@ function [pBL, pBR, pTR, pTL, surfaceFlag] = findCell(x,y,xq,yq,ind)
 % 'ind' is a vector of indices of the nearest grid point neighbors of the
 % query points
 
+% NEW CODE (BARYCENTRIC SEARCH)
+%{
+MEANX = 0.25*(x(1:end-1,1:end-1)+x(2:end,1:end-1)+x(1:end-1,2:end)+x(2:end,2:end));
+MEANY = 0.25*(y(1:end-1,1:end-1)+y(2:end,1:end-1)+y(1:end-1,2:end)+y(2:end,2:end));
+NS = createns([MEANX(:),MEANY(:)]);
+ind = knnsearch(NS,[xq,yq]);
+%}
+
 n = size(x,1); m = size(x,2);
 total = length(x(:));
 

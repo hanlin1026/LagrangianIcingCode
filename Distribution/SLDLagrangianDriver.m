@@ -46,7 +46,7 @@ domain.dispSampleStatistics();
 
 STATE = {};
 strImpMod = 'NoImpingement';
-for i=1:100
+for i=1:1
     domain.nDroplet = [];
     domain.samples = [];
     domain.numParcels = [];
