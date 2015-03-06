@@ -26,40 +26,24 @@ xq = cloud.x(indAdv); yq = cloud.y(indAdv);
 uq = cloud.u(indAdv); vq = cloud.v(indAdv);
 particles = size(xq,1);
 ind = knnsearch(NS,[xq,yq]);
-% Clear impinge index tracker
+% Set timesteps based on cell areas
+velMag = sqrt(uq.^2 + vq.^2);
+[~,~,nx,ny,~,~] = airfoil.findPanel(xq,yq);
+normvel = uq.*nx + vq.*ny;
+area = fluid.cellarea(ind);
+dt = 0.2*sqrt(area)./velMag;
+% Check to see if any points are on the airfoil surface
+n = size(x,1)-1;
+surfaceFlag1 = ind-2*n<=0;
+surfaceFlag2 = normvel<0.01;
+surfaceFlag = surfaceFlag1 & surfaceFlag2;
+indSurf = find(surfaceFlag==1);
+% If past airfoil, set dt=0
+dt(xq>1) = 0;
+% Set currently impinging indices (only retaining new impingements)
 set(cloud,'impinge',[]);
-for i=1:particles
-    [pBL, pBR, pTR, pTL, surfaceFlag] = findCell(x,y,xq(i),yq(i),ind(i));
-    % Determine local time step
-    L1 = norm(pBL-pBR);
-    L2 = norm(pTR-pBR);
-    area = L1*L2;
-    vel = [uq(i); vq(i)];
-    if surfaceFlag==1
-        % Calculate normal velocity to make sure impingement is occuring
-        [~,~,nx,ny,~,~] = airfoil.findPanel(xq(i),yq(i));
-        normvel = vel(1)*nx+vel(2)*ny;
-        if normvel<0.01
-            % NOTE: dt will be reset to dt=0 for splash/spread impingement
-            % modes separately in their respective modules!
-            dt(i,1) = 0.2*sqrt(area)/norm(vel);
-            % Only retain new impingement indices
-            impinge = setdiff(indAdv(i),cloud.impingeTotal);
-            if ~isempty(impinge)
-                set(cloud,'impinge',impinge);
-            end
-        else
-            % If not, set local time step
-            dt(i,1) = 0.2*sqrt(area)/norm(vel);
-        end
-    elseif xq(i)>1
-        % If we are past the airfoil, stop advecting
-        dt(i,1) = 0;
-    else
-        % If not, set local time step
-        dt(i,1) = 0.2*sqrt(area)/norm(vel);
-    end
-end
+impinge = setdiff(indSurf,cloud.impingeTotal);
+set(cloud,'impinge',impinge);
 
 if cloud.FLAGtimeResolve==1
     % Set global timestep as minimum of dt

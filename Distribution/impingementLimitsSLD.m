@@ -20,7 +20,7 @@ cloud = SLDcloud([Xnew Ynew Unew Vnew Rd 0 0 0],rhol,1,'NoTResolve');
 TOL = 1e-4;
 maxiter = 2000; iter = 1;
 STATE = [cloud.x, cloud.y];
-figure(1); plot(x(:,1),y(:,1),'k'); axis equal; xlim([-.5,.2]); ylim([-.3,.3]);
+figure(1); plot(x(:,1),y(:,1),'k'); axis equal; xlim([-0.5,.2]); ylim([-.3,.3]);
 while abs(Ymiss-Yhit)>TOL
     % Call subroutine to calculate local timesteps and impinging particles
     calcDtandImpinge(cloud,airfoil,fluid);

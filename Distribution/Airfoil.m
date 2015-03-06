@@ -15,6 +15,8 @@ classdef Airfoil < hgsetget
         originalImpingeScoordSplash = [];
         originalImpingeScoordSpread = [];
         stagPt; % Stagnation point of the airfoil
+        % Tree-searcher object for panel centroids
+        NS;
     end
     
     methods
@@ -26,6 +28,8 @@ classdef Airfoil < hgsetget
             airfoil.setTangNorm();
             % Initialize s-coord mapping
             airfoil.calculateSCoords();
+            % Initialize tree-searcher for panel center points
+            airfoil.NS = createns([airfoil.PANELx, airfoil.PANELy]);
         end
         
         function setTangNorm(airfoil)
@@ -51,6 +55,18 @@ classdef Airfoil < hgsetget
             % Function to determine the closest panel to a query point
             % Returns closest panel point and normal vector
             
+            normvec = airfoil.NORM; tangvec = airfoil.TANG;
+            % Tree-search for nearest panel centroid
+            ind = knnsearch(airfoil.NS,[xq,yq]);
+            px = airfoil.PANELx(ind);
+            py = airfoil.PANELy(ind);
+            % Tangent and normal vectors
+            tx = tangvec(ind,1);
+            ty = tangvec(ind,2);
+            nx = normvec(ind,1);
+            ny = normvec(ind,2);
+            
+            %{
             x = airfoil.PANELx; y = airfoil.PANELy;
             normvec = airfoil.NORM; tangvec = airfoil.TANG;
             
@@ -62,7 +78,7 @@ classdef Airfoil < hgsetget
                 nx(i,1) = normvec(index(1),1); ny(i,1) = normvec(index(1),2);
                 tx(i,1) = tangvec(index(1),1); ty(i,1) = tangvec(index(1),2);
             end
-            
+            %}
         end
         
         function calculateSCoords(airfoil)

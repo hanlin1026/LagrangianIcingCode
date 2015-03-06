@@ -31,7 +31,7 @@ if strcmp(strImpMod,'NoImpingement')
         end
         totalImpinge = size(cloud.impingeTotal,1);
         % Save state variables every 0.1 sec
-        %{
+        %
         if mod(iter,100)==0
             figure(1); clf; plot(airfoil.X,airfoil.Y); axis([-.5 1 -.3 .3]);
         end
