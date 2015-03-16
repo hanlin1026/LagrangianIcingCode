@@ -1,15 +1,21 @@
 function splashDynamics(cloud,airfoil)
+% Functionality:
+% (1) Update cloud.rd for the parent splashing particles
+% (2) Add new child parcels drawn from a splashing distribution to the cloud
+% (3) Deposit a certain amount of mass to the airfoil.FILMsplash
 
 % CALCULATE SPLASHING MODE DYNAMICS ***************************************
 indSplash = cloud.splash; % Indices of cloud.impinge which have splashed
 indStateSplash = cloud.impinge(indSplash); % Splash indices for state variables
-indexTrackSplash = cloud.index(indStateSplash); % Index trackers
 
 origSplash = [];
 if ~isempty(indSplash)
+    rhol = cloud.rhol;
     % Pull out quantities for the splashing mode
-    xSplash = cloud.x(indStateSplash); ySplash = cloud.y(indStateSplash); uSplash = cloud.u(indStateSplash); vSplash = cloud.v(indStateSplash);
-    rdSplash = cloud.rd(indStateSplash); tSplash = cloud.time(indStateSplash); rhol = cloud.rhol;
+    xSplash = cloud.x(indStateSplash); ySplash = cloud.y(indStateSplash);
+    uSplash = cloud.u(indStateSplash); vSplash = cloud.v(indStateSplash);
+    rdSplash = cloud.rd(indStateSplash); tempSplash = cloud.Temp(indStateSplash);
+    tSplash = cloud.time(indStateSplash); nDropSplash = cloud.numDroplets(indStateSplash);
     
     KSplash = cloud.K(indSplash); KsSplash = cloud.fs(indSplash)*cloud.Ks0;
     vnormsqSplash = cloud.normvelsq(indSplash); vtangSplash = cloud.tangvel(indSplash);
@@ -24,10 +30,9 @@ if ~isempty(indSplash)
     m0 = (4/3)*pi*rdSplash.^3;
     ms = ms_m0.*m0;
     mStick = rhol*(m0 - ms);
-    % Update parent particle properties: set dt=0, update mass (i.e. radius)
-    set(cloud,'dt',[indexTrackSplash, zeros(length(indexTrackSplash),1)]);
+    % Update parent particle properties: update mass (i.e. radius)
     rStick = (mStick./(rhol*(4/3)*pi)).^(1/3);
-    set(cloud,'rd',[indexTrackSplash, rStick]);
+    set(cloud,'rd',[indStateSplash, rStick]);
     % Calculate splashed droplet size
     rnew = {};
     state = [];
@@ -75,8 +80,10 @@ if ~isempty(indSplash)
             sx = repmat(xSplash(i),numnew,1);
             sy = repmat(ySplash(i),numnew,1);
             sr = rnew{i}(:);
-            st = repmat(tSplash(i),numnew,1);
-            state = [state; [sx sy vSplashDrop(:,1) vSplashDrop(:,2) sr st]];
+            sTemp = repmat(tempSplash(i),numnew,1);
+            sTime = repmat(tSplash(i),numnew,1);
+            sNDropSplash = repmat(nDropSplash(i),numnew,1);
+            state = [state; [sx sy vSplashDrop(:,1) vSplashDrop(:,2) sr sTemp sTime sNDropSplash]];
             NUMNEWTOTAL = NUMNEWTOTAL + numnew;
         else
             % No splashing actually occurs, per model limits (i.e. simple
@@ -84,18 +91,18 @@ if ~isempty(indSplash)
             
         end
         % Add mass which has "stuck" to airfoil
-        set(airfoil,'FILMsplash',[sCoordSplash(i), mStick(i)]);
+        set(airfoil,'FILMsplash',[sCoordSplash(i), nDropSplash(i)*mStick(i)]);
     end
     if ~isempty(state)
         % Add new splashed child particles
-        indS1 = max(cloud.index)+1;
+        indS1 = cloud.particles+1;
         indS2 = indS1+NUMNEWTOTAL-1;
         indSnew = [indS1:1:indS2]';
         cloud.addParticle(state);
-        set(cloud,'parentind',indexTrackSplash);
+        set(cloud,'parentind',indStateSplash);
         set(cloud,'childind',indSnew);
         % Record splashing of original droplets
-        indtmp = find(indexTrackSplash <= cloud.originalNumParticles);
+        indtmp = find(indStateSplash <= cloud.originalNumParticles);
         origSplash = sCoordSplash(indtmp);
         set(airfoil,'originalImpingeScoordSplash',origSplash);
     end

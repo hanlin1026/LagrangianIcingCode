@@ -25,9 +25,9 @@ airfoil = Airfoil([ax,ay]);
 airfoil.calcStagPt(fluid);
 % Initialize domain and associated distribution functions
 strPDFTypes = {'Implicit','Implicit','Custom','Gaussian','Uniform'};
-simTime = 60*10;
-uDIST = 0*Uinf*cos(alpha/180)*[1 0.0001];
-vDIST = 0*Uinf*sin(alpha/180)*[1 0.0001];
+simTime = 60*30;
+uDIST = 0*Uinf*cos(alpha/180)*[1 0.00001];
+vDIST = 0*Uinf*sin(alpha/180)*[1 0.00001];
 load('BIN27.mat');
 BIN27(:,1) = BIN27(:,1);
 rDIST = BIN27;
@@ -46,13 +46,14 @@ domain.dispSampleStatistics();
 
 STATE = {};
 strImpMod = 'NoImpingement';
-for i=1:1
+for i=1:100
+    i
     domain.nDroplet = [];
     domain.samples = [];
     domain.numParcels = [];
     domain.sampleRealization(nClumps);
     
-    [STATE,totalImpinge,impinge,s,beta] = calcCollectionEfficiency(airfoil,fluid,domain,strImpMod);
+    [STATE,totalImpinge,impinge,s,beta,sStick,mStick] = calcCollectionEfficiency(airfoil,fluid,domain,strImpMod);
     airfoil.calcStagPt(fluid);
     sCENT = 0.5*(s(2:end)+s(1:end-1)) - airfoil.stagPt;
     figure(2); hold on; plot(sCENT,beta);
@@ -60,7 +61,7 @@ for i=1:1
     figure(3); hold on; plot(xSMOOTH,ySMOOTH,'k');
     BETA{i} = [sCENT,beta];
 end
-%save('BETA_23012_BIN27.mat','BETA');
+save('BETA_23012_BIN27_SPLASH.mat','BETA');
 
 %% Simulation
 

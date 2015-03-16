@@ -86,9 +86,10 @@ classdef InjectionDomain < hgsetget
             %   simTime: desired time of simulation
             
             % Code to draw random samples from (x,u,R,e;t)
-            minx = min(domain.XY_bounds(:,1)); maxx = max(domain.XY_bounds(:,2));
+            minx = min(domain.XY_bounds(:,1)); maxx = max(domain.XY_bounds(:,1));
             miny = min(domain.XY_bounds(:,2)); maxy = max(domain.XY_bounds(:,2));
             samplesXY = []; fxyEval = [];
+            % Sample xy domain
             while size(samplesXY,1) < numClumps
                 xy = unifrnd([minx miny],[maxx maxy]);
                 xyEval = domain.fxy(xy(1),xy(2));
@@ -141,23 +142,24 @@ classdef InjectionDomain < hgsetget
             
             RMAX = max(domain.fR(:,1));
             % Determine impingement limits in y-direction at x0
-            xL = -0.5; 
-            Yhit = -0.05; Ymiss = 0.3;
+            xL = -10; 
+            Yhit = -0.4; Ymiss = -0.2;
             yLimUP = impingementLimitsSLD(RMAX,fluid,airfoil,xL,Ymiss,Yhit,'UP');
-            Ymiss = -0.3;
+            Ymiss = -0.5;
             yLimDOWN = impingementLimitsSLD(RMAX,fluid,airfoil,xL,Ymiss,Yhit,'DOWN');
             x1 = [xL; yLimUP];
             x2 = [xL; yLimDOWN];
-            % Determine impingement limits in y-direction at x = x0-1
-            xL = xL-1; 
-            Yhit = -0.25; Ymiss = 0.3;
+            % Determine impingement limits in y-direction at x = x0-offset
+            dx = 0.1;
+            xL = xL-dx;
+            Yhit = -0.4; Ymiss = -0.2;
             yLimUP = impingementLimitsSLD(RMAX,fluid,airfoil,xL,Ymiss,Yhit,'UP');
-            Ymiss = -0.35; Yhit = -0.10;
+            Ymiss = -0.5;
             yLimDOWN = impingementLimitsSLD(RMAX,fluid,airfoil,xL,Ymiss,Yhit,'DOWN');
             x3 = [xL; yLimUP];
             x4 = [xL; yLimDOWN];
             % Widen y-Boundaries by a certain amount
-            k = 0;
+            k = 0.5;
             yRange = x1(2)-x2(2);
             x1(2) = x1(2) + k*yRange;
             x2(2) = x2(2) - k*yRange;
@@ -167,7 +169,7 @@ classdef InjectionDomain < hgsetget
             % Save new boundaries of particles
             domain.XY_bounds = [x1'; x2'; x3'; x4'];
             % Estimate time to traverse domain
-            domain.dtTraverse_avg = 1/fluid.Uinf;
+            domain.dtTraverse_avg = dx/fluid.Uinf;
         end
         
         function pdf = setPDF(domain,strType,params)
@@ -239,8 +241,10 @@ classdef InjectionDomain < hgsetget
             
             samples = domain.samples;
             % xy
+            maxC = max(samples(:,5)); minC = min(samples(:,5));
+            C = 9*(samples(:,5)-minC)./(maxC-minC) + 1;
             figure(10); subplot(2,4,1); plot(domain.XY_bounds(:,1),domain.XY_bounds(:,2),'o');
-            hold on; plot(samples(:,1),samples(:,2),'r.');
+            hold on; scatter(samples(:,1),samples(:,2),[],C,'filled');
             % u,v,R,e,t
             fX = {domain.fu(:,1),domain.fv(:,1),domain.fR(:,1),domain.fe(:,1),domain.ft(:,1)};
             fY = {domain.fu(:,2),domain.fv(:,2),domain.fR(:,2),domain.fe(:,2),domain.ft(:,2)};

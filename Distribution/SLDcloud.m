@@ -236,7 +236,7 @@ classdef SLDcloud < hgsetget
                 % Clear impinge
                 cloud.impinge = [];
             elseif length(vars)==1
-                % Set a particular element of impinge
+                % Append a single element to impinge
                 ind=length(cloud.impinge)+1;
                 cloud.impinge(ind,1) = vars;
             else

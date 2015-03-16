@@ -4,7 +4,7 @@ function transportSLD(cloud,fluid)
 % Gas has velocity (ug,vg) (at the cell locations occupied by the particles)
 
 % Check that there are actually particles to advect
-if ~isempty(cloud.dt)
+if ~isempty(cloud.indAdv)
     Tinf = fluid.Tinf;
     % Find parcels which are have already entered the injection domain
     indAdv = cloud.indAdv;
@@ -12,8 +12,6 @@ if ~isempty(cloud.dt)
     % Pull out state variables of those particles currently in the simulation
     x = cloud.x(indAdv); y = cloud.y(indAdv); u = cloud.u(indAdv); v = cloud.v(indAdv); 
     rd = cloud.rd(indAdv); dt = cloud.dt; rhol = cloud.rhol;
-    % Exempt those particles which have passed the airfoil from further advection
-    dt(x>=1) = 0;
 
     % Interpolate fluid properties at particle positions
     [pg,ug,vg] = fluid.interpFluid(x,y);

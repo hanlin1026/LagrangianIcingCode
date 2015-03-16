@@ -17,7 +17,7 @@ Vnew = vg + 0.001*vg*unifrnd(-1,1);
 cloud = SLDcloud([Xnew Ynew Unew Vnew Rd 0 0 0],rhol,1,'NoTResolve');
 
 % Iterative procedure to find upper limit
-TOL = 1e-4;
+TOL = 1e-5;
 maxiter = 2000; iter = 1;
 STATE = [cloud.x, cloud.y];
 figure(1); plot(x(:,1),y(:,1),'k'); axis equal; xlim([-0.5,.2]); ylim([-.3,.3]);
