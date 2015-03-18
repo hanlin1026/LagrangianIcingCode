@@ -6,3 +6,4 @@ Literature/*
 *.log
 *.synctex.gz
 Documentation/*eps-converted-to.pdf
+Distribution/*.m~
