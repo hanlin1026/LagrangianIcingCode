@@ -91,6 +91,54 @@ classdef Fluid < hgsetget
             DJ = sqrt(DJ_x(:).^2 + DJ_y(:).^2);
             fluid.cellarea = DI.*DJ;
         end
+
+        function sqrtMap(fluid)
+            % Function to compute sqrt mapping of grid coordinates
+            
+            CENT = [4.885655747050746E-003  6.112252758408689E-003];
+            %CENT = [0 0];
+            x = fluid.x - CENT(1); y = fluid.y - CENT(2);
+            MEANX = 0.25*(x(1:end-1,1:end-1)+x(2:end,1:end-1)+x(1:end-1,2:end)+x(2:end,2:end));
+            MEANY = 0.25*(y(1:end-1,1:end-1)+y(2:end,1:end-1)+y(1:end-1,2:end)+y(2:end,2:end));
+            x2 = MEANX; y2 = MEANY;
+            COMP = x + i*y;
+            SQRT = sqrt(COMP);
+            xSQRT = real(SQRT); ySQRT = imag(SQRT);
+            scal=1;
+        
+                  
+                  bx=0;
+                  for j=1:129
+                      u=1; v=0; angl= pi + pi;
+                  for k = 1:513
+                        angl      = angl  +atan2((u*y(k,j)  -v*x(k,j)),(u*x(k,j)  +v*y(k,j)));
+                        r         = scal*sqrt(x(k,j)^2  +y(k,j)^2);
+                        u         = x(k,j); 
+                        v         = y(k,j);
+                        r         = bx*r  +sqrt((bx*r)^2  +2.*r);
+                        xs(k,j)     = r*cos(.5*angl);
+                        ys(k,j)     = r*sin(.5*angl);
+                      end
+                  end
+       
+                                    
+                  for j=1:128
+                  angl2 = pi + pi;
+                  u2=1; v2=0;
+                  for k=1:512
+                      angl2     = angl2  +atan2((u2*y2(k,j)  -v2*x2(k,j)),(u2*x2(k,j)  +v2*y2(k,j)));
+                      r2         = scal*sqrt(x2(k,j)^2  +y2(k,j)^2);
+                      u2         = x2(k,j);
+                      v2         = y2(k,j);
+                      r2         = bx*r2  +sqrt((bx*r2)^2  +2.*r2);
+                      xs2(k,j)     = r2*cos(.5*angl2);
+                      ys2(k,j)     = r2*sin(.5*angl2);
+                  end
+                  end
+
+
+            
+        end
     end
     
 end

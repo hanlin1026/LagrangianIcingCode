@@ -110,11 +110,15 @@ classdef Airfoil < hgsetget
         end
         
         function airfoil = set.FILMsplash(airfoil,vars)
-            % Set particular elements of film
-            ind1 = size(airfoil.FILMsplash,1)+1;
-            ind2 = ind1+size(vars,1)-1;
-            airfoil.FILMsplash(ind1:ind2,1) = vars(:,1);
-            airfoil.FILMsplash(ind1:ind2,2) = vars(:,2);
+            if ~isempty(vars)
+                % Set particular elements of film
+                ind1 = size(airfoil.FILMsplash,1)+1;
+                ind2 = ind1+size(vars,1)-1;
+                airfoil.FILMsplash(ind1:ind2,1) = vars(:,1);
+                airfoil.FILMsplash(ind1:ind2,2) = vars(:,2);
+            else
+                airfoil.FILMsplash = [];
+            end
         end
         
         function airfoil = set.FILMspread(airfoil,vars)
@@ -128,10 +132,14 @@ classdef Airfoil < hgsetget
         end
         
         function airfoil = set.originalImpingeScoordSplash(airfoil,vars)
-            % Set particular elements of film
-            ind1 = size(airfoil.originalImpingeScoordSplash,1)+1;
-            ind2 = ind1+size(vars,1)-1;
-            airfoil.originalImpingeScoordSplash(ind1:ind2,1) = vars;
+            if ~isempty(vars)
+                % Set particular elements of film
+                ind1 = size(airfoil.originalImpingeScoordSplash,1)+1;
+                ind2 = ind1+size(vars,1)-1;
+                airfoil.originalImpingeScoordSplash(ind1:ind2,1) = vars;
+            else
+                airfoil.originalImpingeScoordSplash = [];
+            end
         end
         
         function airfoil = set.originalImpingeScoordSpread(airfoil,vars)
@@ -193,6 +201,17 @@ classdef Airfoil < hgsetget
             vel = sqrt(ug.^2 + vg.^2);
             [val,index] = min(vel);
             airfoil.stagPt = airfoil.s(ind(index));
+        end
+        
+        function clearFilm(airfoil)
+            % Function to clear airfoil film
+            
+            set(airfoil,'FILM',[]);
+            set(airfoil,'FILMsplash',[]);
+            set(airfoil,'FILMspread',[]);
+            set(airfoil,'originalImpingeScoord',[]);
+            set(airfoil,'originalImpingeScoordSplash',[]);
+            set(airfoil,'originalImpingeScoordSpread',[]);
         end
         
     end

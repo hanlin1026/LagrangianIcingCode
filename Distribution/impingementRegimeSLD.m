@@ -6,6 +6,10 @@ function impingementRegimeSLD(cloud,airfoil)
 
 % Compute impingement parameters
 cloud.computeImpingementParams(airfoil);
+
+% Clear airfoil film
+airfoil.clearFilm();
+
 % Compute impingement regime dynamics
 splashDynamics(cloud,airfoil);
 bounceDynamics(cloud,airfoil);

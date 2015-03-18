@@ -23,6 +23,7 @@ ind = find(x(:,1)<=1);
 ax = x(ind,1); ay = y(ind,1);
 airfoil = Airfoil([ax,ay]);
 airfoil.calcStagPt(fluid);
+%%
 % Initialize domain and associated distribution functions
 strPDFTypes = {'Implicit','Implicit','Custom','Gaussian','Uniform'};
 simTime = 60*30;

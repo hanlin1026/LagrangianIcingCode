@@ -35,7 +35,7 @@ if strcmp(strImpMod,'NoImpingement')
         maxC = max(cloud.rd); minC = min(cloud.rd);
         C = 9*(cloud.rd-minC)./(maxC-minC) + 1;
         if mod(iter,100)==0
-            figure(1); clf; plot(airfoil.X,airfoil.Y); axis([-.02 .04 -.04 .04]);
+            figure(1); clf; plot(airfoil.X,airfoil.Y); axis([-.02 .15 -.1 .1])
         end
         %
         if floor(tSAMP/tRATE)>=1
@@ -78,7 +78,7 @@ elseif strcmp(strImpMod,'Impingement')
         maxC = max(cloud.rd); minC = min(cloud.rd);
         C = 9*(cloud.rd-minC)./(maxC-minC) + 1;
         if mod(iter,tRATE)==tRATE-1
-            figure(1); clf; plot(airfoil.X,airfoil.Y); axis([-.02 .075 -.06 .06]);
+            figure(1); clf; plot(airfoil.X,airfoil.Y); axis([-.02 .15 -.1 .1])
         end
         %
         if floor(tSAMP/tRATE)>=1
