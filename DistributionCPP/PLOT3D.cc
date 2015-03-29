@@ -3,30 +3,21 @@
 
 using namespace std;
 
-PLOT3D::PLOT3D(const std::string& meshfile, const std::string& solnfile) {
-  // Initialize input file stream to read in meshfile
-  FILE* finput;
-  finput = fopen(meshfile.c_str(),"r");
-  if (finput == NULL) {
-    cout << "Error, didn't load meshfile" << endl;
-    exit(1);
-  }
+PLOT3D::PLOT3D(ifstream& meshfile, ifstream& solnfile) {
   // Read in size of mesh
   int nx, ny; 
-  fscan(finput,"%i",&nx);
-  fscan(finput,"%i",&ny);
+  meshfile >> nx; meshfile >> ny;
+  nx_ = nx; ny_ = ny;
   // Read in mesh coordinates
-  xy = int[nx*ny];
-  int i = 0;
-  while (!finput.eof()) {
-    fscan(finput,"%i",&tmp);
-    xy[i] = tmp;
-    i++;
+  xy_ = new double[2*nx*ny];
+  double tmp;
+  for (int i=0; i<2*nx*ny; i++) {
+    meshfile >> tmp;
+    xy_[i] = tmp;
   }
-  xy_ = xy;
 
   // Close input file
-  fclose(finput);
+  meshfile.close(); solnfile.close();
 }
 
 PLOT3D::~PLOT3D() {
