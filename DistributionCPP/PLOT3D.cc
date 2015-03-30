@@ -1,11 +1,14 @@
 #include "PLOT3D.h"
+#include <stdio.h>
 #include <assert.h>
 
 using namespace std;
 
-PLOT3D::PLOT3D(ifstream& meshfile, ifstream& solnfile) {
+PLOT3D::PLOT3D(const char *meshfname, const char *solnfname) {
   // Read in size of mesh
-  int nx, ny; 
+  int nx, ny;
+  ifstream meshfile;
+  meshfile.open(meshfname);
   meshfile >> nx; meshfile >> ny;
   nx_ = nx; ny_ = ny;
   // Read in mesh coordinates
@@ -15,14 +18,26 @@ PLOT3D::PLOT3D(ifstream& meshfile, ifstream& solnfile) {
     meshfile >> tmp;
     xy_[i] = tmp;
   }
-  // Read in soln data
-  soln_ = new double[10];
-  char buff[4];
-  solnfile.read(buff,2);
-  solnfile.read(buff,4); mach_ = atof(buff);
-  solnfile.read(buff,4); alpha_ = atof(buff);
-  solnfile.read(buff,4); reynolds_ = atof(buff);
-  solnfile.read(buff,4); time_ = atof(buff);
+  meshfile.close();
+  // Read in mach,alpha,reynolds,time
+  FILE *solnfile = fopen(solnfname, "r");
+  assert(solnfile != NULL);
+  char buff[BUFSIZ];
+  fread(buff, sizeof(int), 2, solnfile); // First 2 ints are just nx,ny
+  fread(&mach_, sizeof(float), 1, solnfile);
+  fread(&alpha_, sizeof(float), 1, solnfile);
+  fread(&reynolds_, sizeof(float), 1, solnfile);
+  fread(&time_, sizeof(float), 1, solnfile);
+  // Read in solution data
+  int n = nx*ny;
+  rho_ = new float[n];
+  rhou_ = new float[n];
+  rhov_ = new float[n];
+  E_ = new float[n];
+  fread(rho_, sizeof(float), n, solnfile);
+  fread(rhou_, sizeof(float), n, solnfile);
+  fread(rhov_, sizeof(float), n, solnfile);
+  fread(E_, sizeof(float), n, solnfile);
   /**
   for (int i=0; i<10; i++) {
     solnfile.read(buff,4);
@@ -30,10 +45,10 @@ PLOT3D::PLOT3D(ifstream& meshfile, ifstream& solnfile) {
   }
   **/
   // Close input file
-  meshfile.close(); solnfile.close();
+  fclose(solnfile);
 }
 
 PLOT3D::~PLOT3D() {
   delete[] xy_;
-  delete[] soln_;
+  delete[] rho_, rhou_, rhov_, E_;
 }

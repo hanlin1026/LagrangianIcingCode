@@ -7,12 +7,21 @@
 // Driver program to test PLOT3D class
 
 int main(int argc, const char *argv[]) {
-  ifstream meshfile, solnfile;
-  meshfile.open("MESH.P3D");
-  solnfile.open("q103.0.50E+01.bin", ios::binary);
   // Initialize plot3D object
-  PLOT3D* p3d;
-  p3d = new PLOT3D(meshfile,solnfile);
+  PLOT3D* p3d = new PLOT3D("MESH.P3D", "q103.0.50E+01.bin");
+  // Output mach,alpha,reynolds,time as a test
+  printf("mach = %f\nalpha = %f\nreynolds = %f\ntime = %f\n", p3d->mach_, p3d->alpha_, p3d->reynolds_, p3d->time_);
+  // Output solution file flow variable data
+  ofstream foutSoln;
+  foutSoln.open("outputSOLN.dat");
+  float* tmp = p3d->rho_;
+  int nx = p3d->nx_;
+  int ny = p3d->ny_;
+  int n = nx*ny;
+  for (int i=0; i<n; i++) {
+    foutSoln << tmp[i] << "\n";
+  }
+  /*
   // Output xy coordinates as a test
   ofstream fout;
   fout.open("outputXY.dat");
@@ -28,11 +37,13 @@ int main(int argc, const char *argv[]) {
   ofstream foutSoln;
   foutSoln.open("outputSOLN.dat");
   foutSoln << p3d->mach_ << p3d->alpha_ << p3d->reynolds_ << p3d->time_;
+  */
   /**
   for (int i=0; i<10; i++) {
     foutSoln << p3d->soln_[i];
   }
+  fout.close(); 
   **/
   delete p3d;
-  fout.close(); foutSoln.close();
+  foutSoln.close();
 }

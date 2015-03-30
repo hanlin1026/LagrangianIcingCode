@@ -11,12 +11,15 @@ using namespace std;
 
 class PLOT3D {
  public:
-  PLOT3D(ifstream& meshfile, ifstream& solnfile);
+  PLOT3D(const char *meshfname, const char *solnfname);
   ~PLOT3D();
   double* xy_;
   int nx_, ny_;
-  double mach_, alpha_, reynolds_, time_;
-  double* soln_;
+  float mach_, alpha_, reynolds_, time_;
+  float* rho_;
+  float* rhou_;
+  float* rhov_;
+  float* E_;
   //void getXY(int** XY);
 
  private:
