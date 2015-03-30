@@ -13,27 +13,22 @@ class PLOT3D {
  public:
   PLOT3D(const char *meshfname, const char *solnfname);
   ~PLOT3D();
-  double* xy_;
-  int nx_, ny_;
-  float mach_, alpha_, reynolds_, time_;
-  float* rho_;
-  float* rhou_;
-  float* rhov_;
-  float* E_;
-  //void getXY(int** XY);
+  void getXY(double** X, double** Y);
+  void getRHO(float** RHO);
+  void getRHOU(float** RHOU);
+  void getRHOV(float** RHOV);
+  void getE(float** E);
+  void getPROPS(float* PROPS);
 
  private:
-  //int[] xy_;
-  //int** X_;
-  //int** Y_;
-  //double rho_;
-  //double rhoU_;
-  //double rhoV_;
-  //double E_;
-  //double mach_;
-  //double alpha_;
-  //double reynolds_;
-  //double time_;
+  double** x_;
+  double** y_;
+  float** rho_;
+  float** rhou_;
+  float** rhov_;
+  float** E_;
+  int nx_, ny_;
+  float mach_, alpha_, reynolds_, time_;
 
 };
 #endif // PLOT3D_H
