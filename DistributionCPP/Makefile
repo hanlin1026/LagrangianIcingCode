@@ -1,13 +1,13 @@
-CXXFLAGS = -c -g -Wall -O2
+CXXFLAGS = -c -g -O2
 OMP = g++
 OMPFLAGS = -fopenmp -O2
 MPI = mpic++
 MPIFLAGS = -O2
 
-all: test
+all: foo
 
-test : PLOT3Ddriver.cc
-	$(CXX) PLOT3Ddriver.cc PLOT3D.cc -o test
+foo : PLOT3Ddriver.o PLOT3D.o
+	$(CXX) $^ -o $@
 
 clean:
 	$(RM) *.o

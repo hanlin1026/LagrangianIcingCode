@@ -20,7 +20,7 @@ cloud = SLDcloud([Xnew Ynew Unew Vnew Rd 0 0 0],rhol,1,'NoTResolve');
 TOL = 1e-5;
 maxiter = 2000; iter = 1;
 STATE = [cloud.x, cloud.y];
-figure(1); plot(x(:,1),y(:,1),'k'); axis equal; xlim([-0.5,.2]); ylim([-.3,.3]);
+figure(1); plot(x(:,1),y(:,1),'k'); axis equal; xlim([-0.5,.2]); ylim([-.3,.3]); drawnow;
 while abs(Ymiss-Yhit)>TOL
     % Call subroutine to calculate local timesteps and impinging particles
     calcDtandImpinge(cloud,airfoil,fluid);
@@ -42,7 +42,7 @@ while abs(Ymiss-Yhit)>TOL
         
         yL = Ynew;
         iter=1;
-        figure(1); hold on; scatter(STATE(:,1),STATE(:,2),5,'filled');
+        figure(1); hold on; scatter(STATE(:,1),STATE(:,2),5,'filled'); drawnow;
         STATE = [Xnew,Ynew];
     elseif isempty(cloud.impinge) && iter>maxiter
         % If not impinged after maxiter iterations, try another guess
@@ -57,7 +57,7 @@ while abs(Ymiss-Yhit)>TOL
         
         yL = Ynew;
         iter=1;
-        figure(1); hold on; scatter(STATE(:,1),STATE(:,2),5,'filled');
+        figure(1); hold on; scatter(STATE(:,1),STATE(:,2),5,'filled'); drawnow;
         STATE = [Xnew,Ynew];
     end
     iter = iter+1;
@@ -66,7 +66,7 @@ end
 % Output result to airfoil and determine s-coordinates of limit
 airfoil.setLim(hitLocx,hitLocy,limstr);
 figure(1); hold on; plot(hitLocx,hitLocy,'ko');
-hold on; plot(xL,yL,'ko');
+hold on; plot(xL,yL,'ko'); drawnow;
 airfoil.XYtoScoords(hitLocx,hitLocy)
 
 

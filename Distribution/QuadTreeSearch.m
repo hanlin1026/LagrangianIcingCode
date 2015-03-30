@@ -1,4 +1,4 @@
-function [index,tree] = QuadTreeSearch(X,xq)
+function [index,tree] = QuadTreeSearch(X,xq,BB)
 % Quadtree binary search algorithm for 2D data
 % INPUTS:
 %   X = reference data (rows = observations, columns = coordinates)
@@ -9,13 +9,14 @@ function [index,tree] = QuadTreeSearch(X,xq)
 
 indX = [1:size(X,1)]';
 
-minX = min(X(:,1)); maxX = max(X(:,1));
-minY = min(X(:,2)); maxY = max(X(:,2));
+minX = BB(1); maxX = BB(2);
+minY = BB(3); maxY = BB(4);
 
 tree = [minX minY; maxX minY; maxX maxY; minX maxY];
 branch = 1;
 % Assume XN = [x1,x2,x3,x4,x12,x14,x23,x24,xC]
 caseXN = [9 7 3 8; 5 2 7 9; 6 9 8 4; 1 5 9 6];
+XDOM = X;
 while true
     % Pull out 4 corner points
     x1 = tree(branch,:);
@@ -41,30 +42,41 @@ while true
     tree(branch+1,:) = XYN(CaseXY(2),:);
     tree(branch+2,:) = XYN(CaseXY(3),:);
     tree(branch+3,:) = XYN(CaseXY(4),:);
+    % Save old logic
+    XDOMprev = XDOM;
+    indXprev = indX;
     % Find out how many data points are in the new domain
-    logicX = (X(:,1)>tree(branch,1)) & (X(:,1)<tree(branch+2,1));
-    logicY = (X(:,2)>tree(branch,2)) & (X(:,2)<tree(branch+2,2));
-    logicXY = logicX & logicY;
+    %logicX = (XDOM(:,1)>=tree(branch,1)) & (XDOM(:,1)<=tree(branch+2,1));
+    %logicY = (XDOM(:,2)>=tree(branch,2)) & (XDOM(:,2)<=tree(branch+2,2));
+    logicXY = (XDOM(:,1)>=tree(branch,1)) & (XDOM(:,1)<=tree(branch+2,1)) & (XDOM(:,2)>=tree(branch,2)) & (XDOM(:,2)<=tree(branch+2,2));
+    XDOM = XDOM(logicXY,:);
+    indX = indX(logicXY);
     TOTAL = sum(logicXY);
-    if TOTAL < 2
-        branch = branch-4;
-        logicX = (X(:,1)>=tree(branch,1)) & (X(:,1)<=tree(branch+2,1));
-        logicY = (X(:,2)>=tree(branch,2)) & (X(:,2)<=tree(branch+2,2));
-        logicXY = logicX & logicY;
-        index = indX(logicXY);
+    % If number of data points inside bucket is less than threshold, roll 
+    % back to the previous bucket
+    if TOTAL < 50
+        ind1 = indXprev;
+        XDOM = XDOMprev;
         break;
     end
 end
-% Find minimum distance
-IND = []; DIST = []; tic;
-for i=1:512
-    [index,tree] = QuadTreeSearch([xs(:) log(ysN(:)+1e-5)],[xs2(i,1) log(ys2N(i,1)+1e-5)]);
-    dist = sqrt((xs2(i,1)-xs(index)).^2 + (log(ys2N(i,1)+1e-5)-log(ysN(index)+1e-5)).^2);
-    [themin,minind] = min(dist);
-    IND = [IND; index(minind)];
-    DIST = [DIST; themin];
-end
-toc;
-
+% Transform coordinates by rotation corresponding to local tang/normal
+%{
+cent = X(min(ind1),:);
+cent_IP1 = X(min(ind1)+1,:);
+t = (cent_IP1-cent)/norm(cent_IP1-cent);
+n = [-t(2); t(1)];
+%}
+%a = t(1)^2 + n(1)^2;
+%b = t(1)*t(2) + n(1)*n(2);
+%c = t(2)^2 + n(2)^2;
+% Find minimum distance (1-norm) in transformed coordinates
+%dist = abs(xq(1)*t(1) + xq(2)*t(2)) + abs(xq(1)*n(1) + xq(2)*n(2));
+Xbin = X(ind1,:);
+dist = sqrt((xq(1)-Xbin(:,1)).^2 + (xq(2)-Xbin(:,2)).^2);
+[themin,theind] = min(dist);
+index = ind1(theind);
+%[~,ind2] = min(dist);
+%index = ind1(ind2);
 end
 

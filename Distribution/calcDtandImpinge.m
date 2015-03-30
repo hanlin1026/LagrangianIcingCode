@@ -4,7 +4,7 @@ function calcDtandImpinge(cloud,airfoil,fluid)
 % (2) set global time step based on cell volumes
 % (3) determine and track which droplets have impinged on the airfoil
 
-x = fluid.x; y = fluid.y; NS = fluid.NS;
+x = fluid.x; y = fluid.y;
 dt = [];t = cloud.time;
 if cloud.FLAGtimeResolve==1
     % Find parcels which are have already entered the injection domain
@@ -29,12 +29,12 @@ if ~isempty(indAdv)
     xq = cloud.x(indAdv); yq = cloud.y(indAdv); 
     uq = cloud.u(indAdv); vq = cloud.v(indAdv);
     particles = size(xq,1);
-    ind = knnsearch(NS,[xq,yq]);
+    ind = fluid.searchTree([xq,yq]);
     % Set timesteps based on cell areas
     velMag = sqrt(uq.^2 + vq.^2);
     [~,~,nx,ny,~,~] = airfoil.findPanel(xq,yq);
     normvel = uq.*nx + vq.*ny;
-    area = fluid.cellarea(ind);
+    area = fluid.getCellArea(ind);
     dt = 0.2*sqrt(area)./velMag;
     % Check to see if any points are on the airfoil surface
     n = size(x,1)-1;

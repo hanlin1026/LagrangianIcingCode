@@ -34,7 +34,6 @@ int main(int argc, const char *argv[]) {
   p3d->getE(E);
   for (int i=0; i<nx; i++) {
     for (int j=0; j<ny; j++) {
-      //foutSoln << RHO[i][j] << "\t" << RHOU[i][j] << "\t" << RHOV[i][j] << "\t" << E[i][j] << "\n";
       fprintf(foutSoln,"%f \t %f \t %f \t %f \t \n", RHO[i][j], RHOU[i][j], RHOV[i][j], E[i][j]);
     }
   }

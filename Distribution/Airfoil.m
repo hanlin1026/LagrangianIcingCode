@@ -189,18 +189,13 @@ classdef Airfoil < hgsetget
         function calcStagPt(airfoil,fluid)
             % Calculate the stagnation point of the airfoil
             
-            hnorm = 10e-6;
-            x = airfoil.PANELx;
-            y = airfoil.PANELy;
-            norm = airfoil.NORM;
+            % Find stagnation pt
+            I = size(fluid.x,1);
+            indWrap1 = I+1; indWrap2 = I*2;
+            RHOU = fluid.RHOU(indWrap1:indWrap2); RHOV = fluid.RHOV(indWrap1:indWrap2);
+            [themin,theind] = min(RHOU(1:floor(I/2)).^2 + RHOV(1:floor(I/2)).^2);
+            airfoil.stagPt = airfoil.XYtoScoords(fluid.x(I+theind),fluid.y(I+theind));
             
-            offset = [x,y] + hnorm*norm;
-            smax = max(airfoil.s);
-            ind = find(airfoil.s > 0.35*smax & airfoil.s < 0.65*smax);
-            [pg,ug,vg] = fluid.interpFluid(offset(ind,1),offset(ind,2));
-            vel = sqrt(ug.^2 + vg.^2);
-            [val,index] = min(vel);
-            airfoil.stagPt = airfoil.s(ind(index));
         end
         
         function clearFilm(airfoil)

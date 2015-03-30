@@ -13,8 +13,8 @@ if ~isempty(cloud.indAdv)
     x = cloud.x(indAdv); y = cloud.y(indAdv); u = cloud.u(indAdv); v = cloud.v(indAdv); 
     rd = cloud.rd(indAdv); dt = cloud.dt; rhol = cloud.rhol;
 
-    % Interpolate fluid properties at particle positions
-    [pg,ug,vg] = fluid.interpFluid(x,y);
+    % Get fluid properties at nearest neighbor grid pts
+    [pg,ug,vg] = fluid.getNNFluidProps(x,y);
 
     % Sutherland's law
     C1 = 1.458e-6; % kg/(ms*sqrt(K))
