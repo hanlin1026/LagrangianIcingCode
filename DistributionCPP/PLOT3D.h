@@ -15,20 +15,22 @@ class PLOT3D {
   ~PLOT3D();
   double* xy_;
   int nx_, ny_;
+  double mach_, alpha_, reynolds_, time_;
+  double* soln_;
   //void getXY(int** XY);
 
  private:
   //int[] xy_;
   //int** X_;
   //int** Y_;
-  double rho_;
-  double rhoU_;
-  double rhoV_;
-  double E_;
-  double mach_;
-  double alpha_;
-  double reynolds_;
-  double time_;
+  //double rho_;
+  //double rhoU_;
+  //double rhoV_;
+  //double E_;
+  //double mach_;
+  //double alpha_;
+  //double reynolds_;
+  //double time_;
 
 };
 #endif // PLOT3D_H
