@@ -7,8 +7,12 @@
 // Driver program to test PLOT3D class
 
 int main(int argc, const char *argv[]) {
+  // Initialize scalars
+  double* scalars = new double[6];
+  scalars[0] = 0; scalars[1] = 1; scalars[2] = 2;
+  scalars[3] = 3; scalars[4] = 4; scalars[5] = 5;
   // Initialize plot3D object
-  PLOT3D* p3d = new PLOT3D("MESH.P3D", "q103.0.50E+01.bin");
+  PLOT3D* p3d = new PLOT3D("MESH.P3D", "q103.0.50E+01.bin", scalars);
   // Output mach,alpha,reynolds,time as a test
   float* PROPS = new float[6];
   p3d->getPROPS(PROPS);
@@ -18,51 +22,32 @@ int main(int argc, const char *argv[]) {
   // Output solution file flow variable data
   int n = nx*ny;
   FILE* foutSoln = fopen("outputSOLN.dat","w");
-  float** RHO = new float*[nx];
-  float** RHOU = new float*[nx];
-  float** RHOV = new float*[nx];
-  float** E = new float*[nx];
-  for (int i=0; i<nx; i++) {
-    RHO[i] = new float[ny];
-    RHOU[i] = new float[ny];
-    RHOV[i] = new float[ny];
-    E[i] = new float[ny];
-  }
+  float* RHO = new float[n];
+  float* RHOU = new float[n];
+  float* RHOV = new float[n];
+  float* E = new float[n];
   p3d->getRHO(RHO);
   p3d->getRHOU(RHOU);
   p3d->getRHOV(RHOV);
   p3d->getE(E);
-  for (int i=0; i<nx; i++) {
-    for (int j=0; j<ny; j++) {
-      fprintf(foutSoln,"%f \t %f \t %f \t %f \t \n", RHO[i][j], RHOU[i][j], RHOV[i][j], E[i][j]);
-    }
+  for (int i=0; i<n; i++) {
+    fprintf(foutSoln,"%f \t %f \t %f \t %f \t \n", RHO[i], RHOU[i], RHOV[i], E[i]);
   }
   // Get grid x,y coordinates
-  double** X = new double*[nx];
-  double** Y = new double*[nx];
-  for (int i=0; i<nx; i++) {
-    X[i] = new double[ny];
-    Y[i] = new double[ny];
-  }
+  double* X = new double[n];
+  double* Y = new double[n];
   p3d->getXY(X,Y);
   // Output grid x,y coordinates to file
   ofstream foutXY;
   foutXY.open("outputXY.dat");
-  for (int i=0; i<nx; i++) {
-    for (int j=0; j<ny; j++) {
-      foutXY << X[i][j] << "\t" << Y[i][j] << "\n";
-    }
+  for (int i=0; i<n; i++) {
+    foutXY << X[i] << "\t" << Y[i] << "\n";
   }
   
   // Clear any allocated memory, close files/streams
   delete p3d;
   foutXY.close();
   fclose(foutSoln);
-  for (int i=0; i<nx; i++) {
-    delete[] X[i];
-    delete[] Y[i];
-    delete[] RHO[i]; delete[] RHOU[i]; delete[] RHOV[i]; delete[] E[i];
-  }
   delete[] X,Y,RHO,RHOU,RHOV,E;
-  delete[] PROPS;
+  delete[] PROPS, scalars;
 }

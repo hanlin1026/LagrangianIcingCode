@@ -4,7 +4,7 @@
 
 using namespace std;
 
-PLOT3D::PLOT3D(const char *meshfname, const char *solnfname) {
+PLOT3D::PLOT3D(const char *meshfname, const char *solnfname, double* scalars) {
   // Constructor: read in mesh/soln file data
 
   // Read in size of mesh
@@ -14,23 +14,15 @@ PLOT3D::PLOT3D(const char *meshfname, const char *solnfname) {
   meshfile >> nx; meshfile >> ny;
   nx_ = nx; ny_ = ny; n = nx*ny;
   // Read in mesh coordinates
-  double* xy = new double[2*nx*ny];
-  x_ = new double*[nx];
-  y_ = new double*[nx];
-  for (int i=0; i<nx; i++) {
-    x_[i] = new double[ny];
-    y_[i] = new double[ny];
-  }
-  for (int i=0; i<2*nx*ny; i++) {
+  double* xy = new double[2*n];
+  x_ = new double[n];
+  y_ = new double[n];
+  for (int i=0; i<2*n; i++) {
     meshfile >> xy[i];
   }
-  int iter = 0;
-  for (int i=0; i<nx; i++) {
-    for (int j=0; j<ny; j++) {
-      x_[i][j] = xy[iter];
-      y_[i][j] = xy[iter+n];
-      iter++; 
-    }
+  for (int i=0; i<n; i++) {
+      x_[i] = xy[i];
+      y_[i] = xy[i+n];
   }
   // Read in mach,alpha,reynolds,time
   FILE *solnfile = fopen(solnfname, "r");
@@ -42,128 +34,97 @@ PLOT3D::PLOT3D(const char *meshfname, const char *solnfname) {
   fread(&reynolds_, sizeof(float), 1, solnfile);
   fread(&time_, sizeof(float), 1, solnfile);
   // Read in solution data
-  float* rho = new float[n];
-  float* rhou = new float[n];
-  float* rhov = new float[n];
-  float* E = new float[n];
-  fread(rho, sizeof(float), n, solnfile);
-  fread(rhou, sizeof(float), n, solnfile);
-  fread(rhov, sizeof(float), n, solnfile);
-  fread(E, sizeof(float), n, solnfile);
-  // Reshape solution data vectors
-  rho_ = new float*[nx];
-  rhou_ = new float*[nx];
-  rhov_ = new float*[nx];
-  E_ = new float*[nx];
-  for (int i=0; i<nx; i++) {
-    rho_[i] = new float[ny];
-    rhou_[i] = new float[ny];
-    rhov_[i] = new float[ny];
-    E_[i] = new float[ny];
-  }
-  iter = 0;
-  for (int i=0; i<nx; i++) {
-    for (int j=0; j<ny; j++) {
-      rho_[i][j] = rho[iter];
-      rhou_[i][j] = rhou[iter];
-      rhov_[i][j] = rhov[iter];
-      E_[i][j] = E[iter];
-      iter++;
-    }
-  }
+  rho_ = new float[n];
+  rhou_ = new float[n];
+  rhov_ = new float[n];
+  E_ = new float[n];
+  fread(rho_, sizeof(float), n, solnfile);
+  fread(rhou_, sizeof(float), n, solnfile);
+  fread(rhov_, sizeof(float), n, solnfile);
+  fread(E_, sizeof(float), n, solnfile);
+  // Read in scalars
+  pinf_ =   scalars[0];
+  R_ =      scalars[1];
+  Tinf_ =   scalars[2];
+  rhoinf_ = scalars[3];
+  Ubar_ =   scalars[4];
+  rhol_ =   scalars[5];
+  Uinf_ = mach_*340;
   // Close input streams/files, free any allocated memory
-  delete[] xy, rho, rhou, rhov, E;
+  delete[] xy;
   meshfile.close();
   fclose(solnfile);
 }
 
 PLOT3D::~PLOT3D() {
   // Destructor: free any allocated memory
-
-  for (int i=0; i<this->nx_; i++) {
-    delete[] x_[i];
-    delete[] y_[i];
-    delete[] rho_[i];
-    delete[] rhou_[i];
-    delete[] rhov_[i];
-    delete[] E_[i];
-  }
+  
   delete[] x_, y_, rho_, rhou_, rhov_, E_;
 }
 
-void PLOT3D::getXY(double**X, double** Y) {
+void PLOT3D::getXY(double* X, double* Y) {
   // Function to return grid coordinates x,y
   
   int nx = this->nx_;
   int ny = this->ny_;
-  double** x = this->x_;
-  double** y = this->y_;
+  double* x = this->x_;
+  double* y = this->y_;
   int n = nx*ny;
-  for (int i=0; i<nx; i++) {
-    for (int j=0; j<ny; j++) {
-      X[i][j] = x[i][j];
-      Y[i][j] = y[i][j];
-    }
+  for (int i=0; i<n; i++) {
+    X[i] = x[i];
+    Y[i] = y[i];
   }
 
 }
 
-void PLOT3D::getRHO(float** RHO) {
+void PLOT3D::getRHO(float* RHO) {
   // Function to return rho
   
   int nx = this->nx_;
   int ny = this->ny_;
-  float** rho = this->rho_;
+  float* rho = this->rho_;
   int n = nx*ny;
-  for (int i=0; i<nx; i++) {
-    for (int j=0; j<ny; j++) {
-      RHO[i][j] = rho[i][j];
-    }
+  for (int i=0; i<n; i++) {
+    RHO[i] = rho[i];
   }
 
 }
 
-void PLOT3D::getRHOU(float** RHOU) {
+void PLOT3D::getRHOU(float* RHOU) {
   // Function to return rhou
   
   int nx = this->nx_;
   int ny = this->ny_;
-  float** rhou = this->rhou_;
+  float* rhou = this->rhou_;
   int n = nx*ny;
-  for (int i=0; i<nx; i++) {
-    for (int j=0; j<ny; j++) {
-      RHOU[i][j] = rhou[i][j];
-    }
+  for (int i=0; i<n; i++) {
+    RHOU[i] = rhou[i];
   }
 
 }
 
-void PLOT3D::getRHOV(float** RHOV) {
+void PLOT3D::getRHOV(float* RHOV) {
   // Function to return rhov
   
   int nx = this->nx_;
   int ny = this->ny_;
-  float** rhov = this->rhov_;
+  float* rhov = this->rhov_;
   int n = nx*ny;
-  for (int i=0; i<nx; i++) {
-    for (int j=0; j<ny; j++) {
-      RHOV[i][j] = rhov[i][j];
-    }
+  for (int i=0; i<n; i++) {
+    RHOV[i] = rhov[i];
   }
 
 }
 
-void PLOT3D::getE(float** E) {
+void PLOT3D::getE(float* E) {
   // Function to return E
   
   int nx = this->nx_;
   int ny = this->ny_;
-  float** e = this->E_;
+  float* e = this->E_;
   int n = nx*ny;
-  for (int i=0; i<nx; i++) {
-    for (int j=0; j<ny; j++) {
-      E[i][j] = e[i][j];
-    }
+  for (int i=0; i<n; i++) {
+    E[i] = e[i];
   }
 
 }
