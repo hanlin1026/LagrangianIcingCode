@@ -34,6 +34,8 @@ classdef SLDcloud < hgsetget
         Kb0;
         normvelsq=[];
         tangvel = [];
+        % Current cells occupied by particles
+        indCell;
 
     end 
     
@@ -143,6 +145,21 @@ classdef SLDcloud < hgsetget
             splashSpread = [indimp(spread); indimp(splash)];
             impingeNew = setdiff(splashSpread,cloud.impingeTotal);
             set(cloud,'impingeTotal',impingeNew);
+        end
+        
+        function computeNewCellLocations(cloud,fluid)
+            % Function to compute new cells occupied by particles after
+            % transporting them one timestep
+            
+            indCell = cloud.indCell;
+            % Particle positions
+            xP = cloud.x(indAdv); yP = cloud.y(indAdv);
+            % Old cell centers
+            xC = fluid.MEANx(indCell); yC = fluid.MEANy(indCell);
+            % Transformed local coordinates of particles
+            [I,J] = fluid.transformXYtoIJ(indCell,[xP,yP]);
+            % Transformed local coordinates of 9 nearest neighbor cell centers
+            
         end
         
         function cloud = deleteParticle(cloud,ind)

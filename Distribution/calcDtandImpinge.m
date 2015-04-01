@@ -28,16 +28,14 @@ if ~isempty(indAdv)
     % simulation which have not impinged/stuck to airfoil
     xq = cloud.x(indAdv); yq = cloud.y(indAdv); 
     uq = cloud.u(indAdv); vq = cloud.v(indAdv);
-    particles = size(xq,1);
-    ind = fluid.searchTree([xq,yq]);
-    % Set timesteps based on cell areas
+    % Set timesteps based on CFL condition
     velMag = sqrt(uq.^2 + vq.^2);
-    [~,~,nx,ny,~,~] = airfoil.findPanel(xq,yq);
-    normvel = uq.*nx + vq.*ny;
     area = fluid.getCellArea(ind);
     dt = 0.2*sqrt(area)./velMag;
     % Check to see if any points are on the airfoil surface
     n = size(x,1)-1;
+    [~,~,nx,ny,~,~] = airfoil.findPanel(xq,yq);
+    normvel = uq.*nx + vq.*ny;
     surfaceFlag1 = ind-2*n<=0;
     surfaceFlag2 = normvel<0.01;
     surfaceFlag = surfaceFlag1 & surfaceFlag2;

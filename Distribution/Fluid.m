@@ -19,15 +19,18 @@ classdef Fluid < hgsetget
         % Mesh and solution filenames
         meshfile;
         solnfile;
-        % Mesh x,y coordinates
+        % Mesh coordinates
         x; y;
         % Tree-search object for nearest neighbor search of the grid
         NS;
         refinedWrapInd;
         wrapRefinement;
         indexNN;
-        % Cell areas
+        % Cell stuff
         cellarea;
+        MEANx; MEANy; % Centers
+        xx; xy; yx; yy; % Grid metrics
+        Lmin; % Minimum cell lengths
         % SQRT plane mapping of grid corners
         xSQRT; ySQRT;
         % Other solution quantities
@@ -62,13 +65,12 @@ classdef Fluid < hgsetget
             fluid.alpha = alpha;
             fluid.Re = Re;
             fluid.Uinf = mach*340;
-            % Create tree-search object of cell centroids
-            %MEANX = 0.25*(x(1:end-1,1:end-1)+x(2:end,1:end-1)+x(1:end-1,2:end)+x(2:end,2:end));
-            %MEANY = 0.25*(y(1:end-1,1:end-1)+y(2:end,1:end-1)+y(1:end-1,2:end)+y(2:end,2:end));
-            %fluid.NS = createns([MEANX(:),MEANY(:)]);
+            % Create tree-search object
             fluid.createTreeSearcher();
-            % Calculate cell areas
-            fluid.computeCellAreas();            
+            % Calculate cell properties
+            fluid.computeCellAreas();      
+            fluid.computeCellCenters();
+            fluid.computeGridMetrics();
         end
         
         function [pg,ug,vg] = getNNFluidProps(fluid,xq,yq)
@@ -155,6 +157,8 @@ classdef Fluid < hgsetget
             
             x = fluid.x; y = fluid.y;
             I = size(x,1); J = size(x,2);
+            fluid.NS = createns([x(:),y(:)]);
+            %{
             % Calculate aspect ratio of each wrap
             AR = [];
             for i=1:J-1
@@ -195,15 +199,17 @@ classdef Fluid < hgsetget
             fluid.refinedWrapInd = convertRefOrigInd;
             RES(RES==2) = 1;
             fluid.wrapRefinement = RES;
+            %}
         end
         
         function index = searchTree(fluid,xq)
             % Function to search the tree object
             
-            I = size(fluid.x,1);
             % Search the refined grid
             ind = knnsearch(fluid.NS,xq);
             % Convert refined grid index to original grid index
+            %{
+            I = size(fluid.x,1);
             RES = fluid.wrapRefinement;
             refinedWrapInd = fluid.refinedWrapInd;
             index = zeros(size(xq,1),1);
@@ -214,7 +220,7 @@ classdef Fluid < hgsetget
                 cell(i,1) = ceil((ind(i)-refinedWrapInd(wrap(i),1))/RES(wrap(i)));
                 index(i) = (wrap(i)-1)*I + cell(i);
             end
-            
+            %}
         end
         
         function [pg,ug,vg] = interpFluid(fluid,xq,yq)
@@ -236,6 +242,53 @@ classdef Fluid < hgsetget
             indCell = indGridPt - (indWrap-1).*I;
             indCenter = (indWrap-1).*(I-1) + indCell;
             area = fluid.cellarea(indCenter);
+        end
+        
+        function computeCellCenters(fluid)
+            % Function to compute cell centers
+            
+            x = fluid.x; y = fluid.y;
+            fluid.MEANx = 0.25*(x(1:end-1,1:end-1)+x(2:end,1:end-1)+x(1:end-1,2:end)+x(2:end,2:end));
+            fluid.MEANy = 0.25*(y(1:end-1,1:end-1)+y(2:end,1:end-1)+y(1:end-1,2:end)+y(2:end,2:end));
+            
+        end
+        
+        function computeGridMetrics(fluid)
+            % Function to calculate grid metrics
+            
+            x = fluid.x; y = fluid.y;
+            xC = fluid.MEANx; yC = fluid.MEANy;
+            % Calculate Jacobian metric tensor components at cell centers
+            I = 1:(size(x,1)-1); J = 1:(size(x,2)-1);
+            fluid.xx = 0.5*((x(I+1,J+1)-x(I,J+1)) + (x(I+1,J)-x(I,J)));
+            fluid.xy = 0.5*((x(I,J+1)-x(I,J)) + (x(I+1,J+1)-x(I+1,J)));
+            fluid.yx = 0.5*((y(I+1,J+1)-y(I,J+1)) + (y(I+1,J)-y(I,J)));
+            fluid.yy = 0.5*((y(I,J+1)-y(I,J)) + (y(I+1,J+1)-y(I+1,J)));
+            % Calculate minimum cell lengths (for use in CFL condition)
+            LI = sqrt(fluid.xx.^2 + fluid.yx.^2);
+            LJ = sqrt(fluid.xy.^2 + fluid.yy.^2);
+            fluid.Lmin = min(LI,LJ);
+            
+        end
+        
+        function [I,J] = transformXYtoIJ(fluid,IND,xq)
+            % Function to transform global (x,y) coords to local (I,J)
+            % computational domain coords (centered at cell center IND)
+            % NOTE: this routine is vectorized with the assumption that
+            % element xq(k) is being transformed using Jacobian(IND(k))
+            
+            x = xq(:,1); y = xq(:,2);
+            XC = fluid.MEANx(IND); YC = fluid.MEANy(IND);
+            A = fluid.cellarea(IND);
+            
+            xx = fluid.xx(IND); xy = fluid.xy(IND);
+            yx = fluid.yx(IND); yy = fluid.yy(IND);
+            
+            % Inverse transformation
+            X = x-XC; Y = y-YC;
+            I = (X.*yy - Y.*xy)./A;
+            J = (-X.*yx + Y.*xx)./A;
+            
         end
     end
     
