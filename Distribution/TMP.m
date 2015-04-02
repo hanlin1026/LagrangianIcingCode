@@ -29,6 +29,8 @@ for i=1:realizations
 end
 save('BETA_23012_BIN27_SPLASH.mat','BETA');
 %}
+
+
 %{
 % Initialize domain and associated distribution functions
 strPDFTypes = {'Implicit','Implicit','Custom','Gaussian','Uniform'};
@@ -50,6 +52,8 @@ domain.sampleRealization(nClumps,fluid);
 domain.dispSampleStatistics();
 %}
 
+%{
+% Illustrate visually the local Jacobian transformation
 x = fluid.x; y = fluid.y;
 % Sample point
 I = 50; J = 200;
@@ -70,6 +74,28 @@ hold on; plot(xC,yC,'ro',xt,yt,'r');
 % Draw transformed circle
 [It,Jt] = transformXYtoIJ(fluid,IND,[xt,yt]);
 figure(2); hold on; plot(It,Jt,'r');
+%}
+
+% Test out the local Jacobian transformation and NN search
+xsamp = unifrnd(-6,-5,100,1);
+ysamp = unifrnd(-.5,.5,100,1);
+[pg,ug,vg] = fluid.interpFluid(xsamp,ysamp);
+Rd = 50e-6;
+Usamp = ug + 0.001*ug*unifrnd(-1,1);
+Vsamp = vg + 0.001*vg*unifrnd(-1,1);
+cloud = SLDcloud([xsamp ysamp Usamp Vsamp repmat(Rd,100,1) zeros(100,3)],rhol,1,'NoTResolve');
+indInit = fluid.searchTree([cloud.x,cloud.y]);
+set(cloud,'indCell',indInit);
+figure(1); hold on; plot(x,y,'k',x',y','k');
+IND = [1:100]';
+cloud.indAdv = IND;
+hold on; scatter(cloud.x(IND),cloud.y(IND),'b'); 
+hold on; scatter(fluid.MEANx(indInit(IND)),fluid.MEANy(indInit(IND)),'g');
+
+cloud.computeNewCellLocations(fluid);
+figure(1); hold on; scatter(fluid.MEANx(cloud.indCell),fluid.MEANy(cloud.indCell),'r.');
+
+
 
 
 

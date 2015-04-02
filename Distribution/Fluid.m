@@ -30,6 +30,7 @@ classdef Fluid < hgsetget
         cellarea;
         MEANx; MEANy; % Centers
         xx; xy; yx; yy; % Grid metrics
+        rhoC; rhouC; rhovC; eC; % Flow variables at cell centers
         Lmin; % Minimum cell lengths
         % SQRT plane mapping of grid corners
         xSQRT; ySQRT;
@@ -65,27 +66,23 @@ classdef Fluid < hgsetget
             fluid.alpha = alpha;
             fluid.Re = Re;
             fluid.Uinf = mach*340;
-            % Create tree-search object
-            fluid.createTreeSearcher();
             % Calculate cell properties
             fluid.computeCellAreas();      
             fluid.computeCellCenters();
             fluid.computeGridMetrics();
+            % Create tree-search object
+            fluid.createTreeSearcher();
         end
         
         function [pg,ug,vg] = getNNFluidProps(fluid,xq,yq)
-            % Function to return fluid values at nearest neighbor grid pts
+            % Function to return fluid values at nearest neighbor cell
+            % center pts
             
             rhoinf = fluid.rhoinf;
             Ubar = fluid.Ubar;
-            RHO = fluid.RHO;
-            RHOU = fluid.RHOU;
-            RHOV = fluid.RHOV;
-            %{
-            pg = rhoinf*RHO(xq,yq);
-            ug = RHOU(xq,yq)*Ubar*rhoinf./pg;
-            vg = RHOV(xq,yq)*Ubar*rhoinf./pg;
-            %}
+            RHO = fluid.rhoC;
+            RHOU = fluid.rhouC;
+            RHOV = fluid.rhovC;
             
             % Use values at closest grid points
             ind = fluid.searchTree([xq,yq]);
@@ -155,10 +152,11 @@ classdef Fluid < hgsetget
         function createTreeSearcher(fluid)
             % Function to create tree-searcher object on refined grid
             
+            MEANx = fluid.MEANx; MEANy = fluid.MEANy;
+            fluid.NS = createns([MEANx(:),MEANy(:)]);
+            %{
             x = fluid.x; y = fluid.y;
             I = size(x,1); J = size(x,2);
-            fluid.NS = createns([x(:),y(:)]);
-            %{
             % Calculate aspect ratio of each wrap
             AR = [];
             for i=1:J-1
@@ -206,7 +204,7 @@ classdef Fluid < hgsetget
             % Function to search the tree object
             
             % Search the refined grid
-            ind = knnsearch(fluid.NS,xq);
+            index = knnsearch(fluid.NS,xq);
             % Convert refined grid index to original grid index
             %{
             I = size(fluid.x,1);
@@ -248,9 +246,17 @@ classdef Fluid < hgsetget
             % Function to compute cell centers
             
             x = fluid.x; y = fluid.y;
+            nI = size(x,1); nJ = size(x,2);
             fluid.MEANx = 0.25*(x(1:end-1,1:end-1)+x(2:end,1:end-1)+x(1:end-1,2:end)+x(2:end,2:end));
             fluid.MEANy = 0.25*(y(1:end-1,1:end-1)+y(2:end,1:end-1)+y(1:end-1,2:end)+y(2:end,2:end));
-            
+            % Compute flow variables at cell centers
+            R = reshape(fluid.RHO,nI,nJ); RU = reshape(fluid.RHOU,nI,nJ); 
+            RV = reshape(fluid.RHOV,nI,nJ); E = reshape(fluid.E,nI,nJ);
+            I = 1:(nI-1); J = 1:(nJ-1);
+            fluid.rhoC = 0.25*(R(I,J)+R(I+1,J)+R(I,J+1)+R(I+1,J+1));
+            fluid.rhouC = 0.25*(RU(I,J)+RU(I+1,J)+RU(I,J+1)+RU(I+1,J+1));
+            fluid.rhovC = 0.25*(RV(I,J)+RV(I+1,J)+RV(I,J+1)+RV(I+1,J+1));
+            fluid.eC = 0.25*(E(I,J)+E(I+1,J)+E(I,J+1)+E(I+1,J+1));
         end
         
         function computeGridMetrics(fluid)

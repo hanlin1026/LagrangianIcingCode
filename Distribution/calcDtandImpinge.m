@@ -26,13 +26,14 @@ cloud.indAdv = indAdv;
 if ~isempty(indAdv)
     % Nearest neighbor grid point search over those particles currently in the
     % simulation which have not impinged/stuck to airfoil
-    xq = cloud.x(indAdv); yq = cloud.y(indAdv); 
-    uq = cloud.u(indAdv); vq = cloud.v(indAdv);
+    cloud.computeNewCellLocations(fluid);
     % Set timesteps based on CFL condition
     velMag = sqrt(uq.^2 + vq.^2);
-    area = fluid.getCellArea(ind);
-    dt = 0.2*sqrt(area)./velMag;
+    Lmin = fluid.Lmin(cloud.indCell(indAdv));
+    dt = 0.5*Lmin./velMag;
     % Check to see if any points are on the airfoil surface
+    xq = cloud.x(indAdv); yq = cloud.y(indAdv); 
+    uq = cloud.u(indAdv); vq = cloud.v(indAdv);
     n = size(x,1)-1;
     [~,~,nx,ny,~,~] = airfoil.findPanel(xq,yq);
     normvel = uq.*nx + vq.*ny;

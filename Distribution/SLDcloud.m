@@ -151,15 +151,53 @@ classdef SLDcloud < hgsetget
             % Function to compute new cells occupied by particles after
             % transporting them one timestep
             
-            indCell = cloud.indCell;
-            % Particle positions
+            indAdv = cloud.indAdv;
+            indCell = cloud.indCell(indAdv);
+            % Particle positions, cell centers
             xP = cloud.x(indAdv); yP = cloud.y(indAdv);
-            % Old cell centers
-            xC = fluid.MEANx(indCell); yC = fluid.MEANy(indCell);
-            % Transformed local coordinates of particles
-            [I,J] = fluid.transformXYtoIJ(indCell,[xP,yP]);
-            % Transformed local coordinates of 9 nearest neighbor cell centers
-            
+            xC = fluid.MEANx; yC = fluid.MEANy;
+            ni = size(fluid.MEANx,1); nj = size(fluid.MEANx,2);
+            C = indCell;
+            N = C+ni; S = C-ni; E = C+1; W = C-1;
+            SW = S-1; SE = S+1; NW = N-1; NE = N+1;
+            % Transformed particle position
+            [PI,PJ] = fluid.transformXYtoIJ(C,[xP,yP]);
+            % Transformed neighbor positions
+            [CI,CJ] = fluid.transformXYtoIJ(C,[xC(C),yC(C)]);
+            [NI,NJ] = fluid.transformXYtoIJ(C,[xC(N),yC(N)]);
+            [SI,SJ] = fluid.transformXYtoIJ(C,[xC(S),yC(S)]);
+            [EI,EJ] = fluid.transformXYtoIJ(C,[xC(E),yC(E)]);
+            [WI,WJ] = fluid.transformXYtoIJ(C,[xC(W),yC(W)]);
+            [SWI,SWJ] = fluid.transformXYtoIJ(C,[xC(SW),yC(SW)]);
+            [SEI,SEJ] = fluid.transformXYtoIJ(C,[xC(SE),yC(SE)]);
+            [NWI,NWJ] = fluid.transformXYtoIJ(C,[xC(NW),yC(NW)]);
+            [NEI,NEJ] = fluid.transformXYtoIJ(C,[xC(NE),yC(NE)]);
+            % 9NN search in the transformed plane
+            dC = (CI-PI).^2 + (CJ-PJ).^2;
+            dN = (NI-PI).^2 + (NJ-PJ).^2;
+            dS = (SI-PI).^2 + (SJ-PJ).^2;
+            dE = (EI-PI).^2 + (EJ-PJ).^2;
+            dW = (WI-PI).^2 + (WJ-PJ).^2;
+            dSW = (SWI-PI).^2 + (SWJ-PJ).^2;
+            dSE = (SEI-PI).^2 + (SEJ-PJ).^2;
+            dNW = (NWI-PI).^2 + (NWJ-PJ).^2;
+            dNE = (NEI-PI).^2 + (NEJ-PJ).^2;
+            % Find minimum
+            [~,indMin] = min([dC,dN,dS,dE,dW,dSW,dSE,dNW,dNE]');
+            indNN = [C,N,S,E,W,SW,SE,NW,NE];
+            indCellNew = zeros(length(indAdv),1);
+            for i=1:length(indAdv)
+                indCellNew(i) = indNN(i,indMin(i));
+            end
+            set(cloud,'indCell',indCellNew);
+            % Plot
+            %{
+            for i=1:length(indAdv)
+                figure(1+i); hold on; scatter([CI(i);NI(i);SI(i);EI(i);WI(i);SWI(i);SEI(i);NWI(i);NEI(i)],...
+                    [CJ(i);NJ(i);SJ(i);EJ(i);WJ(i);SWJ(i);SEJ(i);NWJ(i);NEJ(i)],'b');
+                hold on; scatter(PI(i),PJ(i),'r');
+            end
+            %}
         end
         
         function cloud = deleteParticle(cloud,ind)
@@ -345,6 +383,12 @@ classdef SLDcloud < hgsetget
         
         function cloud = set.tGLOB(cloud,val)
             cloud.tGLOB = val;
+        end
+        
+        function cloud = set.indCell(cloud,val)
+            % Set indCell
+            
+            cloud.indCell = val;
         end
         
         function state = getState(cloud)
