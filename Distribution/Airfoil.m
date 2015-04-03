@@ -127,8 +127,8 @@ classdef Airfoil < hgsetget
         end
         
         function airfoil = set.FILM(airfoil,vars)
-            % Set particular elements of film
-            airfoil.FILM = vars;
+            % Append elements to FILM so that there is a cumulative effect
+            airfoil.FILM = [airfoil.FILM; vars];
         end
         
         function airfoil = set.originalImpingeScoordSplash(airfoil,vars)

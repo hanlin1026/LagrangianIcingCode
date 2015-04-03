@@ -16,6 +16,7 @@ if ~isempty(indSplash)
     uSplash = cloud.u(indStateSplash); vSplash = cloud.v(indStateSplash);
     rdSplash = cloud.rd(indStateSplash); tempSplash = cloud.Temp(indStateSplash);
     tSplash = cloud.time(indStateSplash); nDropSplash = cloud.numDroplets(indStateSplash);
+    indCellSplash = cloud.indCell(indStateSplash);
     
     KSplash = cloud.K(indSplash); KsSplash = cloud.fs(indSplash)*cloud.Ks0;
     vnormsqSplash = cloud.normvelsq(indSplash); vtangSplash = cloud.tangvel(indSplash);
@@ -36,6 +37,7 @@ if ~isempty(indSplash)
     % Calculate splashed droplet size
     rnew = {};
     state = [];
+    indCellNew = [];
     NUMNEWTOTAL = 0;
     for i=1:length(indSplash)
         if ms(i) ~= 0
@@ -84,6 +86,8 @@ if ~isempty(indSplash)
             sTime = repmat(tSplash(i),numnew,1);
             sNDropSplash = repmat(nDropSplash(i),numnew,1);
             state = [state; [sx sy vSplashDrop(:,1) vSplashDrop(:,2) sr sTemp sTime sNDropSplash]];
+            iCell = repmat(indCellSplash(i),numnew,1);
+            indCellNew = [indCellNew; iCell];
             NUMNEWTOTAL = NUMNEWTOTAL + numnew;
         else
             % No splashing actually occurs, per model limits (i.e. simple
@@ -98,7 +102,7 @@ if ~isempty(indSplash)
         indS1 = cloud.particles+1;
         indS2 = indS1+NUMNEWTOTAL-1;
         indSnew = [indS1:1:indS2]';
-        cloud.addParticle(state);
+        cloud.addParticle(state,indCellNew);
         set(cloud,'parentind',indStateSplash);
         set(cloud,'childind',indSnew);
         % Record splashing of original droplets

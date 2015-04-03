@@ -46,7 +46,7 @@ domain.dispSampleStatistics();
 %% Collection efficiency
 
 STATE = {};
-strImpMod = 'NoImpingement';
+strImpMod = 'Impingement';
 for i=1:100
     i
     domain.nDroplet = [];

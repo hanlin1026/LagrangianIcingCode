@@ -11,14 +11,14 @@ yL = Ynew;
 
 [pg,ug,vg] = fluid.interpFluid(Xnew,Ynew);
 x = fluid.x; y = fluid.y; rhol = fluid.rhol;
-Rd = rdAvg;
+Rd = rdAvg*ones(length(Xnew),1);
 Unew = ug + 0.001*ug*unifrnd(-1,1);
 Vnew = vg + 0.001*vg*unifrnd(-1,1);
-cloud = SLDcloud([Xnew Ynew Unew Vnew Rd 0 0 0],rhol,1,'NoTResolve');
+cloud = SLDcloud([Xnew Ynew Unew Vnew Rd zeros(length(Xnew),3)],rhol,1,fluid,'NoTResolve');
 
 % Iterative procedure to find upper limit
 TOL = 1e-5;
-maxiter = 2000; iter = 1;
+maxiter = 3000; iter = 1;
 STATE = [cloud.x, cloud.y];
 figure(1); plot(x(:,1),y(:,1),'k'); axis equal; xlim([-0.5,.2]); ylim([-.3,.3]); drawnow;
 while abs(Ymiss-Yhit)>TOL
@@ -38,7 +38,7 @@ while abs(Ymiss-Yhit)>TOL
         [pg,ug,vg] = fluid.interpFluid(Xnew,Ynew);
         Unew = ug + 0.001*ug*unifrnd(-1,1);
         Vnew = vg + 0.001*vg*unifrnd(-1,1);
-        cloud = SLDcloud([Xnew Ynew Unew Vnew Rd 0 0 0],rhol,1,'NoTResolve');
+        cloud = SLDcloud([Xnew Ynew Unew Vnew Rd zeros(length(Xnew),3)],rhol,1,fluid,'NoTResolve');
         
         yL = Ynew;
         iter=1;
@@ -53,7 +53,7 @@ while abs(Ymiss-Yhit)>TOL
         [pg,ug,vg] = fluid.interpFluid(Xnew,Ynew);
         Unew = ug + 0.001*ug*unifrnd(-1,1);
         Vnew = vg + 0.001*vg*unifrnd(-1,1);
-        cloud = SLDcloud([Xnew Ynew Unew Vnew Rd 0 0 0],rhol,1,'NoTResolve');
+        cloud = SLDcloud([Xnew Ynew Unew Vnew Rd zeros(length(Xnew),3)],rhol,1,fluid,'NoTResolve');
         
         yL = Ynew;
         iter=1;

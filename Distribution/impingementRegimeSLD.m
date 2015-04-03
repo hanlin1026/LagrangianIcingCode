@@ -1,6 +1,6 @@
 function impingementRegimeSLD(cloud,airfoil)
-% Function to compute the impingement regime for those drops which have
-% struck the airfoil surface.
+% Function to compute the impingement regime for those drops which are
+% currently striking the airfoil surface.
 % INPUTS: SLDcloud object, gas velocity and density at particle positions, Airfoil object
 % OUTPUT: sets airfoil.FILM
 
@@ -8,7 +8,7 @@ function impingementRegimeSLD(cloud,airfoil)
 cloud.computeImpingementParams(airfoil);
 
 % Clear airfoil film
-airfoil.clearFilm();
+%airfoil.clearFilm();
 
 % Compute impingement regime dynamics
 splashDynamics(cloud,airfoil);

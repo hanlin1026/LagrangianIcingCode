@@ -4,7 +4,7 @@ function [STATE,totalImpinge,impinge,s,beta,sStick,mStick] = calcCollectionEffic
 % Initialize a cloud using domain realization
 particles = domain.numParcels;
 rhol = fluid.rhol;
-cloud = SLDcloud([domain.samples, domain.nDroplet],rhol,particles,'NoTResolve');
+cloud = SLDcloud([domain.samples, domain.nDroplet],rhol,particles,fluid,'NoTResolve');
 
 % Advect particles (with/without fracture or impingement submodules)
 disp('Advecting test particles between limits...');
@@ -13,7 +13,7 @@ impinge = [];
 STATE = {};
 t = cloud.tGLOB; simTime = domain.simTime;
 tSAMP = 1; tREFRESH = 0.03; tRATE = 20; tMARK = 1;
-iter = 1; maxiter = 1700;
+iter = 1; maxiter = 3000;
 figure(1); plot(airfoil.X,airfoil.Y); axis([-.5 1 -.3 .3]);
 [xtmp,ytmp] = airfoil.interpStoXY(airfoil.LIMup);
 hold on; plot(xtmp,ytmp,'ko');
@@ -74,7 +74,7 @@ elseif strcmp(strImpMod,'Impingement')
         end
         totalImpinge = size(cloud.impingeTotal,1);
         % Save state variables every 0.1 sec
-        %
+        %{
         maxC = max(cloud.rd); minC = min(cloud.rd);
         C = 9*(cloud.rd-minC)./(maxC-minC) + 1;
         if mod(iter,tRATE)==tRATE-1
@@ -125,7 +125,7 @@ dy = domain.XY_bounds(1,2) - domain.XY_bounds(2,2);
 % Calculate collection efficiency
 beta = (mBin/ds).*(dy/mTOT);
 s = sBin;
-figure(12); plot(sDrop,cloud.rd(impinge),'bo'); drawnow;
-figure(14); hist(cloud.rd(impinge)); drawnow;
+%figure(12); plot(sDrop,cloud.rd(impinge),'bo'); drawnow;
+%figure(14); hist(cloud.rd(impinge)); drawnow;
 
 end

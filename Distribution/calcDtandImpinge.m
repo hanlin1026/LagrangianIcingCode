@@ -28,17 +28,19 @@ if ~isempty(indAdv)
     % simulation which have not impinged/stuck to airfoil
     cloud.computeNewCellLocations(fluid);
     % Set timesteps based on CFL condition
+    xq = cloud.x(indAdv); yq = cloud.y(indAdv); 
+    uq = cloud.u(indAdv); vq = cloud.v(indAdv);
     velMag = sqrt(uq.^2 + vq.^2);
     Lmin = fluid.Lmin(cloud.indCell(indAdv));
     dt = 0.5*Lmin./velMag;
     % Check to see if any points are on the airfoil surface
-    xq = cloud.x(indAdv); yq = cloud.y(indAdv); 
-    uq = cloud.u(indAdv); vq = cloud.v(indAdv);
-    n = size(x,1)-1;
+    n = size(fluid.MEANx,1);
     [~,~,nx,ny,~,~] = airfoil.findPanel(xq,yq);
     normvel = uq.*nx + vq.*ny;
-    surfaceFlag1 = ind-2*n<=0;
+    ind = cloud.indCell(indAdv);
+    surfaceFlag1 = ind-4*n<=0;
     surfaceFlag2 = normvel<0.01;
+    surfaceFlag3 = ind-3*n<=0;
     surfaceFlag = surfaceFlag1 & surfaceFlag2;
     indSurf = indAdv(find(surfaceFlag==1));
     % If past airfoil, set dt=0

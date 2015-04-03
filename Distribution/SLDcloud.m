@@ -40,7 +40,7 @@ classdef SLDcloud < hgsetget
     end 
     
     methods
-        function cloud = SLDcloud(state0,rhol,particles,FLAGtimeResolve)
+        function cloud = SLDcloud(state0,rhol,particles,fluid,FLAGtimeResolve)
             % Constructor: state = (x0,y0,u0,v0,r0,temp0,t0,nDrop0)
             
             cloud.x(:,1) = state0(:,1);
@@ -65,9 +65,13 @@ classdef SLDcloud < hgsetget
             cloud.sigma = 75.64e-3; % Surface tension of water at 0 deg C against air
             cloud.T = 270; % Temperature (K) for SLD's (estimate, slightly below freezing)
             
+            % Initialize particle positions
+            indInit = fluid.searchTree([cloud.x,cloud.y]);
+            set(cloud,'indCell',indInit);
+            
         end
         
-        function cloud = addParticle(cloud,state)
+        function cloud = addParticle(cloud,state,indCellP)
             % Function to add a particle to the SLD cloud
             
             i = size(cloud.x,1)+1;
@@ -80,6 +84,7 @@ classdef SLDcloud < hgsetget
             cloud.Temp(i:i+numnew-1,1) = state(:,6);
             cloud.time(i:i+numnew-1,1) = state(:,7);
             cloud.numDroplets(i:i+numnew-1,1) = state(:,8);
+            cloud.indCell(i:i+numnew-1,1) = indCellP;
             % Update total number of particles
             cloud.particles = cloud.particles+numnew;
         end
@@ -165,23 +170,33 @@ classdef SLDcloud < hgsetget
             % Transformed neighbor positions
             [CI,CJ] = fluid.transformXYtoIJ(C,[xC(C),yC(C)]);
             [NI,NJ] = fluid.transformXYtoIJ(C,[xC(N),yC(N)]);
-            [SI,SJ] = fluid.transformXYtoIJ(C,[xC(S),yC(S)]);
             [EI,EJ] = fluid.transformXYtoIJ(C,[xC(E),yC(E)]);
             [WI,WJ] = fluid.transformXYtoIJ(C,[xC(W),yC(W)]);
-            [SWI,SWJ] = fluid.transformXYtoIJ(C,[xC(SW),yC(SW)]);
-            [SEI,SEJ] = fluid.transformXYtoIJ(C,[xC(SE),yC(SE)]);
             [NWI,NWJ] = fluid.transformXYtoIJ(C,[xC(NW),yC(NW)]);
             [NEI,NEJ] = fluid.transformXYtoIJ(C,[xC(NE),yC(NE)]);
+            % Catch any particles trying to "glitch" through the airfoil surface
+            noGlitch = S>0; glitch = S<=0;
+            SI = zeros(length(indAdv),1); SJ = zeros(length(indAdv),1);
+            SWI = zeros(length(indAdv),1); SWJ = zeros(length(indAdv),1);
+            SEI = zeros(length(indAdv),1); SEJ = zeros(length(indAdv),1);
+            [SI(noGlitch),SJ(noGlitch)] = fluid.transformXYtoIJ(C(noGlitch),[xC(S(noGlitch)),yC(S(noGlitch))]);
+            [SWI(noGlitch),SWJ(noGlitch)] = fluid.transformXYtoIJ(C(noGlitch),[xC(SW(noGlitch)),yC(SW(noGlitch))]);
+            [SEI(noGlitch),SEJ(noGlitch)] = fluid.transformXYtoIJ(C(noGlitch),[xC(SE(noGlitch)),yC(SE(noGlitch))]);
             % 9NN search in the transformed plane
             dC = (CI-PI).^2 + (CJ-PJ).^2;
             dN = (NI-PI).^2 + (NJ-PJ).^2;
-            dS = (SI-PI).^2 + (SJ-PJ).^2;
             dE = (EI-PI).^2 + (EJ-PJ).^2;
             dW = (WI-PI).^2 + (WJ-PJ).^2;
-            dSW = (SWI-PI).^2 + (SWJ-PJ).^2;
-            dSE = (SEI-PI).^2 + (SEJ-PJ).^2;
             dNW = (NWI-PI).^2 + (NWJ-PJ).^2;
             dNE = (NEI-PI).^2 + (NEJ-PJ).^2;
+            % Catch any particles trying to "glitch" through airfoil surface
+            dS = zeros(length(indAdv),1); dSW = zeros(length(indAdv),1); dSE = zeros(length(indAdv),1);
+            dS(noGlitch) = (SI(noGlitch)-PI(noGlitch)).^2 + (SJ(noGlitch)-PJ(noGlitch)).^2;
+            dSW(noGlitch) = (SWI(noGlitch)-PI(noGlitch)).^2 + (SWJ(noGlitch)-PJ(noGlitch)).^2;
+            dSE(noGlitch) = (SEI(noGlitch)-PI(noGlitch)).^2 + (SEJ(noGlitch)-PJ(noGlitch)).^2;
+            dS(glitch) = 1e5;
+            dSW(glitch) = 1e5;
+            dSE(glitch) = 1e5;
             % Find minimum
             [~,indMin] = min([dC,dN,dS,dE,dW,dSW,dSE,dNW,dNE]');
             indNN = [C,N,S,E,W,SW,SE,NW,NE];
@@ -189,8 +204,13 @@ classdef SLDcloud < hgsetget
             for i=1:length(indAdv)
                 indCellNew(i) = indNN(i,indMin(i));
             end
-            set(cloud,'indCell',indCellNew);
+            set(cloud,'indCell',[indCellNew,indAdv]);
             % Plot
+            %{
+            for i=1:length(indAdv)
+                figure(1); hold on; scatter(fluid.MEANx(indCell(i)),fluid.MEANy(indCell(i)),'ro');
+            end
+            %}
             %{
             for i=1:length(indAdv)
                 figure(1+i); hold on; scatter([CI(i);NI(i);SI(i);EI(i);WI(i);SWI(i);SEI(i);NWI(i);NEI(i)],...
@@ -388,7 +408,13 @@ classdef SLDcloud < hgsetget
         function cloud = set.indCell(cloud,val)
             % Set indCell
             
-            cloud.indCell = val;
+            if size(val,2)==1
+                % Set all elements
+                cloud.indCell = val;
+            elseif size(val,2)==2
+                % Set specified elements
+                cloud.indCell(val(:,2)) = val(:,1);
+            end
         end
         
         function state = getState(cloud)
