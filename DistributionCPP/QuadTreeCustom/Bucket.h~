@@ -1,0 +1,16 @@
+#ifndef __BUCKET_H__
+#define __BUCKET_H__
+
+#include <vector>
+
+using namespace std;
+
+class Bucket {
+ public:
+  Bucket(double SW, double SE, double NW, double NE);
+  double SW_, SE_, NW_, NE_;
+
+};
+
+
+#endif
