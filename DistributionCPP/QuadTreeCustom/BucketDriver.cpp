@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <random>
 #include "Bucket.h"
 
 using namespace std;
@@ -33,6 +34,50 @@ int main(int argc, const char *argv[]) {
   printf("xNW = %f, yNW = %f \n",QT->buckets_[0]->NW_[0],QT->buckets_[0]->NW_[1]);
   printf("xNE = %f, yNE = %f \n",QT->buckets_[0]->NE_[0],QT->buckets_[0]->NE_[1]);
 
+  // Test set/get points
+  const int nrolls=100;  // number of experiments
+
+  default_random_engine generator;
+  uniform_real_distribution<double> distX(-0.5,1.5);
+  uniform_real_distribution<double> distY(-0.5,1.5);
+  
+  double sampsX[nrolls];
+  double sampsY[nrolls];
+  for (int i=0; i<nrolls; i++) {
+    double nx = distX(generator);
+    double ny = distY(generator);
+    sampsX[i] = nx;
+    sampsY[i] = ny;    
+  }
+  
+  QT->setPoints(&sampsX[0],&sampsY[0],nrolls);
+  vector<double> PX; vector<double> PY;
+  QT->getPoints(&PX,&PY);
+  int N = QT->getNPts();
+  printf("N = %d \n", N);
+  for (int i=0; i<N; i++) {
+    printf("%f\t%f\n",PX[i],PY[i]);
+  }
+
+  // Divide buckets
+  Bucket* bPoint = QT->buckets_[1];
+  if (bPoint) {
+    printf("Bucket has children %f \n",bPoint->SE_[1]);
+  }
+  else {
+    printf("Empty Pointer \n");
+  }
+
+  QT->divideBucket();
+  for (int i=0; i<4; i++) {
+    printf("CHILD NODE %d:\n", i);
+    printf("xSW = %f, ySW = %f \n",QT->buckets_[i]->SW_[0],QT->buckets_[i]->SW_[1]);
+    printf("xSE = %f, ySE = %f \n",QT->buckets_[i]->SE_[0],QT->buckets_[i]->SE_[1]);
+    printf("xNW = %f, yNW = %f \n",QT->buckets_[i]->NW_[0],QT->buckets_[i]->NW_[1]);
+    printf("xNE = %f, yNE = %f \n",QT->buckets_[i]->NE_[0],QT->buckets_[i]->NE_[1]);
+  }
+  
+  // Delete allocated memory
   delete QT;
 
 }

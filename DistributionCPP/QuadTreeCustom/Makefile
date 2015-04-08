@@ -1,4 +1,4 @@
-CXXFLAGS = -c -g -O2
+CXXFLAGS = -std=c++11 -c -g -O2
 OMP = g++
 OMPFLAGS = -fopenmp -O2
 MPI = mpic++
