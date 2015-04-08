@@ -21,16 +21,18 @@ int main(int argc, const char *argv[]) {
   printf("xNE = %f, yNE = %f \n",QT->NE_[0],QT->NE_[1]);
 
   // Add 4 subbuckets
-  SW[0] = 0.; SW[1] = 0.; SE[0] = 0.5; SE[1] = 0.; 
-  NW[0] = 0.; NW[1] = 0.5; NE[0] = 0.5; NE[1] = 0.5;
-  QT->addNode(0,&SW[0],&SE[0],&NW[0],&NE[0]);
+  double SW2[2] = {0,0};
+  double SE2[2] = {0.5,0};
+  double NW2[2] = {0,0.5};
+  double NE2[2] = {0.5,0.5};
+  QT->addNode(0,&SW2[0],&SE2[0],&NW2[0],&NE2[0]);
   
   // Print four corners of child node
   printf("xSW = %f, ySW = %f \n",QT->buckets_[0]->SW_[0],QT->buckets_[0]->SW_[1]);
   printf("xSE = %f, ySE = %f \n",QT->buckets_[0]->SE_[0],QT->buckets_[0]->SE_[1]);
   printf("xNW = %f, yNW = %f \n",QT->buckets_[0]->NW_[0],QT->buckets_[0]->NW_[1]);
   printf("xNE = %f, yNE = %f \n",QT->buckets_[0]->NE_[0],QT->buckets_[0]->NE_[1]);
-  
-  delete[] QT;
+
+  delete QT;
 
 }

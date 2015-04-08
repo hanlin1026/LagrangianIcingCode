@@ -13,9 +13,9 @@ Bucket::Bucket(double* SW, double* SE, double* NW, double* NE)
 
 Bucket::~Bucket() {
   for (int i=0; i<4; i++) {
-    delete[] buckets_[i];
+    delete buckets_[i];
   }
-  delete[] buckets_;
+  delete buckets_;
 }
 
 void Bucket::addNode(int ind, double* sw, double* se, double* nw, double* ne) {
