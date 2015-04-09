@@ -6,6 +6,7 @@
 class Bucket {
  public:
   Bucket(double* SW, double* SE, double* NW, double* NE);
+  Bucket(double* SW, double* SE, double* NW, double* NE, int level);
   ~Bucket();
   double SW_[2], SE_[2], NW_[2], NE_[2];
   Bucket** buckets_;
@@ -13,14 +14,17 @@ class Bucket {
   void setPoints(double* dataX, double* dataY, int NumPts);
   void getPoints(std::vector<double>* PX, std::vector<double>* PY);
   int getNPts();
+  int getLevel();
   void setBucketSize(int BS);
   void divideBucket();
+  void calcQuadTree(double* dataX, double* dataY, int NumPts);
 
  private:
   std::vector<double> PX_;
   std::vector<double> PY_;
   int NumPts_;
   int BucketSize_;
+  int level_;
 };
 
 
