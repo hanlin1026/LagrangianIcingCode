@@ -17,18 +17,13 @@ int main(int argc, const char *argv[]) {
   double NE[2] = {1.,1.};
   Bucket* QT = new Bucket(&SW[0],&SE[0],&NW[0],&NE[0]);
 
-  // Print four corners of first bucket
-  printf("xSW = %f, ySW = %f \n",QT->SW_[0],QT->SW_[1]);
-  printf("xSE = %f, ySE = %f \n",QT->SE_[0],QT->SE_[1]);
-  printf("xNW = %f, yNW = %f \n",QT->NW_[0],QT->NW_[1]);
-  printf("xNE = %f, yNE = %f \n",QT->NE_[0],QT->NE_[1]);
-
   // Test set/get points
-  const int nrolls=50000;  // number of experiments
+  const int nrolls=1000;  // number of experiments
 
   default_random_engine generator;
   normal_distribution<double> distX(0.3,.1);
   normal_distribution<double> distY(0.4,0.2);
+  FILE* fout = fopen("DataSet.dat","w");
   
   double sampsX[nrolls];
   double sampsY[nrolls];
@@ -36,20 +31,15 @@ int main(int argc, const char *argv[]) {
     double nx = distX(generator);
     double ny = distY(generator);
     sampsX[i] = nx;
-    sampsY[i] = ny;    
+    sampsY[i] = ny;   
+    fprintf(fout,"%f\t%f\n",nx,ny);
   }
-  
-  /**
-  vector<double> PX; vector<double> PY;
-  QT->getPoints(&PX,&PY);
-  int N = QT->getNPts();
-  printf("N = %d \n", N);
-  **/
 
   // Divide buckets
   QT->calcQuadTree(&sampsX[0],&sampsY[0],nrolls);
   
   // Delete allocated memory
   delete QT;
+  fclose(fout);
 
 }

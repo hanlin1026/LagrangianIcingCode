@@ -27,28 +27,30 @@ pylab.rcParams.update(params)
 
 fig = plt.figure()
 ax = fig.gca()
-XY = genfromtxt("OUT.dat", delimiter = '\t')
+XY = genfromtxt("QuadTreeXY.dat", delimiter = '\t')
 #plt.scatter(XY[:,0],XY[:,1])
 for i in xrange(0,size(XY,0)/4):
     ind = 4*i
     X = np.append(XY[ind:ind+4,0], XY[ind,0]);
     Y = np.append(XY[ind:ind+4,1], XY[ind,1]);
     plt.plot(X,Y,color='k');
+XYdata = genfromtxt("DataSet.dat", delimiter = "\t")
+plt.scatter(XYdata[:,0],XYdata[:,1]);
 
-pylab.savefig('temp2.png',bbox_inches=0)
+#pylab.savefig('temp2.png',bbox_inches=0)
 
 plt.show()
 
-import Image
-import numpy as np
+#import Image
+#import numpy as np
 
-image=Image.open('temp2.png')
+#image=Image.open('temp2.png')
 # image=Image.open('temp2.eps')
-image.load()
+#image.load()
 
-print image.size
+#print image.size
 
-crop_image = image.crop([370,220,1150,950])
+#crop_image = image.crop([370,220,1150,950])
 
-crop_image.save('temp2_cropped.png')
+#crop_image.save('temp2_cropped.png')
 # crop_image.save('temp2_cropped.eps')

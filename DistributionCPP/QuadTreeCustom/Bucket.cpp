@@ -139,27 +139,32 @@ void Bucket::calcQuadTree(double* dataX, double* dataY, int NumPts) {
   int sizeCurrent = 1;
   int numNext = 0;
   bool flag = false;
-  FILE* fout = fopen("OUT.dat","w");
+  FILE* fout = fopen("QuadTreeXY.dat","w");
+  Bucket* child;
+  // Print initial bucket to file
+  fprintf(fout,"%f\t%f\n", this->SW_[0], this->SW_[1]);
+  fprintf(fout,"%f\t%f\n", this->SE_[0], this->SE_[1]);
+  fprintf(fout,"%f\t%f\n", this->NE_[0], this->NE_[1]);
+  fprintf(fout,"%f\t%f\n", this->NW_[0], this->NW_[1]);
 
   while(flag==false) {
     // Divide current
     for (int i=0; i<sizeCurrent; i++) {
-      printf("N = %d ", current[i]->getNPts());
       current[i]->divideBucket();
       // Check 4 children
       for (int j=0; j<4; j++) {
-	if (current[i]->buckets_[j]->getNPts() > BucketSize_) {
-	  next.push_back(current[i]->buckets_[j]);
-	  // Print to file
-	  fprintf(fout,"%f\t%f\n",current[i]->buckets_[j]->SW_[0], current[i]->buckets_[j]->SW_[1]);
-	  fprintf(fout,"%f\t%f\n",current[i]->buckets_[j]->SE_[0], current[i]->buckets_[j]->SE_[1]);
-	  fprintf(fout,"%f\t%f\n",current[i]->buckets_[j]->NE_[0], current[i]->buckets_[j]->NE_[1]);
-	  fprintf(fout,"%f\t%f\n",current[i]->buckets_[j]->NW_[0], current[i]->buckets_[j]->NW_[1]);
+	child = current[i]->buckets_[j];
+	if (child->getNPts() > BucketSize_) {
+	  next.push_back(child);
 	  numNext++;
 	}
+	// Print to file
+	fprintf(fout,"%f\t%f\n", child->SW_[0], child->SW_[1]);
+	fprintf(fout,"%f\t%f\n", child->SE_[0], child->SE_[1]);
+	fprintf(fout,"%f\t%f\n", child->NE_[0], child->NE_[1]);
+	fprintf(fout,"%f\t%f\n", child->NW_[0], child->NW_[1]);
       }
     }
-    printf("\n numNext = %d \n",numNext);
     if (numNext>0) {
       // Reset current nodes
       current.swap(next);
@@ -169,11 +174,12 @@ void Bucket::calcQuadTree(double* dataX, double* dataY, int NumPts) {
     }
     else {
       // Exit; no more divisions needed
-      printf("Done! \n");
+      printf("Quadtree successfully created. Bucket coordinates written to QuadTreeXY.dat. \n");
       flag = true;
       break;
     }
   
   }
+  fclose(fout);
   
 }
