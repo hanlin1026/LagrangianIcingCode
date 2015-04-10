@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
+#include <fstream>
 #include <random>
 #include "Bucket.h"
 
@@ -22,11 +24,11 @@ int main(int argc, const char *argv[]) {
   printf("xNE = %f, yNE = %f \n",QT->NE_[0],QT->NE_[1]);
 
   // Test set/get points
-  const int nrolls=10000;  // number of experiments
+  const int nrolls=50000;  // number of experiments
 
   default_random_engine generator;
-  uniform_real_distribution<double> distX(0.,1);
-  uniform_real_distribution<double> distY(0.,1.);
+  normal_distribution<double> distX(0.3,.1);
+  normal_distribution<double> distY(0.4,0.2);
   
   double sampsX[nrolls];
   double sampsY[nrolls];

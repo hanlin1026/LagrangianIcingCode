@@ -139,6 +139,7 @@ void Bucket::calcQuadTree(double* dataX, double* dataY, int NumPts) {
   int sizeCurrent = 1;
   int numNext = 0;
   bool flag = false;
+  FILE* fout = fopen("OUT.dat","w");
 
   while(flag==false) {
     // Divide current
@@ -149,6 +150,11 @@ void Bucket::calcQuadTree(double* dataX, double* dataY, int NumPts) {
       for (int j=0; j<4; j++) {
 	if (current[i]->buckets_[j]->getNPts() > BucketSize_) {
 	  next.push_back(current[i]->buckets_[j]);
+	  // Print to file
+	  fprintf(fout,"%f\t%f\n",current[i]->buckets_[j]->SW_[0], current[i]->buckets_[j]->SW_[1]);
+	  fprintf(fout,"%f\t%f\n",current[i]->buckets_[j]->SE_[0], current[i]->buckets_[j]->SE_[1]);
+	  fprintf(fout,"%f\t%f\n",current[i]->buckets_[j]->NE_[0], current[i]->buckets_[j]->NE_[1]);
+	  fprintf(fout,"%f\t%f\n",current[i]->buckets_[j]->NW_[0], current[i]->buckets_[j]->NW_[1]);
 	  numNext++;
 	}
       }
