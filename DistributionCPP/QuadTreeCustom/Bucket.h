@@ -18,6 +18,7 @@ class Bucket {
   void setBucketSize(int BS);
   void divideBucket();
   void calcQuadTree(double* dataX, double* dataY, int NumPts);
+  void knnSearch(double* Xq, double* Yq, double* Xnn, double* Ynn);
 
  private:
   std::vector<double> PX_;
@@ -25,6 +26,7 @@ class Bucket {
   int NumPts_;
   int BucketSize_;
   int level_;
+  bool calcInBucket(double* Xq, double* Yq);
 };
 
 

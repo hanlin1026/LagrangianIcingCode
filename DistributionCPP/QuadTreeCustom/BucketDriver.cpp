@@ -37,6 +37,14 @@ int main(int argc, const char *argv[]) {
 
   // Divide buckets
   QT->calcQuadTree(&sampsX[0],&sampsY[0],nrolls);
+
+  // Search for a query point
+  double Xq = 0.41;
+  double Yq = 0.5;
+  double Xnn, Ynn;
+  QT->knnSearch(&Xq,&Yq,&Xnn,&Ynn);
+  
+  printf("Xq = %f, Yq = %f\nXnn = %f, Ynn = %f\n",Xq,Yq,Xnn,Ynn);
   
   // Delete allocated memory
   delete QT;

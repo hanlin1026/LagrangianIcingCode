@@ -1,6 +1,8 @@
 #include "Bucket.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <cmath>
+#include <algorithm>
 
 using namespace std;
 
@@ -57,10 +59,10 @@ void Bucket::setPoints(double* dataX, double* dataY, int NumPts) {
   PY_.reserve(NumPts);
   bool flag1, flag2, flag3, flag4, flag;
   for (int i=0; i<NumPts; i++) {
-    flag1 = (dataX[i] > SW_[0]);
-    flag2 = (dataX[i] < SE_[0]);
-    flag3 = (dataY[i] > SW_[1]);
-    flag4 = (dataY[i] < NW_[1]);
+    flag1 = (dataX[i] >= SW_[0]);
+    flag2 = (dataX[i] <= SE_[0]);
+    flag3 = (dataY[i] >= SW_[1]);
+    flag4 = (dataY[i] <= NW_[1]);
 
     flag = flag1 && flag2 && flag3 && flag4;
     if (flag==true) {
@@ -182,4 +184,72 @@ void Bucket::calcQuadTree(double* dataX, double* dataY, int NumPts) {
   }
   fclose(fout);
   
+}
+
+bool Bucket::calcInBucket(double* Xq, double* Yq) {
+  // Function to determine whether a query point is inside a bucket
+
+  bool flag1, flag2, flag3, flag4, flag;
+  flag1 = (*Xq >= this->SW_[0]);
+  flag2 = (*Xq <= this->SE_[0]);
+  flag3 = (*Yq >= this->SW_[1]);
+  flag4 = (*Yq <= this->NW_[1]);
+  flag = flag1 && flag2 && flag3 && flag4;
+  
+  return flag;
+}
+
+void Bucket::knnSearch(double* Xq, double* Yq, double* Xnn, double* Ynn) {
+  // Function that takes a query point and finds the nearest 
+  // neighbor in the data set of the quadtree
+
+  bool flagFinal = false;
+  bool flagChild = false;
+  Bucket* current = this;
+  int iter;
+  // Iteratively search down the tree
+  while(flagFinal==false) {
+    // Determine if current bucket has child iter
+    iter = -1;
+    while((flagChild==false) && (iter<3)) {
+      iter++;
+      if (current->buckets_[iter] != NULL) {
+        // If child iter exists, search it
+        flagChild = current->buckets_[iter]->calcInBucket(Xq,Yq);
+      }
+    }
+    // If we have found a valid child containing (Xq,Yq), reset current
+    if (flagChild==true) {
+      current = current->buckets_[iter];
+      flagChild = false;
+    }
+    // Otherwise, we are done
+    else {
+      flagFinal = true;
+    }
+
+  }
+
+  // Calculate nearest neighbor inside bucket
+  int BS = BucketSize_;
+  double* dist = new double[BS];
+  std::vector<double> x;
+  std::vector<double> y;
+  current->getPoints(&x,&y);
+  for (int i=0; i<BS; i++) {
+    dist[i] = pow(x[i]-*Xq,2) + pow(y[i]-*Yq,2);
+  }
+  int indMin = 0;
+  double distMin = dist[0];
+  for (int i=1; i<BS; i++) {
+    if (dist[i] < distMin) {
+      distMin = dist[i];
+      indMin = i;
+    }
+  }
+  *Xnn = x[indMin];
+  *Ynn = y[indMin];
+
+  delete[] dist;
+
 }
