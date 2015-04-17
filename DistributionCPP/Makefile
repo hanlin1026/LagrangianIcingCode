@@ -1,12 +1,13 @@
-CXXFLAGS = -c -g -O2
+CXXFLAGS = -std=c++0x -c -g -O2
 OMP = g++
 OMPFLAGS = -fopenmp -O2
 MPI = mpic++
 MPIFLAGS = -O2
+VPATH = ./QuadTreeCustom/
 
-all: foo
+all: icing
 
-foo : PLOT3Ddriver.o PLOT3D.o
+icing : IcingDriver.o PLOT3D.o Bucket.o
 	$(CXX) $^ -o $@
 
 clean:

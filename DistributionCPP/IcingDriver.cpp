@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <random>
 #include "PLOT3D.h"
+#include "QuadTreeCustom/Bucket.h"
 
 // Driver program to test PLOT3D class
 
@@ -43,6 +45,26 @@ int main(int argc, const char *argv[]) {
   for (int i=0; i<n; i++) {
     foutXY << X[i] << "\t" << Y[i] << "\n";
   }
+
+  // Quadtree test
+  double SW[2] = {-22.5,-32.5};
+  double SE[2] = {18.5,-32.5};
+  double NW[2] = {-22.5,33.0};
+  double NE[2] = {18.5,33.0};
+  Bucket* QT = new Bucket(&SW[0],&SE[0],&NW[0],&NE[0]);
+  QT->calcQuadTree(&X[0],&Y[0],n);
+
+  // Search for a query point
+  default_random_engine generator;
+  uniform_real_distribution<double> distX(-0.2,-0.1);
+  uniform_real_distribution<double> distY(-0.1,0.1);
+  double Xq, Yq, Xnn, Ynn;
+  for (int i=0; i<1000; i++) {
+    Xq = distX(generator);
+    Yq = distY(generator);
+    QT->knnSearch(&Xq,&Yq,&Xnn,&Ynn);
+    //printf("Xq = %f, Yq = %f\nXnn = %f, Ynn = %f\n",Xq,Yq,Xnn,Ynn);
+  }
   
   // Clear any allocated memory, close files/streams
   delete p3d;
@@ -50,4 +72,5 @@ int main(int argc, const char *argv[]) {
   fclose(foutSoln);
   delete[] X,Y,RHO,RHOU,RHOV,E;
   delete[] PROPS, scalars;
+  delete QT;
 }
