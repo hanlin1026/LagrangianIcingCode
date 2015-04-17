@@ -1,0 +1,20 @@
+CXXFLAGS = -c -g -O2
+OMP = g++
+OMPFLAGS = -fopenmp -O2
+MPI = mpic++
+MPIFLAGS = -O2
+VPATH = ./QuadTree
+
+all: foo
+
+foo : PLOT3Ddriver.o PLOT3D.o Quadtree.o Object.o
+	$(CXX) $^ -o $@
+
+clean:
+	$(RM) *.o
+	$(RM) .depend
+
+depend:
+	$(CXX) -MM $(CXXFLAGS) *.cc > .depend
+
+-include .depend

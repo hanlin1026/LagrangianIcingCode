@@ -3,8 +3,8 @@
 #include <math.h>
 #include <string.h>
 #include <random>
-#include "PLOT3D.h"
-#include "QuadTreeCustom/Bucket.h"
+#include "Grid/PLOT3D.h"
+#include "QuadTree/Bucket.h"
 
 // Driver program to test PLOT3D class
 
@@ -14,7 +14,7 @@ int main(int argc, const char *argv[]) {
   scalars[0] = 0; scalars[1] = 1; scalars[2] = 2;
   scalars[3] = 3; scalars[4] = 4; scalars[5] = 5;
   // Initialize plot3D object
-  PLOT3D* p3d = new PLOT3D("MESH.P3D", "q103.0.50E+01.bin", scalars);
+  PLOT3D* p3d = new PLOT3D("Grid/MESH.P3D", "Grid/q103.0.50E+01.bin", scalars);
   // Output mach,alpha,reynolds,time as a test
   float* PROPS = new float[6];
   p3d->getPROPS(PROPS);
