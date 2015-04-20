@@ -46,7 +46,7 @@ int main(int argc, const char *argv[]) {
   p3d->getXY(X,Y);
   // Output grid x,y coordinates to file
   ofstream foutXY;
-  foutXY.open("outputXY.dat");
+  foutXY.open("outputGRID.dat");
   for (int i=0; i<n; i++) {
     foutXY << X[i] << "\t" << Y[i] << "\n";
   }

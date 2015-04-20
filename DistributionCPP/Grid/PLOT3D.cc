@@ -61,20 +61,18 @@ PLOT3D::~PLOT3D() {
   // Destructor: free any allocated memory
   
   delete[] x_, y_, rho_, rhou_, rhov_, E_;
+  delete[] xCENT_, yCENT_;
+  delete[] rhoCENT_, rhouCENT_, rhovCENT_, ECENT_;
   delete[] cellArea_;
 }
 
 void PLOT3D::getXY(double* X, double* Y) {
   // Function to return grid coordinates x,y
   
-  int nx = this->nx_;
-  int ny = this->ny_;
-  double* x = this->x_;
-  double* y = this->y_;
-  int n = nx*ny;
+  int n = nx_*ny_;
   for (int i=0; i<n; i++) {
-    X[i] = x[i];
-    Y[i] = y[i];
+    X[i] = x_[i];
+    Y[i] = y_[i];
   }
 
 }
@@ -82,12 +80,9 @@ void PLOT3D::getXY(double* X, double* Y) {
 void PLOT3D::getRHO(float* RHO) {
   // Function to return rho
   
-  int nx = this->nx_;
-  int ny = this->ny_;
-  float* rho = this->rho_;
-  int n = nx*ny;
+  int n = nx_*ny_;
   for (int i=0; i<n; i++) {
-    RHO[i] = rho[i];
+    RHO[i] = rho_[i];
   }
 
 }
@@ -95,12 +90,9 @@ void PLOT3D::getRHO(float* RHO) {
 void PLOT3D::getRHOU(float* RHOU) {
   // Function to return rhou
   
-  int nx = this->nx_;
-  int ny = this->ny_;
-  float* rhou = this->rhou_;
-  int n = nx*ny;
+  int n = nx_*ny_;
   for (int i=0; i<n; i++) {
-    RHOU[i] = rhou[i];
+    RHOU[i] = rhou_[i];
   }
 
 }
@@ -108,12 +100,9 @@ void PLOT3D::getRHOU(float* RHOU) {
 void PLOT3D::getRHOV(float* RHOV) {
   // Function to return rhov
   
-  int nx = this->nx_;
-  int ny = this->ny_;
-  float* rhov = this->rhov_;
-  int n = nx*ny;
+  int n = nx_*ny_;
   for (int i=0; i<n; i++) {
-    RHOV[i] = rhov[i];
+    RHOV[i] = rhov_[i];
   }
 
 }
@@ -121,75 +110,104 @@ void PLOT3D::getRHOV(float* RHOV) {
 void PLOT3D::getE(float* E) {
   // Function to return E
   
-  int nx = this->nx_;
-  int ny = this->ny_;
-  float* e = this->E_;
-  int n = nx*ny;
+  int n = nx_*ny_;
   for (int i=0; i<n; i++) {
-    E[i] = e[i];
+    E[i] = E_[i];
   }
 
 }
 
 void PLOT3D::getPROPS(float* PROPS) {
   // Function to return [nx,ny,mach,alpha,reynolds,time]
-  
-  int nx = this->nx_;
-  int ny = this->ny_;
-  float mach = this->mach_;
-  float alpha = this->alpha_;
-  float reynolds = this->reynolds_;
-  float time = this->time_;
 
-  PROPS[0] = (float)nx;
-  PROPS[1] = (float)ny;
-  PROPS[2] = mach;
-  PROPS[3] = alpha;
-  PROPS[4] = reynolds;
-  PROPS[5] = time;
+  PROPS[0] = (float)nx_;
+  PROPS[1] = (float)ny_;
+  PROPS[2] = mach_;
+  PROPS[3] = alpha_;
+  PROPS[4] = reynolds_;
+  PROPS[5] = time_;
   
 }
 
 void PLOT3D::computeCellAreas() {
   // Function to compute cell areas
 
-  double* x = this->x_;
-  double* y = this->y_;
-  int nx = this->nx_; 
-  int ny = this->ny_;
-  double XX[nx][ny];
-  double YY[nx][ny];
-  double DI_x[nx-1][ny-1];
-  double DI_y[nx-1][ny-1];
-  double DJ_x[nx-1][ny-1];
-  double DJ_y[nx-1][ny-1];
+  double XX[nx_][ny_];
+  double YY[nx_][ny_];
+  double DI_x[nx_-1][ny_-1];
+  double DI_y[nx_-1][ny_-1];
+  double DJ_x[nx_-1][ny_-1];
+  double DJ_y[nx_-1][ny_-1];
   double DI, DJ;
+  // Convert vectorized grid into 2D array
   int iter = 0;
-  for (int i=0; i<nx; i++) {
-    for (int j=0; j<ny; j++) {
-      XX[i][j] = x[iter];
-      YY[i][j] = y[iter];
+  for (int i=0; i<nx_; i++) {
+    for (int j=0; j<ny_; j++) {
+      XX[i][j] = x_[iter];
+      YY[i][j] = y_[iter];
       iter++;
     }
   }
-  for (int i=0; i<nx-1; i++) {
-    for (int j=0; j<ny-1; j++) {
+  for (int i=0; i<nx_-1; i++) {
+    for (int j=0; j<ny_-1; j++) {
       DI_x[i][j] = XX[i+1][j] - XX[i][j];
       DI_y[i][j] = YY[i+1][j] - YY[i][j];
       DJ_x[i][j] = XX[i][j+1] - XX[i][j];
       DJ_y[i][j] = YY[i][j+1] - YY[i][j];
     }
   }
-  this->cellArea_ = new double[(nx-1)*(ny-1)];
+  cellArea_ = new double[(nx_-1)*(ny_-1)];
   iter = 0;
-  for (int i=0; i<nx-1; i++) {
-    for (int j=0; j<ny-1; j++) {
+  for (int i=0; i<nx_-1; i++) {
+    for (int j=0; j<ny_-1; j++) {
       DI = sqrt(pow(DI_x[i][j],2) + pow(DI_y[i][j],2));
       DJ = sqrt(pow(DJ_x[i][j],2) + pow(DJ_y[i][j],2));
       cellArea_[iter] = DI*DJ;
       iter++;
     }
   }
-  
+}
 
+void PLOT3D::computeCellCenters() {
+  // Function to compute cell centroids of the grid
+  
+  double XX[nx_][ny_];
+  double YY[nx_][ny_];
+  float RHO[nx_][ny_];
+  float RHOU[nx_][ny_];
+  float RHOV[nx_][ny_];
+  float E[nx_][ny_];
+  xCENT_ = new double[(nx_-1)*(ny_-1)];
+  yCENT_ = new double[(nx_-1)*(ny_-1)];
+  rhoCENT_ = new float[(nx_-1)*(ny_-1)];
+  rhouCENT_ = new float[(nx_-1)*(ny_-1)];
+  rhovCENT_ = new float[(nx_-1)*(ny_-1)];
+  ECENT_ = new float[(nx_-1)*(ny_-1)];
+  
+  // Convert vectorized grid/soln into 2D array
+  int iter = 0;
+  for (int i=0; i<nx_; i++) {
+    for (int j=0; j<ny_; j++) {
+      XX[i][j] = x_[iter];
+      YY[i][j] = y_[iter];
+      RHO[i][j] = rho_[iter];
+      RHOU[i][j] = rhou_[iter];
+      RHOV[i][j] = rhov_[iter];
+      E[i][j] = E_[iter];
+      iter++;
+    }
+  }
+  // Compute centroid locations and flow variables
+  iter = 0;
+  for (int i=0; i<nx_-1; i++) {
+    for (int j=0; j<ny_-1; j++) {
+      xCENT_[iter] =    0.25*(XX[i][j] + XX[i+1][j] + XX[i][j+1] + XX[i+1][j+1]);
+      yCENT_[iter] =    0.25*(YY[i][j] + YY[i+1][j] + YY[i][j+1] + YY[i+1][j+1]);
+      rhoCENT_[iter] =  0.25*(RHO[i][j] + RHO[i+1][j] + RHO[i][j+1] + RHO[i+1][j+1]);
+      rhouCENT_[iter] = 0.25*(RHOU[i][j] + RHOU[i+1][j] + RHOU[i][j+1] + RHOU[i+1][j+1]);
+      rhovCENT_[iter] = 0.25*(RHOV[i][j] + RHOV[i+1][j] + RHOV[i][j+1] + RHOV[i+1][j+1]);
+      ECENT_[iter] =    0.25*(E[i][j] + E[i+1][j] + E[i][j+1] + E[i+1][j+1]);
+      iter++;
+    }
+  }
 }

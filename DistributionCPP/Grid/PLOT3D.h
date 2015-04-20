@@ -27,17 +27,24 @@ class PLOT3D {
   // Grid coordinates/solution
   double* x_;
   double* y_;
-  float* rho_;
-  float* rhou_;
-  float* rhov_;
+  float* rho_; 
+  float* rhou_; 
+  float* rhov_; 
   float* E_;
-  // Size of the grid
+  // Properties of the grid/soln
   int nx_, ny_;
   float mach_, alpha_, reynolds_, time_;
   double pinf_, R_, Tinf_, rhoinf_, Ubar_, rhol_;
   double Uinf_;
+  // Properties/functions for the dual grid (grid of centroid locations)
+  double* xCENT_;
+  double* yCENT_;
+  float* rhoCENT_; 
+  float* rhouCENT_; 
+  float* rhovCENT_; 
+  float* ECENT_;
   double* cellArea_;
-  // Functions for grid metrics
   void computeCellAreas();
+  void computeCellCenters();
 };
 #endif // PLOT3D_H
