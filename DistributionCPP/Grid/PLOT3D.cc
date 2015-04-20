@@ -1,10 +1,11 @@
 #include "PLOT3D.h"
 #include <stdio.h>
 #include <assert.h>
+#include <cmath>
 
 using namespace std;
 
-PLOT3D::PLOT3D(const char *meshfname, const char *solnfname, double* scalars) {
+PLOT3D::PLOT3D(const char *meshfname, const char *solnfname, FluidScalars* scalars) {
   // Constructor: read in mesh/soln file data
 
   // Read in size of mesh
@@ -43,12 +44,12 @@ PLOT3D::PLOT3D(const char *meshfname, const char *solnfname, double* scalars) {
   fread(rhov_, sizeof(float), n, solnfile);
   fread(E_, sizeof(float), n, solnfile);
   // Read in scalars
-  pinf_ =   scalars[0];
-  R_ =      scalars[1];
-  Tinf_ =   scalars[2];
-  rhoinf_ = scalars[3];
-  Ubar_ =   scalars[4];
-  rhol_ =   scalars[5];
+  pinf_ =   scalars->pinf_;
+  R_ =      scalars->R_;
+  Tinf_ =   scalars->Tinf_;
+  rhoinf_ = scalars->rhoinf_;
+  Ubar_ =   scalars->Ubar_;
+  rhol_ =   scalars->rhol_;
   Uinf_ = mach_*340;
   // Close input streams/files, free any allocated memory
   delete[] xy;
@@ -60,6 +61,7 @@ PLOT3D::~PLOT3D() {
   // Destructor: free any allocated memory
   
   delete[] x_, y_, rho_, rhou_, rhov_, E_;
+  delete[] cellArea_;
 }
 
 void PLOT3D::getXY(double* X, double* Y) {
@@ -146,4 +148,48 @@ void PLOT3D::getPROPS(float* PROPS) {
   PROPS[4] = reynolds;
   PROPS[5] = time;
   
+}
+
+void PLOT3D::computeCellAreas() {
+  // Function to compute cell areas
+
+  double* x = this->x_;
+  double* y = this->y_;
+  int nx = this->nx_; 
+  int ny = this->ny_;
+  double XX[nx][ny];
+  double YY[nx][ny];
+  double DI_x[nx-1][ny-1];
+  double DI_y[nx-1][ny-1];
+  double DJ_x[nx-1][ny-1];
+  double DJ_y[nx-1][ny-1];
+  double DI, DJ;
+  int iter = 0;
+  for (int i=0; i<nx; i++) {
+    for (int j=0; j<ny; j++) {
+      XX[i][j] = x[iter];
+      YY[i][j] = y[iter];
+      iter++;
+    }
+  }
+  for (int i=0; i<nx-1; i++) {
+    for (int j=0; j<ny-1; j++) {
+      DI_x[i][j] = XX[i+1][j] - XX[i][j];
+      DI_y[i][j] = YY[i+1][j] - YY[i][j];
+      DJ_x[i][j] = XX[i][j+1] - XX[i][j];
+      DJ_y[i][j] = YY[i][j+1] - YY[i][j];
+    }
+  }
+  this->cellArea_ = new double[(nx-1)*(ny-1)];
+  iter = 0;
+  for (int i=0; i<nx-1; i++) {
+    for (int j=0; j<ny-1; j++) {
+      DI = sqrt(pow(DI_x[i][j],2) + pow(DI_y[i][j],2));
+      DJ = sqrt(pow(DJ_x[i][j],2) + pow(DJ_y[i][j],2));
+      cellArea_[iter] = DI*DJ;
+      iter++;
+    }
+  }
+  
+
 }

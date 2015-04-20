@@ -10,16 +10,21 @@
 
 int main(int argc, const char *argv[]) {
   // Initialize scalars
-  double* scalars = new double[6];
-  scalars[0] = 0; scalars[1] = 1; scalars[2] = 2;
-  scalars[3] = 3; scalars[4] = 4; scalars[5] = 5;
+  FluidScalars scalars;
+  scalars.pinf_ = 0;
+  scalars.R_ = 1;
+  scalars.Tinf_ = 2;
+  scalars.rhoinf_ = 3;
+  scalars.Ubar_ = 4;
+  scalars.rhol_ = 5;
   // Initialize plot3D object
-  PLOT3D* p3d = new PLOT3D("Grid/MESH.P3D", "Grid/q103.0.50E+01.bin", scalars);
+  PLOT3D* p3d = new PLOT3D("Grid/MESH.P3D", "Grid/q103.0.50E+01.bin", &scalars);
   // Output mach,alpha,reynolds,time as a test
   float* PROPS = new float[6];
   p3d->getPROPS(PROPS);
   int nx = (int)PROPS[0]; int ny = (int)PROPS[1];
-  float mach = PROPS[2]; float alpha = PROPS[3]; float reynolds = PROPS[4]; float time = PROPS[5];
+  float mach = PROPS[2]; float alpha = PROPS[3];
+  float reynolds = PROPS[4]; float time = PROPS[5];
   printf("mach = %f\nalpha = %f\nreynolds = %f\ntime = %f\n", mach, alpha, reynolds, time);
   // Output solution file flow variable data
   int n = nx*ny;
