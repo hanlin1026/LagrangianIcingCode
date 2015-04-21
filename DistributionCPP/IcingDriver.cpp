@@ -29,36 +29,33 @@ int main(int argc, const char *argv[]) {
   // Output solution file flow variable data
   int n = nx*ny;
   FILE* foutSoln = fopen("outputSOLN.dat","w");
-  float* RHO = new float[n];
-  float* RHOU = new float[n];
-  float* RHOV = new float[n];
-  float* E = new float[n];
-  p3d->getRHO(RHO);
-  p3d->getRHOU(RHOU);
-  p3d->getRHOV(RHOV);
-  p3d->getE(E);
-  for (int i=0; i<n; i++) {
-    fprintf(foutSoln,"%f \t %f \t %f \t %f \t \n", RHO[i], RHOU[i], RHOV[i], E[i]);
+  Eigen::MatrixXf RHO  = p3d->getRHO();
+  Eigen::MatrixXf RHOU = p3d->getRHOU();
+  Eigen::MatrixXf RHOV = p3d->getRHOV();
+  Eigen::MatrixXf E    = p3d->getE();
+  for (int i=0; i<nx; i++) {
+    for (int j=0; j<ny; j++) {
+      fprintf(foutSoln,"%f \t %f \t %f \t %f \t \n", RHO(i,j), RHOU(i,j), RHOV(i,j), E(i,j));
+    }
   }
   // Get grid x,y coordinates
-  double* X = new double[n];
-  double* Y = new double[n];
-  p3d->getXY(X,Y);
+  Eigen::MatrixXd X = p3d->getX();
+  Eigen::MatrixXd Y = p3d->getY();
   // Output grid x,y coordinates to file
   ofstream foutXY;
   foutXY.open("outputGRID.dat");
-  for (int i=0; i<n; i++) {
-    foutXY << X[i] << "\t" << Y[i] << "\n";
+  for (int i=0; i<nx; i++) {
+    for (int j=0; j<ny; j++) {
+      foutXY << X(i,j) << "\t" << Y(i,j) << "\n";
+    }
   }
-
   // Quadtree test
   double SW[2] = {-22.5,-32.5};
   double SE[2] = {18.5,-32.5};
   double NW[2] = {-22.5,33.0};
   double NE[2] = {18.5,33.0};
   Bucket* QT = new Bucket(&SW[0],&SE[0],&NW[0],&NE[0]);
-  QT->calcQuadTree(&X[0],&Y[0],n);
-
+  QT->calcQuadTree(X.data(),Y.data(),n);
   // Search for a query point
   default_random_engine generator;
   uniform_real_distribution<double> distX(-0.2,-0.1);
@@ -75,7 +72,6 @@ int main(int argc, const char *argv[]) {
   delete p3d;
   foutXY.close();
   fclose(foutSoln);
-  delete[] X,Y,RHO,RHOU,RHOV,E;
   delete[] PROPS, scalars;
   delete QT;
 }
