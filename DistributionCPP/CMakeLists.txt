@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 project(icing)
 
-add_definitions( -std=c++0x -c -g -O2 )
+add_definitions( -std=c++0x -c -g )
 
 add_library( IcingLib
   Grid/PLOT3D.cc

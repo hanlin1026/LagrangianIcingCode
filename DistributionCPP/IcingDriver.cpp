@@ -17,9 +17,8 @@ int main(int argc, const char *argv[]) {
   scalars.rhoinf_ = 3;
   scalars.Ubar_ = 4;
   scalars.rhol_ = 5;
-  // Initialize plot3D object
+  // Initialize plot3D object, read in basic problem data
   PLOT3D* p3d = new PLOT3D("Grid/MESH.P3D", "Grid/q103.0.50E+01.bin", &scalars);
-  // Output mach,alpha,reynolds,time as a test
   float* PROPS = new float[6];
   p3d->getPROPS(PROPS);
   int nx = (int)PROPS[0]; int ny = (int)PROPS[1];
@@ -33,19 +32,17 @@ int main(int argc, const char *argv[]) {
   Eigen::MatrixXf RHOU = p3d->getRHOU();
   Eigen::MatrixXf RHOV = p3d->getRHOV();
   Eigen::MatrixXf E    = p3d->getE();
-  for (int i=0; i<nx; i++) {
-    for (int j=0; j<ny; j++) {
+  for (int j=0; j<ny; j++) {
+    for (int i=0; i<nx; i++) {
       fprintf(foutSoln,"%f \t %f \t %f \t %f \t \n", RHO(i,j), RHOU(i,j), RHOV(i,j), E(i,j));
     }
   }
-  // Get grid x,y coordinates
+  // Get grid x,y coordinates, output to file
   Eigen::MatrixXd X = p3d->getX();
   Eigen::MatrixXd Y = p3d->getY();
-  // Output grid x,y coordinates to file
-  ofstream foutXY;
-  foutXY.open("outputGRID.dat");
-  for (int i=0; i<nx; i++) {
-    for (int j=0; j<ny; j++) {
+  ofstream foutXY; foutXY.open("outputGRID.dat");
+  for (int j=0; j<ny; j++) {
+    for (int i=0; i<nx; i++) {
       foutXY << X(i,j) << "\t" << Y(i,j) << "\n";
     }
   }
@@ -57,6 +54,7 @@ int main(int argc, const char *argv[]) {
   Bucket* QT = new Bucket(&SW[0],&SE[0],&NW[0],&NE[0]);
   QT->calcQuadTree(X.data(),Y.data(),n);
   // Search for a query point
+  FILE* foutKNN = fopen("outputKNNSEARCH.dat","w");
   default_random_engine generator;
   uniform_real_distribution<double> distX(-0.2,-0.1);
   uniform_real_distribution<double> distY(-0.1,0.1);
@@ -65,13 +63,29 @@ int main(int argc, const char *argv[]) {
     Xq = distX(generator);
     Yq = distY(generator);
     QT->knnSearch(&Xq,&Yq,&Xnn,&Ynn);
-    //printf("Xq = %f, Yq = %f\nXnn = %f, Ynn = %f\n",Xq,Yq,Xnn,Ynn);
+    fprintf(foutKNN,"%f\t%f\t%f\t%f\n",Xq,Yq,Xnn,Ynn);
   }
+  printf("KNN search successful. Data written to outputKNNSEARCH.dat.\n");
+
+  // Test grid metric calculations
+  FILE* foutTRANS = fopen("outputIJCOORDS.dat","w");
+  double ind = (nx-1)*10 + 256;
+  Eigen::MatrixXd I(nx,ny);
+  Eigen::MatrixXd J(nx,ny);
+  p3d->computeCellCenters();
+  p3d->computeCellAreas();
+  p3d->computeGridMetrics();
+  p3d->transformXYtoIJ(ind,X,Y,I,J);
+  for (int i=0; i<nx*ny; i++) {
+    fprintf(foutTRANS,"%f\t%f\n",I(i),J(i));
+  }
+  printf("Jacobian transformation successful. Data written to outputIJCOORDS.dat.\n");
   
   // Clear any allocated memory, close files/streams
   delete p3d;
   foutXY.close();
-  fclose(foutSoln);
+  fclose(foutSoln); fclose(foutKNN);
+  foutXCENT.close(); foutYCENT.close();
   delete[] PROPS, scalars;
   delete QT;
 }

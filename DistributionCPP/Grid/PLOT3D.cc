@@ -23,8 +23,8 @@ PLOT3D::PLOT3D(const char *meshfname, const char *solnfname, FluidScalars* scala
   x_.resize(nx_,ny_);
   y_.resize(nx_,ny_);
   int iter = 0;
-  for (int i=0; i<nx_; i++) {
-    for (int j=0; j<ny_; j++) {
+  for (int j=0; j<ny_; j++) {
+    for (int i=0; i<nx_; i++) {
       x_(i,j) = xy[iter];
       y_(i,j) = xy[iter+n];
       iter++;
@@ -53,8 +53,8 @@ PLOT3D::PLOT3D(const char *meshfname, const char *solnfname, FluidScalars* scala
   fread(&rhovTMP, sizeof(float), nx_*ny_, solnfile);
   fread(&ETMP, sizeof(float), nx_*ny_, solnfile);
   iter = 0;
-  for (int i=0; i<nx_; i++) {
-    for (int j=0; j<ny_; j++) {
+  for (int j=0; j<ny_; j++) {
+    for (int i=0; i<nx_; i++) {
       rho_(i,j) = rhoTMP[iter];
       rhou_(i,j) = rhouTMP[iter];
       rhov_(i,j) = rhovTMP[iter];
@@ -99,6 +99,12 @@ MatrixXf PLOT3D::getRHOV() {
 MatrixXf PLOT3D::getE() {
   return E_;
 }
+MatrixXd PLOT3D::getXCENT() {
+  return xCENT_;
+}
+MatrixXd PLOT3D::getYCENT() {
+  return yCENT_;
+}
 
 void PLOT3D::getPROPS(float* PROPS) {
   // Function to return [nx,ny,mach,alpha,reynolds,time]
@@ -115,23 +121,24 @@ void PLOT3D::getPROPS(float* PROPS) {
 void PLOT3D::computeCellAreas() {
   // Function to compute cell areas
 
-  double DI_x[nx_-1][ny_-1];
-  double DI_y[nx_-1][ny_-1];
-  double DJ_x[nx_-1][ny_-1];
-  double DJ_y[nx_-1][ny_-1];
+  MatrixXd DI_x(nx_-1,ny_-1);
+  MatrixXd DI_y(nx_-1,ny_-1);
+  MatrixXd DJ_x(nx_-1,ny_-1);
+  MatrixXd DJ_y(nx_-1,ny_-1);
   double DI, DJ;
-  for (int i=0; i<nx_-1; i++) {
-    for (int j=0; j<ny_-1; j++) {
-      DI_x[i][j] = x_(i+1,j) - x_(i,j);
-      DI_y[i][j] = y_(i+1,j) - y_(i,j);
-      DJ_x[i][j] = x_(i,j+1) - x_(i,j);
-      DJ_y[i][j] = y_(i,j+1) - y_(i,j);
+  for (int j=0; j<ny_-1; j++) {
+    for (int i=0; i<nx_-1; i++) {
+      DI_x(i,j) = x_(i+1,j) - x_(i,j);
+      DI_y(i,j) = y_(i+1,j) - y_(i,j);
+      DJ_x(i,j) = x_(i,j+1) - x_(i,j);
+      DJ_y(i,j) = y_(i,j+1) - y_(i,j);
     }
   }
-  for (int i=0; i<nx_-1; i++) {
-    for (int j=0; j<ny_-1; j++) {
-      DI = sqrt(pow(DI_x[i][j],2) + pow(DI_y[i][j],2));
-      DJ = sqrt(pow(DJ_x[i][j],2) + pow(DJ_y[i][j],2));
+  cellArea_.resize(nx_-1,ny_-1);
+  for (int j=0; j<ny_-1; j++) {
+    for (int i=0; i<nx_-1; i++) {
+      DI = sqrt(pow(DI_x(i,j),2) + pow(DI_y(i,j),2));
+      DJ = sqrt(pow(DJ_x(i,j),2) + pow(DJ_y(i,j),2));
       cellArea_(i,j) = DI*DJ;
     }
   }
@@ -148,8 +155,8 @@ void PLOT3D::computeCellCenters() {
   ECENT_.resize(nx_-1,ny_-1);
   
   // Compute centroid locations and flow variables
-  for (int i=0; i<nx_-1; i++) {
-    for (int j=0; j<ny_-1; j++) {
+  for (int j=0; j<ny_-1; j++) {
+    for (int i=0; i<nx_-1; i++) {
       xCENT_(i,j) =    0.25*(x_(i,j) + x_(i+1,j) + x_(i,j+1) + x_(i+1,j+1));
       yCENT_(i,j) =    0.25*(y_(i,j) + y_(i+1,j) + y_(i,j+1) + y_(i+1,j+1));
       rhoCENT_(i,j) =  0.25*(rho_(i,j) + rho_(i+1,j) + rho_(i,j+1) + rho_(i+1,j+1));
@@ -165,12 +172,17 @@ void PLOT3D::computeGridMetrics() {
 
   // Compute Jacobians and minimum cell lengths (for use in CFL condition)
   double LI, LJ;
-  for (int i=0; i<nx_-1; i++) {
-    for (int j=0; j<ny_-1; j++) {
-      Jxx_(i,j) = 0.5*( (x_(i+1,j+1)-x_(i,j+1)) + (x_(i+1,j)-x_(i,j)) );
-      Jxy_(i,j) = 0.5*( (x_(i,j+1)-x_(i,j)) + (x_(i+1,j+1)-x_(i+1,j)) );
-      Jyx_(i,j) = 0.5*( (y_(i+1,j+1)-y_(i,j+1)) + (y_(i+1,j)-y_(i,j)) );
-      Jyy_(i,j) = 0.5*( (y_(i,j+1)-y_(i,j)) + (y_(i+1,j+1)-y_(i+1,j)) );
+  Jxx_.resize(nx_-1,ny_-1);
+  Jxy_.resize(nx_-1,ny_-1);
+  Jyx_.resize(nx_-1,ny_-1);
+  Jyy_.resize(nx_-1,ny_-1);
+  Lmin_.resize(nx_-1,ny_-1);
+  for (int j=0; j<ny_-1; j++) {
+    for (int i=0; i<nx_-1; i++) {
+      Jxx_(i,j) = 0.5*( (x_(i+1,j+1) - x_(i,j+1)) + (x_(i+1,j)   - x_(i,j))   );
+      Jxy_(i,j) = 0.5*( (x_(i,j+1)   - x_(i,j))   + (x_(i+1,j+1) - x_(i+1,j)) );
+      Jyx_(i,j) = 0.5*( (y_(i+1,j+1) - y_(i,j+1)) + (y_(i+1,j)   - y_(i,j))   );
+      Jyy_(i,j) = 0.5*( (y_(i,j+1)   - y_(i,j))   + (y_(i+1,j+1) - y_(i+1,j)) );
       LI = sqrt( pow(Jxx_(i,j),2) + pow(Jyx_(i,j),2) );
       LJ = sqrt( pow(Jxy_(i,j),2) + pow(Jyy_(i,j),2) );
       Lmin_(i,j) = std::min(LI,LJ);
@@ -179,7 +191,7 @@ void PLOT3D::computeGridMetrics() {
 
 }
 
-void PLOT3D::transformXYtoIJ(int ind, Eigen::VectorXd* xq, Eigen::VectorXd* yq, Eigen::VectorXd* Iq, Eigen::VectorXd* Jq) {
+void PLOT3D::transformXYtoIJ(int ind, Eigen::MatrixXd& xq, Eigen::MatrixXd& yq, Eigen::MatrixXd& Iq, Eigen::MatrixXd& Jq) {
   // Function to transform physical domain coordinates (x,y) to computational 
   // domain coordinates (I,J), centered at cell center 'ind'
 
@@ -193,11 +205,12 @@ void PLOT3D::transformXYtoIJ(int ind, Eigen::VectorXd* xq, Eigen::VectorXd* yq, 
 
   // Inverse Jacobian transformation
   double X, Y;
-  for (int i=0; i<xq->size(); i++) {
-    X = (*xq)(i) - xC;
-    Y = (*yq)(i) - yC;
-    (*Iq)(i) = (X*Jyy - Y*Jxy)/area;
-    (*Jq)(i) = (-X*Jyx + Y*Jxx)/area;
+  int n = xq.rows()*xq.cols();
+  for (int i=0; i<n; i++) {
+    X = xq(i) - xC;
+    Y = yq(i) - yC;
+    Iq(i) = (X*Jyy - Y*Jxy)/area;
+    Jq(i) = (-X*Jyx + Y*Jxx)/area;
   }
 
 }
