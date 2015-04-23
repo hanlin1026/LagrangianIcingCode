@@ -85,7 +85,6 @@ int main(int argc, const char *argv[]) {
   delete p3d;
   foutXY.close();
   fclose(foutSoln); fclose(foutKNN);
-  foutXCENT.close(); foutYCENT.close();
   delete[] PROPS, scalars;
   delete QT;
 }

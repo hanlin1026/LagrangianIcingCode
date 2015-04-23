@@ -23,6 +23,7 @@ class Bucket {
  private:
   std::vector<double> PX_;
   std::vector<double> PY_;
+  std::vector<double> ind_;
   int NumPts_;
   int BucketSize_;
   int level_;
