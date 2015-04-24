@@ -41,8 +41,8 @@ int main(int argc, const char *argv[]) {
   // Search for a query point
   double Xq = 0.41;
   double Yq = 0.5;
-  double Xnn, Ynn;
-  QT->knnSearch(&Xq,&Yq,&Xnn,&Ynn);
+  double Xnn, Ynn, indnn;
+  QT->knnSearch(&Xq,&Yq,&Xnn,&Ynn,&indnn);
   
   printf("Xq = %f, Yq = %f\nXnn = %f, Ynn = %f\n",Xq,Yq,Xnn,Ynn);
   

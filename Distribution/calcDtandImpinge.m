@@ -4,6 +4,7 @@ function calcDtandImpinge(cloud,airfoil,fluid)
 % (2) set global time step based on cell volumes
 % (3) determine and track which droplets have impinged on the airfoil
 
+
 x = fluid.x; y = fluid.y;
 dt = [];t = cloud.time;
 if cloud.FLAGtimeResolve==1
@@ -35,11 +36,11 @@ if ~isempty(indAdv)
     dt = 0.5*Lmin./velMag;
     % Check to see if any points are on the airfoil surface
     n = size(fluid.MEANx,1);
-    [~,~,nx,ny,~,~] = airfoil.findPanel(xq,yq);
+    [px,py,nx,ny,~,~] = airfoil.findPanel(xq,yq);
     normvel = uq.*nx + vq.*ny;
     ind = cloud.indCell(indAdv);
     surfaceFlag1 = ind-4*n<=0;
-    surfaceFlag2 = normvel<0.01;
+    surfaceFlag2 = normvel<0;
     surfaceFlag3 = ind-3*n<=0;
     surfaceFlag = surfaceFlag1 & surfaceFlag2;
     indSurf = indAdv(find(surfaceFlag==1));
@@ -48,7 +49,7 @@ if ~isempty(indAdv)
     % Set currently impinging indices (only retaining new impingements)
     set(cloud,'impinge',[]);
     set(cloud,'impinge',indSurf);
-
+    
     if cloud.FLAGtimeResolve==1
         % Set global timestep as minimum of dt
         dtNZ = dt(dt~=0);

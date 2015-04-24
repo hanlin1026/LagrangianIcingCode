@@ -56,6 +56,7 @@ classdef InjectionDomain < hgsetget
                 Ravg = trapz(domain.fR(:,1),domain.fR(:,1).*domain.fR(:,2));
             end
             domain.R_avg = Ravg;
+            %
             domain.calcInjectionDomain(fluid,airfoil);
             % Calculate area of trapezoidal injection domain
             domain.calcDomainArea();
@@ -76,6 +77,7 @@ classdef InjectionDomain < hgsetget
             domain.fxy = @(xq,yq) domain.numDroplets_avg*inpolygon(xq,yq,xv,yv)./domain.area;
             % Scale temporal PDF s.t. integral is tSim/dtTraverse
             domain.ft(:,2) = domain.ft(:,2)*simTime/domain.dtTraverse_avg;
+            %}
         end
         
         function sampleRealization(domain,numClumps,fluid)
@@ -101,8 +103,8 @@ classdef InjectionDomain < hgsetget
             if (isempty(domain.fu) || isempty(domain.fv))
                 % (u,v) PDFs are some perturbation of the gas velocities
                 [~,ug,vg] = fluid.interpFluid(samplesXY(:,1),samplesXY(:,2));
-                meanU = mean(ug); sigU = sqrt(var(ug));
-                meanV = mean(vg); sigV = sqrt(var(vg));
+                meanU = mean(ug); sigU = max(1e-10,sqrt(var(ug)));
+                meanV = mean(vg); sigV = max(1e-10,sqrt(var(vg)));
                 domain.fu = domain.setPDF('Gaussian',[meanU sigU]);
                 domain.fv = domain.setPDF('Gaussian',[meanV sigV]);
             end
@@ -130,6 +132,9 @@ classdef InjectionDomain < hgsetget
             % Round the number of particles per clump to nearest integer
             ind = find(nDroplet<1);
             nDroplet(ind) = 1;
+            % TEMPORARY OVERRIDE *************
+            nDroplet(:) = 1;
+            % ********************************
             domain.nDroplet = round(nDroplet);
             domain.samples = samples;
             domain.numParcels = numClumps;
@@ -140,35 +145,23 @@ classdef InjectionDomain < hgsetget
             % INPUTS: 
             %   fluid,airfoil: fluid and airfoil objects
             
-            RMAX = max(domain.fR(:,1));
-            % Determine impingement limits in y-direction at x0
-            xL = -10; 
-            Yhit = -0.4; Ymiss = -0.2;
-            yLimUP = impingementLimitsSLD(RMAX,fluid,airfoil,xL,Ymiss,Yhit,'UP');
-            Ymiss = -0.5;
-            yLimDOWN = impingementLimitsSLD(RMAX,fluid,airfoil,xL,Ymiss,Yhit,'DOWN');
-            x1 = [xL; yLimUP];
-            x2 = [xL; yLimDOWN];
-            % Determine impingement limits in y-direction at x = x0-offset
-            dx = 0.1;
-            xL = xL-dx;
-            Yhit = -0.4; Ymiss = -0.2;
-            yLimUP = impingementLimitsSLD(RMAX,fluid,airfoil,xL,Ymiss,Yhit,'UP');
-            Ymiss = -0.5;
-            yLimDOWN = impingementLimitsSLD(RMAX,fluid,airfoil,xL,Ymiss,Yhit,'DOWN');
-            x3 = [xL; yLimUP];
-            x4 = [xL; yLimDOWN];
-            % Widen y-Boundaries by a certain amount
-            k = 0.5;
-            yRange = x1(2)-x2(2);
-            x1(2) = x1(2) + k*yRange;
-            x2(2) = x2(2) - k*yRange;
-            yRange = x3(2)-x4(2);
-            x3(2) = x3(2) + k*yRange;
-            x4(2) = x4(2) - k*yRange;
+            % CALCULATE DOMAIN BOUNDS *************************************
+            x0 = -5; dx = 0.1;
+            yLOW = -0.5; yHIGH = 0;
+            [yLIM1,yLIM2] = domain.calcImpingementLimits(fluid,airfoil,x0,yLOW,yHIGH);
+            [yLIM3,yLIM4] = domain.calcImpingementLimits(fluid,airfoil,x0-dx,yLOW,yHIGH);
+            domain.XY_bounds = [x0 yLIM2; x0 yLIM1; x0-dx yLIM4; x0-dx yLIM3];
+            % *************************************************************
+            % OR
+            % LOAD FROM PRECOMPUTATIONS ***********************************
+            %{
             % Save new boundaries of particles
-            domain.XY_bounds = [x1'; x2'; x3'; x4'];
+            %domain.XY_bounds = [x1'; x2'; x3'; x4'];
+            load('XY_bounds.mat');
+            domain.XY_bounds = XY_bounds;
             % Estimate time to traverse domain
+            dx = 0.1;
+            %}
             domain.dtTraverse_avg = dx/fluid.Uinf;
         end
         
@@ -182,7 +175,7 @@ classdef InjectionDomain < hgsetget
                 % 'params' = [mu sigma]
                 mu = params(1);
                 sigma = params(2);
-                xsamp = linspace(mu-3*sigma,mu+3*sigma,3000)';
+                xsamp = linspace(mu-3*sigma,mu+3*sigma,1000)';
                 func = 1/sigma/sqrt(2*pi)*exp(-0.5*(xsamp-mu).^2./(sigma^2));
             elseif strcmp(strType,'Uniform')
                 % 'params' = [minx maxx]
@@ -262,7 +255,145 @@ classdef InjectionDomain < hgsetget
             
         end
         
-        
+        function [yLIM1,yLIM2] = calcImpingementLimits(domain,fluid,airfoil,x0,yLOW,yHIGH)
+            % Function to calculate the impingement limits of the airfoil
+            % [yLIM1, yLIM2] = lower and upper impingement limits at x0
+            
+            disp('Begin calculation of impingement limits');
+            % Set up screen of particles at domain outlet
+            ySamp = 400;
+            ySCREEN = linspace(yLOW,yHIGH,ySamp)';
+            yTOL = 1e-5;
+            % Initialize cloud using the screen
+            [pg,ug,vg] = fluid.interpFluid(repmat(x0,ySamp,1),ySCREEN);
+            x = fluid.x; y = fluid.y; rhol = fluid.rhol;
+            Rd = domain.R_avg*ones(ySamp,1);
+            Unew = ug + 0.001*ug*unifrnd(-1,1);
+            Vnew = vg + 0.001*vg*unifrnd(-1,1);
+            cloud = SLDcloud([repmat(x0,ySamp,1) ySCREEN Unew Vnew Rd zeros(ySamp,3)],rhol,ySamp,fluid,'NoTResolve');
+            STATE = [cloud.x cloud.y];
+            % Find initial bounds for upper and lower impingement limits
+            iter = 1; maxiter = 3000;
+            while((iter<maxiter) && (length(cloud.impingeTotal)<ySamp))
+                % Call subroutine to calculate local timesteps and impinging particles
+                calcDtandImpinge(cloud,airfoil,fluid);
+                % Advect particles one time step
+                transportSLD(cloud,fluid);
+                if (~isempty(cloud.impinge))
+                    cloud.computeImpingementParams(airfoil);
+                end
+                % Save new positions
+                Xnew = cloud.x; Ynew = cloud.y;
+                STATE = [STATE; [Xnew Ynew]];
+                iter = iter+1;
+            end
+            figure(12); clf; plot(STATE(:,1),STATE(:,2),'b.');
+            hold on; plot(airfoil.PANELx,airfoil.PANELy,'k'); axis([-.5,.3,-.3,.3]); drawnow;
+            impinge = cloud.impingeTotal;
+            indLOW = min(impinge);
+            indHIGH = max(impinge);
+            yLOW1 = ySCREEN(indLOW-1);
+            yLOW2 = ySCREEN(indLOW);
+            yHIGH1 = ySCREEN(indHIGH-1);
+            yHIGH2 = ySCREEN(indHIGH);
+            % Iteratively advect and refine lower screen limits
+            fprintf('Calculating lower impingement limit...');
+            ySCREEN = linspace(yLOW1,yLOW2,ySamp)';
+            diffLOW = 10*yTOL;
+            [pg,ug,vg] = fluid.interpFluid(repmat(x0,ySamp,1),ySCREEN);
+            uSCREEN = ug + 0.001*ug*unifrnd(-1,1);
+            vSCREEN = vg + 0.001*vg*unifrnd(-1,1);
+            while(diffLOW > yTOL)
+                STATE = [];
+                iter = 1;
+                clear cloud;
+                cloud = SLDcloud([repmat(x0,ySamp,1) ySCREEN uSCREEN vSCREEN Rd zeros(ySamp,3)],rhol,ySamp,fluid,'NoTResolve');
+                % Advect the sheet of particles
+                while((iter<maxiter) && (length(cloud.impingeTotal)<ySamp))
+                    % Call subroutine to calculate local timesteps and impinging particles
+                    calcDtandImpinge(cloud,airfoil,fluid);
+                    % Advect particles one time step
+                    transportSLD(cloud,fluid);
+                    if (~isempty(cloud.impinge))
+                        cloud.computeImpingementParams(airfoil);
+                    end
+                    % Update field quantities at new particle positions
+                    Xnew = cloud.x; Ynew = cloud.y;
+                    STATE = [STATE; [Xnew,Ynew]];
+                    iter = iter+1;
+                end
+                figure(12); clf; plot(STATE(:,1),STATE(:,2),'b.');
+                hold on; plot(airfoil.PANELx,airfoil.PANELy,'k'); axis([-.5,.3,-.3,.3]); drawnow;
+                % Find the topmost and bottommost impingements
+                impinge = cloud.impingeTotal;
+                indHIT = min(impinge);
+                % Update screen properties
+                yHIT = ySCREEN(indHIT);
+                if (indHIT == 1)
+                    yMISS = yHIT - diffLOW;
+                else
+                    indMISS = indHIT-1;
+                    yMISS = ySCREEN(indMISS);
+                end
+                ySCREEN = linspace(yMISS,yHIT,ySamp)';
+                [pg,ug,vg] = fluid.interpFluid(repmat(x0,ySamp,1),ySCREEN);
+                uSCREEN = ug + 0.001*ug*unifrnd(-1,1);
+                vSCREEN = vg + 0.001*vg*unifrnd(-1,1);
+                % Calculate diffLOW and diffHIGH
+                diffLOW = abs(yHIT-yMISS)/(ySamp-1);
+            end
+            yLIM1 = yHIT;
+            fprintf('Done.\n');
+            % Iteratively advect and refine upper screen limits
+            fprintf('Calculating upper impingement limit...');
+            ySCREEN = linspace(yHIGH1,yHIGH2,ySamp)';
+            diffHIGH = 10*yTOL;
+            [pg,ug,vg] = fluid.interpFluid(repmat(x0,ySamp,1),ySCREEN);
+            uSCREEN = ug + 0.001*ug*unifrnd(-1,1);
+            vSCREEN = vg + 0.001*vg*unifrnd(-1,1);
+            while(diffHIGH > yTOL)
+                STATE = [];
+                iter = 1;
+                clear cloud;
+                cloud = SLDcloud([repmat(x0,ySamp,1) ySCREEN uSCREEN vSCREEN Rd zeros(ySamp,3)],rhol,ySamp,fluid,'NoTResolve');
+                % Advect the sheet of particles
+                while((iter<maxiter) && (length(cloud.impingeTotal)<ySamp))
+                    % Call subroutine to calculate local timesteps and impinging particles
+                    calcDtandImpinge(cloud,airfoil,fluid);
+                    % Advect particles one time step
+                    transportSLD(cloud,fluid);
+                    if (~isempty(cloud.impinge))
+                        cloud.computeImpingementParams(airfoil);
+                    end
+                    % Update field quantities at new particle positions
+                    Xnew = cloud.x; Ynew = cloud.y;
+                    STATE = [STATE; [Xnew,Ynew]];
+                    iter = iter+1;
+                end
+                figure(12); clf; plot(STATE(:,1),STATE(:,2),'b.');
+                hold on; plot(airfoil.PANELx,airfoil.PANELy,'k'); axis([-.5,.3,-.3,.3]); drawnow;
+                % Find the topmost and bottommost impingements
+                impinge = cloud.impingeTotal;
+                indHIT = max(impinge);
+                yHIT = ySCREEN(indHIT);
+                if (indHIT == ySamp)
+                    yMISS = yHIT + diffHIGH;
+                else
+                    indMISS = indHIT+1;
+                    yMISS = ySCREEN(indMISS);
+                end
+                ySCREEN = linspace(yMISS,yHIT,ySamp)';
+                [pg,ug,vg] = fluid.interpFluid(repmat(x0,ySamp,1),ySCREEN);
+                uSCREEN = ug + 0.001*ug*unifrnd(-1,1);
+                vSCREEN = vg + 0.001*vg*unifrnd(-1,1);
+                % Calculate diffLOW and diffHIGH
+                diffHIGH = abs(yHIT-yMISS)/(ySamp-1);
+            end
+            yLIM2 = yHIT;
+            fprintf('Done.\n');
+            
+        end
+
         
     end
     

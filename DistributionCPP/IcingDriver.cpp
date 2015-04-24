@@ -58,12 +58,12 @@ int main(int argc, const char *argv[]) {
   default_random_engine generator;
   uniform_real_distribution<double> distX(-0.2,-0.1);
   uniform_real_distribution<double> distY(-0.1,0.1);
-  double Xq, Yq, Xnn, Ynn;
+  double Xq, Yq, Xnn, Ynn, indnn;
   for (int i=0; i<1000; i++) {
     Xq = distX(generator);
     Yq = distY(generator);
-    QT->knnSearch(&Xq,&Yq,&Xnn,&Ynn);
-    fprintf(foutKNN,"%f\t%f\t%f\t%f\n",Xq,Yq,Xnn,Ynn);
+    QT->knnSearch(&Xq,&Yq,&Xnn,&Ynn,&indnn);
+    fprintf(foutKNN,"%f\t%f\t%f\t%f\t%f\n",Xq,Yq,Xnn,Ynn,indnn);
   }
   printf("KNN search successful. Data written to outputKNNSEARCH.dat.\n");
 

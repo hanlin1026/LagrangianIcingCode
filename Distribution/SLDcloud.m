@@ -105,9 +105,13 @@ classdef SLDcloud < hgsetget
             % Find local points of impingement, normal vectors
             [~,~,nx,ny,tx,ty] = airfoil.findPanel(x,y);
             % Compute (vectorized) dot products of droplet velocities with normal vectors
-            vnormsq = sum(([u,v].*[nx,ny]).^2,2);
+            vnormsq = ((u.*nx) + (v.*ny)).^2;
             vtang = sum(([u,v].*[tx,ty]),2);
             We = 2*rhol.*rd.*(vnormsq)./sigma;
+            % TEMPORARY PLOTTING ***********************************
+            s = airfoil.XYtoScoords(x,y);
+            figure(15); hold on; plot(s-airfoil.stagPt,vnormsq,'b.');
+            % ******************************************************
             % Compute Ohnesorge number
             Oh = sqrt(mul./2./rhol./sigma./rd);
             % Compute Cossali number
@@ -138,8 +142,13 @@ classdef SLDcloud < hgsetget
             ind2 = find((K > Kb0*fb) & (K < Ks0*fs));
             ind3 = find(K > Ks0*fs);
             bounce = ind1;
-            spread = ind2;
-            splash = ind3;
+            %spread = ind2;
+            spread = [];
+            splash = [ind2; ind3];
+            % TEMPORARY PLOTTING ***********************************
+            s = airfoil.XYtoScoords(x,y);
+            figure(16); hold on; plot(s(ind3)-airfoil.stagPt,K(ind3)./(Ks0*fs(ind3)),'b.');
+            % ******************************************************
             % Set index trackers in the cloud
             set(cloud,'bounce',[]); set(cloud,'bounce',bounce);
             set(cloud,'spread',[]); set(cloud,'spread',spread);
@@ -194,9 +203,9 @@ classdef SLDcloud < hgsetget
             dS(noGlitch) = (SI(noGlitch)-PI(noGlitch)).^2 + (SJ(noGlitch)-PJ(noGlitch)).^2;
             dSW(noGlitch) = (SWI(noGlitch)-PI(noGlitch)).^2 + (SWJ(noGlitch)-PJ(noGlitch)).^2;
             dSE(noGlitch) = (SEI(noGlitch)-PI(noGlitch)).^2 + (SEJ(noGlitch)-PJ(noGlitch)).^2;
-            dS(glitch) = 1e5;
-            dSW(glitch) = 1e5;
-            dSE(glitch) = 1e5;
+            dS(glitch) = inf;
+            dSW(glitch) = inf;
+            dSE(glitch) = inf;
             % Find minimum
             [~,indMin] = min([dC,dN,dS,dE,dW,dSW,dSE,dNW,dNE]');
             indNN = [C,N,S,E,W,SW,SE,NW,NE];
@@ -220,7 +229,7 @@ classdef SLDcloud < hgsetget
             %}
         end
         
-        function cloud = deleteParticle(cloud,ind)
+        function cloud = deleteParticles(cloud,ind)
             % Function to delete a particle from the SLD cloud
             
             % Delete appropriate elements from current state vectors
@@ -232,17 +241,41 @@ classdef SLDcloud < hgsetget
             cloud.Temp(ind) = [];
             cloud.numDroplets(ind) = [];
             cloud.time(ind) = [];
+            cloud.indT(ind) = [];
+            set(cloud,'indCell',[ind;-1]);
+            % Delete elements from current particles being advected
+            [commonInd,indIndAdv,~] = intersect(cloud.indAdv,ind);
+            set(cloud,'dt',[indIndAdv;-1]);
+            cloud.indAdv(indIndAdv) = [];
+            % Delete elements from currently impinging particles
+            [commonImpinge,indImp,~] = intersect(cloud.impinge,ind);
+            set(cloud,'impinge',[indImp;-1]);
+            set(cloud,'K',[indImp;-1]);
+            set(cloud,'fs',[indImp;-1]);
+            set(cloud,'fb',[indImp;-1]);
+            set(cloud,'normvelsq',[indImp;-1]);
+            set(cloud,'tangvel',[indImp;-1]);
+            [~,indBounce,~] = intersect(cloud.bounce,indImp);
+            [~,indSpread,~] = intersect(cloud.spread,indImp);
+            [~,indSplash,~] = intersect(cloud.splash,indImp);
+            set(cloud,'bounce',[indBounce;-1]);
+            set(cloud,'spread',[indSpread;-1]);
+            set(cloud,'splash',[indSplash;-1]);
             % Update total number of particles and indices
-            numdel = length(ind);
+            numdel = size(ind,1);
             cloud.particles = cloud.particles - numdel;
-            % Fix index trackers due to particles being deleted
-            newBounce = cloud.resetVector(cloud.bounce,ind);
-            set(cloud,'bounce',[]); set(cloud,'bounce',newBounce);
-            newSpread = cloud.resetVector(cloud.spread,ind);
-            set(cloud,'spread',[]); set(cloud,'spread',newSpread);
-            newImpinge = cloud.resetVector(cloud.impinge,ind);
-            set(cloud,'impinge',[]); set(cloud,'impinge',newImpinge);
+        end
+        
+        function cloud = removeIrrelevantParticles(cloud,fluid)
+            % Function to remove particles that won't impinge
             
+            nWrap = size(fluid.MEANx,1);
+            ind1 = find(cloud.indCell > 60*nWrap);
+            ind2 = find(cloud.x > 0);
+            ind = intersect(ind1,ind2);
+            if (~isempty(cloud.impingeTotal))
+                cloud.deleteParticles(ind);
+            end
         end
 
         function cloud = set.x(cloud,x)
@@ -310,10 +343,14 @@ classdef SLDcloud < hgsetget
             if isempty(vars)
                 % Clear impinge
                 cloud.impinge = [];
-            elseif length(vars)==1
+            elseif size(vars,1)==1
                 % Append a single element to impinge
                 ind=length(cloud.impinge)+1;
                 cloud.impinge(ind,1) = vars;
+            elseif vars(end) == -1
+                % Delete specified members
+                ind = vars(1:end-1);
+                cloud.impinge(ind) = [];
             else
                 % Append multiple elements
                 cloud.impinge = [cloud.impinge; vars];
@@ -332,6 +369,10 @@ classdef SLDcloud < hgsetget
             if isempty(vars)
                 % Clear bounce
                 cloud.bounce = [];
+            elseif vars(end) == -1
+                % Delete specified members
+                ind = vars(1:end-1);
+                cloud.bounce(ind) = [];
             else
                 % Case to append new index trackers to cloud.bounce
                 cloud.bounce = [cloud.bounce; vars];
@@ -341,6 +382,10 @@ classdef SLDcloud < hgsetget
         function cloud = set.spread(cloud,vars)
             if isempty(vars)
                 cloud.spread = [];
+            elseif vars(end) == -1
+                % Delete specified members
+                ind = vars(1:end-1);
+                cloud.spread(ind) = [];
             else
                 cloud.spread = [cloud.spread; vars];
             end
@@ -349,6 +394,10 @@ classdef SLDcloud < hgsetget
         function cloud = set.splash(cloud,vars)
             if isempty(vars)
                 cloud.splash = [];
+            elseif vars(end) == -1
+                % Delete specified members
+                ind = vars(1:end-1);
+                cloud.splash(ind) = [];
             else
                 cloud.splash = [cloud.splash; vars];
             end
@@ -357,6 +406,10 @@ classdef SLDcloud < hgsetget
         function cloud = set.normvelsq(cloud,vars)
             if isempty(vars)
                 cloud.normvelsq = [];
+            elseif vars(end) == -1
+                % Delete specified members
+                ind = vars(1:end-1);
+                cloud.normvelsq(ind) = [];
             else
                 cloud.normvelsq = [cloud.normvelsq; vars];
             end
@@ -365,6 +418,10 @@ classdef SLDcloud < hgsetget
         function cloud = set.tangvel(cloud,vars)
             if isempty(vars)
                 cloud.tangvel = [];
+            elseif vars(end) == -1
+                % Delete specified members
+                ind = vars(1:end-1);
+                cloud.tangvel(ind) = [];
             else
                 cloud.tangvel = [cloud.tangvel; vars];
             end
@@ -377,6 +434,10 @@ classdef SLDcloud < hgsetget
             elseif size(vars,2)==2
                 % Set specific indexed elements of dt
                 cloud.dt(vars(:,1)) = vars(:,2);
+            elseif vars(end) == -1
+                % Delete
+                ind = vars(1:end-1);
+                cloud.dt(ind) = [];
             else
                 % Set all of dt
                 cloud.dt = vars;
@@ -409,12 +470,58 @@ classdef SLDcloud < hgsetget
             % Set indCell
             
             if size(val,2)==1
-                % Set all elements
-                cloud.indCell = val;
+                if val(end) == -1
+                    % Delete
+                    ind = val(1:end-1);
+                    cloud.indCell(ind) = [];
+                else
+                    % Set all elements
+                    cloud.indCell = val;
+                end
             elseif size(val,2)==2
                 % Set specified elements
                 cloud.indCell(val(:,2)) = val(:,1);
             end
+        end
+        
+        function cloud = set.K(cloud,vars)
+            if vars(end) == -1
+                % Delete specified members
+                ind = vars(1:end-1);
+                cloud.K(ind) = [];
+            else
+                cloud.K = vars;
+            end
+            
+        end
+        
+        function cloud = set.fs(cloud,vars)
+            if vars(end) == -1
+                % Delete specified members
+                ind = vars(1:end-1);
+                cloud.fs(ind) = [];
+            else
+                cloud.fs = vars;
+            end
+            
+        end
+        
+        function cloud = set.fb(cloud,vars)
+            if vars(end) == -1
+                % Delete specified members
+                ind = vars(1:end-1);
+                cloud.fb(ind) = [];
+            else
+                cloud.fb = vars;
+            end
+        end
+        
+        function cloud = set.indAdv(cloud,vars)
+            cloud.indAdv = vars;
+        end
+        
+        function cloud = set.indT(cloud,vars)
+            cloud.indT = vars;
         end
         
         function state = getState(cloud)

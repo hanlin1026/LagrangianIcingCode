@@ -17,6 +17,7 @@ if ~isempty(indSpread)
     mSpread = (4/3)*pi*rdSpread.^3*rhol;
     % Deposit mass at s-coordinate location
     sCoordSpread = airfoil.XYtoScoords(pxSpread,pySpread);
+    set(airfoil,'FILMspread',[]);
     set(airfoil,'FILMspread',[sCoordSpread, nDropSpread.*mSpread]);
     % Record splashing of original droplets
     indtmp = find(indStateSpread <= cloud.originalNumParticles);

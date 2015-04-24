@@ -11,7 +11,7 @@ Cloud::Cloud(State& state, Bucket& gridQT, double rhol) {
   // Search grid QT for initial cell indices
   VectorXd Xnn(particles_);
   VectorXd Ynn(particles_);
-  double 
+  VectorXd indCell(particles_);
   for (int i=0; i<particles_; i++) {
     double xq = state.x;
     double yq = state.y;

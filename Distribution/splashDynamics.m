@@ -40,6 +40,7 @@ if ~isempty(indSplash)
     indCellNew = [];
     NUMNEWTOTAL = 0;
     for i=1:length(indSplash)
+        %{
         if ms(i) ~= 0
             % Interpolate analytical expression for the CDF to get droplet size
             var = 0.2;
@@ -94,9 +95,11 @@ if ~isempty(indSplash)
             % deposition)
             
         end
+        %}
         % Add mass which has "stuck" to airfoil
         set(airfoil,'FILMsplash',[sCoordSplash(i), nDropSplash(i)*mStick(i)]);
     end
+    %{
     if ~isempty(state)
         % Add new splashed child particles
         indS1 = cloud.particles+1;
@@ -110,6 +113,7 @@ if ~isempty(indSplash)
         origSplash = sCoordSplash(indtmp);
         set(airfoil,'originalImpingeScoordSplash',origSplash);
     end
+    %}
 end
 % END SPLASHING MODE DYNAMICS *********************************************
 

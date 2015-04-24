@@ -51,12 +51,13 @@ void Bucket::addNode(int ind, double* sw, double* se, double* nw, double* ne) {
   buckets_[ind] = new Bucket(sw,se,nw,ne,level_+1);
 }
 
-void Bucket::setPoints(double* dataX, double* dataY, int NumPts) {
+void Bucket::setPoints(double* dataX, double* dataY, vector<double>& indData, int NumPts) {
   // Function to pass in a data set and determine the subset contained in bucket
   
   int count = 0;
   PX_.reserve(NumPts);
   PY_.reserve(NumPts);
+  indData_.reserve(NumPts);
   bool flag1, flag2, flag3, flag4, flag;
   for (int i=0; i<NumPts; i++) {
     flag1 = (dataX[i] >= SW_[0]);
@@ -68,6 +69,7 @@ void Bucket::setPoints(double* dataX, double* dataY, int NumPts) {
     if (flag==true) {
 	PX_[count] = dataX[i];
 	PY_[count] = dataY[i];
+        indData_.push_back(indData[i]);
 	count++;
     }
   }
@@ -75,13 +77,14 @@ void Bucket::setPoints(double* dataX, double* dataY, int NumPts) {
 
 }
 
-void Bucket::getPoints(std::vector<double>* PX, std::vector<double>* PY) {
-  // Function to return points in the data set
+void Bucket::getPoints(vector<double>* PX, vector<double>* PY, vector<double>* indXY) {
+  // Function to return points in the data set and their indices
   
-  PX->reserve(NumPts_); PY->reserve(NumPts_);
+  PX->reserve(NumPts_); PY->reserve(NumPts_); indXY->reserve(NumPts_);
   for (int i=0; i<NumPts_; i++) {
     PX->push_back(PX_[i]);
     PY->push_back(PY_[i]);
+    indXY->push_back(indData_[i]);
   }
 }
 
@@ -121,18 +124,24 @@ void Bucket::divideBucket() {
     this->addNode(3,&S[0],&SE_[0],&C[0],&E[0]);
 
     // Calculate data inside each of the new child buckets
-    this->buckets_[0]->setPoints(&PX_[0],&PY_[0],NumPts_);
-    this->buckets_[1]->setPoints(&PX_[0],&PY_[0],NumPts_);
-    this->buckets_[2]->setPoints(&PX_[0],&PY_[0],NumPts_);
-    this->buckets_[3]->setPoints(&PX_[0],&PY_[0],NumPts_);
+    this->buckets_[0]->setPoints(&PX_[0],&PY_[0],indData_,NumPts_);
+    this->buckets_[1]->setPoints(&PX_[0],&PY_[0],indData_,NumPts_);
+    this->buckets_[2]->setPoints(&PX_[0],&PY_[0],indData_,NumPts_);
+    this->buckets_[3]->setPoints(&PX_[0],&PY_[0],indData_,NumPts_);
   }
 }
 
 void Bucket::calcQuadTree(double* dataX, double* dataY, int NumPts) {
   // Function to handle the entire construction of the quadtree
-
+  
+  // Initialize indices of mother bucket
+  vector<double> indData;
+  indData.reserve(NumPts);
+  for (int i=0; i<NumPts; i++) {
+    indData.push_back(i);
+  }
   // Set points from dataset given
-  this->setPoints(dataX,dataY,NumPts);
+  this->setPoints(dataX,dataY,indData,NumPts);
   // Recursive division of the quadtree until finest levels 
   // of resolution agree with bucket size
   vector<Bucket*> current;
@@ -199,7 +208,7 @@ bool Bucket::calcInBucket(double* Xq, double* Yq) {
   return flag;
 }
 
-void Bucket::knnSearch(double* Xq, double* Yq, double* Xnn, double* Ynn) {
+void Bucket::knnSearch(double* Xq, double* Yq, double* Xnn, double* Ynn, double* indnn) {
   // Function that takes a query point and finds the nearest 
   // neighbor in the data set of the quadtree
 
@@ -233,9 +242,10 @@ void Bucket::knnSearch(double* Xq, double* Yq, double* Xnn, double* Ynn) {
   // Calculate nearest neighbor inside bucket
   int BS = BucketSize_;
   double* dist = new double[BS];
-  std::vector<double> x;
-  std::vector<double> y;
-  current->getPoints(&x,&y);
+  vector<double> x;
+  vector<double> y;
+  vector<double> ind;
+  current->getPoints(&x,&y,&ind);
   for (int i=0; i<BS; i++) {
     dist[i] = pow(x[i]-*Xq,2) + pow(y[i]-*Yq,2);
   }
@@ -249,6 +259,7 @@ void Bucket::knnSearch(double* Xq, double* Yq, double* Xnn, double* Ynn) {
   }
   *Xnn = x[indMin];
   *Ynn = y[indMin];
+  *indnn = ind[indMin];
 
   delete[] dist;
 

@@ -127,8 +127,13 @@ classdef Airfoil < hgsetget
         end
         
         function airfoil = set.FILM(airfoil,vars)
-            % Append elements to FILM so that there is a cumulative effect
-            airfoil.FILM = [airfoil.FILM; vars];
+            if ~isempty(vars)
+                % Append elements to FILM so that there is a cumulative effect
+                airfoil.FILM = [airfoil.FILM; vars];
+            else
+                % Clear airfoil.FILM
+                airfoil.FILM = [];
+            end
         end
         
         function airfoil = set.originalImpingeScoordSplash(airfoil,vars)
@@ -201,12 +206,12 @@ classdef Airfoil < hgsetget
         function clearFilm(airfoil)
             % Function to clear airfoil film
             
-            set(airfoil,'FILM',[]);
+            %set(airfoil,'FILM',[]);
             set(airfoil,'FILMsplash',[]);
             set(airfoil,'FILMspread',[]);
-            set(airfoil,'originalImpingeScoord',[]);
-            set(airfoil,'originalImpingeScoordSplash',[]);
-            set(airfoil,'originalImpingeScoordSpread',[]);
+            %set(airfoil,'originalImpingeScoord',[]);
+            %set(airfoil,'originalImpingeScoordSplash',[]);
+            %set(airfoil,'originalImpingeScoordSpread',[]);
         end
         
     end
