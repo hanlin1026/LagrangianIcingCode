@@ -7,8 +7,8 @@ function impingementRegimeSLD(cloud,airfoil)
 % Compute impingement parameters
 cloud.computeImpingementParams(airfoil);
 
-% Clear airfoil film
-%airfoil.clearFilm();
+% Clear airfoil.FILM
+airfoil.clearFilm();
 
 % Compute impingement regime dynamics
 splashDynamics(cloud,airfoil);
@@ -16,7 +16,10 @@ bounceDynamics(cloud,airfoil);
 spreadDynamics(cloud,airfoil);
 
 % Set airfoil "film"
-set(airfoil,'FILM',[airfoil.FILMsplash; airfoil.FILMspread]);
+%[length(airfoil.FILMsplash), length(airfoil.FILMspread), length(airfoil.FILM)]
+if ~isempty([airfoil.FILMsplash; airfoil.FILMspread])
+    set(airfoil,'FILM',[airfoil.FILMsplash; airfoil.FILMspread]);
+end
 
 % Reset number of particles in simulation
 t = cloud.time;

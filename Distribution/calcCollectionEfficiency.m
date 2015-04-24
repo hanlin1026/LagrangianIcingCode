@@ -34,7 +34,6 @@ DISTr = tmpB.MVD52;
 %BIN27(:,1) = BIN27(:,1);
 %rDIST = BIN27;
 % Hacky crap to use a monodistributed PDF for R
-%{
 dirnum = [];
 for i=1:length(workdir)
     tmp = str2num(workdir(i));
@@ -44,8 +43,6 @@ for i=1:length(workdir)
 end
 dirNUM = str2num(dirnum);
 meanR = DISTr(dirNUM,1);
-%}
-meanR = (111e-6)/2;
 rDIST = [0.99*meanR 1.01*meanR];
 
 PDFparams = {};

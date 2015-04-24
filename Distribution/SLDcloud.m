@@ -142,9 +142,8 @@ classdef SLDcloud < hgsetget
             ind2 = find((K > Kb0*fb) & (K < Ks0*fs));
             ind3 = find(K > Ks0*fs);
             bounce = ind1;
-            %spread = ind2;
-            spread = [];
-            splash = [ind2; ind3];
+            spread = ind2;
+            splash = ind3;
             % TEMPORARY PLOTTING ***********************************
             s = airfoil.XYtoScoords(x,y);
             figure(16); hold on; plot(s(ind3)-airfoil.stagPt,K(ind3)./(Ks0*fs(ind3)),'b.');
