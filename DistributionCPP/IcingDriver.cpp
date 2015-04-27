@@ -5,18 +5,19 @@
 #include <random>
 #include "Grid/PLOT3D.h"
 #include "QuadTree/Bucket.h"
+#include "Cloud/Cloud.h"
 
 // Driver program to test PLOT3D class
 
 int main(int argc, const char *argv[]) {
   // Initialize scalars
   FluidScalars scalars;
-  scalars.pinf_ = 0;
-  scalars.R_ = 1;
-  scalars.Tinf_ = 2;
-  scalars.rhoinf_ = 3;
-  scalars.Ubar_ = 4;
-  scalars.rhol_ = 5;
+  scalars.pinf_ = 1.01325e5;
+  scalars.R_ = 287.058;
+  scalars.Tinf_ = 300;
+  scalars.rhoinf_ = scalars.pinf_/scalars.R_/scalars.Tinf_;
+  scalars.Ubar_ = sqrt(1.4*scalars.pinf_/scalars.rhoinf_);
+  scalars.rhol_ = 1000;
   // Initialize plot3D object, read in basic problem data
   PLOT3D* p3d = new PLOT3D("Grid/MESH.P3D", "Grid/q103.0.50E+01.bin", &scalars);
   float* PROPS = new float[6];
@@ -80,6 +81,34 @@ int main(int argc, const char *argv[]) {
     fprintf(foutTRANS,"%f\t%f\n",I(i),J(i));
   }
   printf("Jacobian transformation successful. Data written to outputIJCOORDS.dat.\n");
+
+  // Initialize cloud of particles
+  int particles = 1000;
+  State state;
+  state.x.resize(particles);
+  state.y.resize(particles);
+  state.u.resize(particles);
+  state.v.resize(particles);
+  state.r.resize(particles);
+  state.temp.resize(particles);
+  state.time.resize(particles);
+  state.numDrop.resize(particles);
+  double Rmean = 100e-6;
+  double Tmean = 0;
+  double pg, ug, vg;
+  for (int i=0; i<particles; i++) {
+    state.x(i) = distX(generator);
+    state.y(i) = distY(generator);
+    QT->knnSearch(&state.x(i),&state.y(i),&Xnn,&Ynn,&indnn);
+    state.u(i) = p3d->getRHOU(indnn);
+    state.v(i) = p3d->getRHOV(indnn);
+    state.r(i) = Rmean;
+    state.temp(i) = Tmean;
+    state.time(i) = 0;
+    state.numDrop(i) = 1;
+  }
+  Cloud cloud(state,*QT,scalars.rhol_);
+  printf("Cloud initialization successful.\n");
   
   // Clear any allocated memory, close files/streams
   delete p3d;

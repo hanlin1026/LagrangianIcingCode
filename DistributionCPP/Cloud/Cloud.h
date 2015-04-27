@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include "State.h"
+#include "../QuadTree/Bucket.h"
 #include <eigen3/Eigen/Dense>
 
 class Cloud {
@@ -17,6 +18,6 @@ class Cloud {
   double sigma_;
   Eigen::VectorXd indCell_;
 
-}
+};
 
 #endif

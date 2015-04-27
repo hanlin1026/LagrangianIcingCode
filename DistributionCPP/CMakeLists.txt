@@ -5,7 +5,8 @@ add_definitions( -std=c++0x -c -g )
 
 add_library( IcingLib
   Grid/PLOT3D.cc
-  QuadTree/Bucket.cpp )
+  QuadTree/Bucket.cpp
+  Cloud/Cloud.cpp )
 
 
 add_executable( IcingDriver IcingDriver.cpp )

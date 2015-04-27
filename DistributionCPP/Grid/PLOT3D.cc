@@ -39,6 +39,14 @@ PLOT3D::PLOT3D(const char *meshfname, const char *solnfname, FluidScalars* scala
   fread(&alpha_, sizeof(float), 1, solnfile);
   fread(&reynolds_, sizeof(float), 1, solnfile);
   fread(&time_, sizeof(float), 1, solnfile);
+  // Read in scalars
+  pinf_ =   scalars->pinf_;
+  R_ =      scalars->R_;
+  Tinf_ =   scalars->Tinf_;
+  rhoinf_ = scalars->rhoinf_;
+  Ubar_ =   scalars->Ubar_;
+  rhol_ =   scalars->rhol_;
+  Uinf_ = mach_*340;
   // Read in solution data
   rho_.resize(nx_,ny_);
   rhou_.resize(nx_,ny_);
@@ -53,23 +61,16 @@ PLOT3D::PLOT3D(const char *meshfname, const char *solnfname, FluidScalars* scala
   fread(&rhovTMP, sizeof(float), nx_*ny_, solnfile);
   fread(&ETMP, sizeof(float), nx_*ny_, solnfile);
   iter = 0;
+  // Normalize solution data
   for (int j=0; j<ny_; j++) {
     for (int i=0; i<nx_; i++) {
-      rho_(i,j) = rhoTMP[iter];
-      rhou_(i,j) = rhouTMP[iter];
-      rhov_(i,j) = rhovTMP[iter];
+      rho_(i,j) = rhoinf_*rhoTMP[iter];
+      rhou_(i,j) = Ubar_*rhoinf_*rhouTMP[iter]/rho_(i,j);
+      rhov_(i,j) = Ubar_*rhoinf_*rhovTMP[iter]/rho_(i,j);
       E_(i,j) = ETMP[iter];
       iter++;
     }
   }
-  // Read in scalars
-  pinf_ =   scalars->pinf_;
-  R_ =      scalars->R_;
-  Tinf_ =   scalars->Tinf_;
-  rhoinf_ = scalars->rhoinf_;
-  Ubar_ =   scalars->Ubar_;
-  rhol_ =   scalars->rhol_;
-  Uinf_ = mach_*340;
   // Close input streams/files, free any allocated memory
   delete[] xy;
   meshfile.close();
@@ -104,6 +105,30 @@ MatrixXd PLOT3D::getXCENT() {
 }
 MatrixXd PLOT3D::getYCENT() {
   return yCENT_;
+}
+double PLOT3D::getX(int ind) {
+  return x_(ind);
+}
+double PLOT3D::getY(int ind) {
+  return y_(ind);
+}
+float PLOT3D::getRHO(int ind) {
+  return rho_(ind);
+}
+float PLOT3D::getRHOU(int ind) {
+  return rhou_(ind);
+}
+float PLOT3D::getRHOV(int ind) {
+  return rhov_(ind);
+}
+float PLOT3D::getE(int ind) {
+  return E_(ind);
+}
+double PLOT3D::getXCENT(int ind) {
+  return xCENT_(ind);
+}
+double PLOT3D::getYCENT(int ind) {
+  return yCENT_(ind);
 }
 
 void PLOT3D::getPROPS(float* PROPS) {

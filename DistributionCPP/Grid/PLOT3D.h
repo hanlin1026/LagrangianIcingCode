@@ -17,14 +17,14 @@ class PLOT3D {
   PLOT3D(const char *meshfname, const char *solnfname, FluidScalars* scalars);
   ~PLOT3D();
   // Get methods
-  Eigen::MatrixXd getX();
-  Eigen::MatrixXd getY();
-  Eigen::MatrixXf getRHO();
-  Eigen::MatrixXf getRHOU();
-  Eigen::MatrixXf getRHOV();
-  Eigen::MatrixXf getE();
-  Eigen::MatrixXd getXCENT();
-  Eigen::MatrixXd getYCENT();
+  Eigen::MatrixXd getX();      double getX(int ind);
+  Eigen::MatrixXd getY();      double getY(int ind);
+  Eigen::MatrixXf getRHO();    float  getRHO(int ind);
+  Eigen::MatrixXf getRHOU();   float  getRHOU(int ind);
+  Eigen::MatrixXf getRHOV();   float  getRHOV(int ind);
+  Eigen::MatrixXf getE();      float  getE(int ind);
+  Eigen::MatrixXd getXCENT();  double getXCENT(int ind);
+  Eigen::MatrixXd getYCENT();  double getYCENT(int ind);
   void getPROPS(float* PROPS);
   // Cell metrics methods
   void computeCellAreas();
@@ -58,5 +58,6 @@ class PLOT3D {
   Eigen::MatrixXd Jyx_;
   Eigen::MatrixXd Jyy_;
   Eigen::MatrixXd Lmin_;
+  // Method to return 
 };
 #endif // PLOT3D_H
