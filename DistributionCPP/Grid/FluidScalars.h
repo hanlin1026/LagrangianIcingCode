@@ -9,6 +9,13 @@ struct FluidScalars {
   double rhoinf_;
   double Ubar_;
   double rhol_;
+  // Scalars needed for constructor of Grid class
+  int nx_;
+  int ny_;
+  float mach_;
+  float alpha_;
+  float reynolds_;
+  float time_; 
 
 };
 

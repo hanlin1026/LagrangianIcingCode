@@ -49,24 +49,25 @@ PLOT3D::PLOT3D(const char *meshfname, const char *solnfname, FluidScalars* scala
   Uinf_ = mach_*340;
   // Read in solution data
   rho_.resize(nx_,ny_);
-  rhou_.resize(nx_,ny_);
-  rhov_.resize(nx_,ny_);
+  u_.resize(nx_,ny_);
+  v_.resize(nx_,ny_);
   E_.resize(nx_,ny_);
-  double rhoTMP[nx_*ny_];
-  double rhouTMP[nx_*ny_];
-  double rhovTMP[nx_*ny_];
-  double ETMP[nx_*ny_];
+  float rhoTMP[nx_*ny_];
+  float uTMP[nx_*ny_];
+  float vTMP[nx_*ny_];
+  float ETMP[nx_*ny_];
   fread(&rhoTMP, sizeof(float), nx_*ny_, solnfile);
-  fread(&rhouTMP, sizeof(float), nx_*ny_, solnfile);
-  fread(&rhovTMP, sizeof(float), nx_*ny_, solnfile);
+  fread(&uTMP, sizeof(float), nx_*ny_, solnfile);
+  fread(&vTMP, sizeof(float), nx_*ny_, solnfile);
   fread(&ETMP, sizeof(float), nx_*ny_, solnfile);
+  printf("%f\n",rhoTMP[0]);
   iter = 0;
   // Normalize solution data
   for (int j=0; j<ny_; j++) {
     for (int i=0; i<nx_; i++) {
       rho_(i,j) = rhoinf_*rhoTMP[iter];
-      rhou_(i,j) = Ubar_*rhoinf_*rhouTMP[iter]/rho_(i,j);
-      rhov_(i,j) = Ubar_*rhoinf_*rhovTMP[iter]/rho_(i,j);
+      u_(i,j) = Ubar_*rhoinf_*uTMP[iter]/rho_(i,j);
+      v_(i,j) = Ubar_*rhoinf_*vTMP[iter]/rho_(i,j);
       E_(i,j) = ETMP[iter];
       iter++;
     }
@@ -91,11 +92,11 @@ MatrixXd PLOT3D::getY() {
 MatrixXf PLOT3D::getRHO() {
   return rho_;
 }
-MatrixXf PLOT3D::getRHOU() {
-  return rhou_;
+MatrixXf PLOT3D::getU() {
+  return u_;
 }
-MatrixXf PLOT3D::getRHOV() {
-  return rhov_;
+MatrixXf PLOT3D::getV() {
+  return v_;
 }
 MatrixXf PLOT3D::getE() {
   return E_;
@@ -115,11 +116,11 @@ double PLOT3D::getY(int ind) {
 float PLOT3D::getRHO(int ind) {
   return rho_(ind);
 }
-float PLOT3D::getRHOU(int ind) {
-  return rhou_(ind);
+float PLOT3D::getU(int ind) {
+  return u_(ind);
 }
-float PLOT3D::getRHOV(int ind) {
-  return rhov_(ind);
+float PLOT3D::getV(int ind) {
+  return v_(ind);
 }
 float PLOT3D::getE(int ind) {
   return E_(ind);
@@ -131,15 +132,15 @@ double PLOT3D::getYCENT(int ind) {
   return yCENT_(ind);
 }
 
-void PLOT3D::getPROPS(float* PROPS) {
+void PLOT3D::getPROPS(FluidScalars& PROPS) {
   // Function to return [nx,ny,mach,alpha,reynolds,time]
 
-  PROPS[0] = (float)nx_;
-  PROPS[1] = (float)ny_;
-  PROPS[2] = mach_;
-  PROPS[3] = alpha_;
-  PROPS[4] = reynolds_;
-  PROPS[5] = time_;
+  PROPS.nx_ = (float)nx_;
+  PROPS.ny_ = (float)ny_;
+  PROPS.mach_ = mach_;
+  PROPS.alpha_ = alpha_;
+  PROPS.reynolds_ = reynolds_;
+  PROPS.time_ = time_;
   
 }
 
@@ -175,8 +176,8 @@ void PLOT3D::computeCellCenters() {
   xCENT_.resize(nx_-1,ny_-1);
   yCENT_.resize(nx_-1,ny_-1);
   rhoCENT_.resize(nx_-1,ny_-1);
-  rhouCENT_.resize(nx_-1,ny_-1);
-  rhovCENT_.resize(nx_-1,ny_-1);
+  uCENT_.resize(nx_-1,ny_-1);
+  vCENT_.resize(nx_-1,ny_-1);
   ECENT_.resize(nx_-1,ny_-1);
   
   // Compute centroid locations and flow variables
@@ -185,8 +186,8 @@ void PLOT3D::computeCellCenters() {
       xCENT_(i,j) =    0.25*(x_(i,j) + x_(i+1,j) + x_(i,j+1) + x_(i+1,j+1));
       yCENT_(i,j) =    0.25*(y_(i,j) + y_(i+1,j) + y_(i,j+1) + y_(i+1,j+1));
       rhoCENT_(i,j) =  0.25*(rho_(i,j) + rho_(i+1,j) + rho_(i,j+1) + rho_(i+1,j+1));
-      rhouCENT_(i,j) = 0.25*(rhou_(i,j) + rhou_(i+1,j) + rhou_(i,j+1) + rhou_(i+1,j+1));
-      rhovCENT_(i,j) = 0.25*(rhov_(i,j) + rhov_(i+1,j) + rhov_(i,j+1) + rhov_(i+1,j+1));
+      uCENT_(i,j) = 0.25*(u_(i,j) + u_(i+1,j) + u_(i,j+1) + u_(i+1,j+1));
+      vCENT_(i,j) = 0.25*(v_(i,j) + v_(i+1,j) + v_(i,j+1) + v_(i+1,j+1));
       ECENT_(i,j) =    0.25*(E_(i,j) + E_(i+1,j) + E_(i,j+1) + E_(i+1,j+1));
     }
   }

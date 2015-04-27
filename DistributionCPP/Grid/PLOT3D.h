@@ -20,12 +20,12 @@ class PLOT3D {
   Eigen::MatrixXd getX();      double getX(int ind);
   Eigen::MatrixXd getY();      double getY(int ind);
   Eigen::MatrixXf getRHO();    float  getRHO(int ind);
-  Eigen::MatrixXf getRHOU();   float  getRHOU(int ind);
-  Eigen::MatrixXf getRHOV();   float  getRHOV(int ind);
+  Eigen::MatrixXf getU();      float  getU(int ind);
+  Eigen::MatrixXf getV();      float  getV(int ind);
   Eigen::MatrixXf getE();      float  getE(int ind);
   Eigen::MatrixXd getXCENT();  double getXCENT(int ind);
   Eigen::MatrixXd getYCENT();  double getYCENT(int ind);
-  void getPROPS(float* PROPS);
+  void getPROPS(FluidScalars& PROPS);
   // Cell metrics methods
   void computeCellAreas();
   void computeCellCenters();
@@ -37,8 +37,8 @@ class PLOT3D {
   Eigen::MatrixXd x_;
   Eigen::MatrixXd y_;
   Eigen::MatrixXf rho_; 
-  Eigen::MatrixXf rhou_; 
-  Eigen::MatrixXf rhov_; 
+  Eigen::MatrixXf u_; 
+  Eigen::MatrixXf v_; 
   Eigen::MatrixXf E_;
   // Properties of the grid/soln
   int nx_, ny_;
@@ -49,8 +49,8 @@ class PLOT3D {
   Eigen::MatrixXd xCENT_;
   Eigen::MatrixXd yCENT_;
   Eigen::MatrixXf rhoCENT_; 
-  Eigen::MatrixXf rhouCENT_; 
-  Eigen::MatrixXf rhovCENT_; 
+  Eigen::MatrixXf uCENT_; 
+  Eigen::MatrixXf vCENT_; 
   Eigen::MatrixXf ECENT_;
   Eigen::MatrixXd cellArea_;
   Eigen::MatrixXd Jxx_;
