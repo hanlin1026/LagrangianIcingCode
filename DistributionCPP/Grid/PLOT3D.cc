@@ -60,7 +60,6 @@ PLOT3D::PLOT3D(const char *meshfname, const char *solnfname, FluidScalars* scala
   fread(&uTMP, sizeof(float), nx_*ny_, solnfile);
   fread(&vTMP, sizeof(float), nx_*ny_, solnfile);
   fread(&ETMP, sizeof(float), nx_*ny_, solnfile);
-  printf("%f\n",rhoTMP[0]);
   iter = 0;
   // Normalize solution data
   for (int j=0; j<ny_; j++) {

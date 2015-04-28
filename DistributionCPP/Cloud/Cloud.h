@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include "State.h"
 #include <QuadTree/Bucket.h>
+#include <Airfoil/Airfoil.h>
+#include <Grid/PLOT3D.h>
 #include <eigen3/Eigen/Dense>
 
 class Cloud {
@@ -12,11 +14,13 @@ class Cloud {
   ~Cloud();
   void addParticle(State& state, Bucket& gridQT);
   State getState();
+  // Methods for SLD dynamics
+  void calcDtandImpinge(Airfoil& airfoil, PLOT3D& grid);
 
  private:
   State state_;
   double rhol_;
-  double particles_;
+  int particles_;
   double sigma_;
   Eigen::VectorXd indCell_;
 

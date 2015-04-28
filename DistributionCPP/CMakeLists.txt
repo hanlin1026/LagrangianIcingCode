@@ -8,7 +8,8 @@ add_library( IcingLib
   Grid/PLOT3D.cc
   QuadTree/Bucket.cpp
   Cloud/Cloud.cpp
-  Cloud/State.cpp )
+  Cloud/State.cpp
+  Airfoil/Airfoil.cpp )
 
 
 add_executable( IcingDriver IcingDriver.cpp )

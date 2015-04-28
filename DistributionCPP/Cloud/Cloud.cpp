@@ -45,3 +45,17 @@ State Cloud::getState() {
 
   return state_;
 }
+
+void Cloud::calcDtandImpinge(Airfoil& airfoil, PLOT3D& grid) {
+  // Function which does the following:
+  // (1) calculate which particles are currently being advected
+  // (2) set local time steps based on CFL condition
+  // (3) determine which droplets are currently impinging
+
+  double indT[particles_];
+  for (int i=0; i<particles_; i++) {
+    indT[i] = i;
+  }
+  
+
+}

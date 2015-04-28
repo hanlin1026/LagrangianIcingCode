@@ -6,8 +6,9 @@
 #include "Grid/PLOT3D.h"
 #include "QuadTree/Bucket.h"
 #include "Cloud/Cloud.h"
+#include "Airfoil/Airfoil.h"
 
-// Driver program to test PLOT3D class
+// Airfoil icing code driver program
 
 int main(int argc, const char *argv[]) {
   // Initialize scalars
@@ -62,6 +63,22 @@ int main(int argc, const char *argv[]) {
   }
   Cloud cloud(state,*QT,scalars.rhol_);
   printf("Cloud initialization successful.\n");
+  // Intialize airfoil object
+  Eigen::MatrixXd Xgrid = p3d.getX();
+  Eigen::MatrixXd Ygrid = p3d.getY();
+  Eigen::VectorXd X(Xgrid.rows());
+  Eigen::VectorXd Y(Ygrid.rows());
+  int iter = 0;
+  for (int i=0; i<Xgrid.rows(); i++) {
+    if (Xgrid(i,0) <= 1) {
+      X(iter) = Xgrid(i,0);
+      Y(iter) = Ygrid(i,0);
+      iter++;
+    }
+  }
+  X = X.block(0,0,iter,1);
+  Y = Y.block(0,0,iter,1);
+  Airfoil airfoil = Airfoil(X,Y);
   
   // Clear any allocated memory, close files/streams
   delete QT;
