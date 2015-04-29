@@ -143,6 +143,13 @@ void PLOT3D::getPROPS(FluidScalars& PROPS) {
   
 }
 
+int PLOT3D::getNX() {
+  return nx_;
+}
+int PLOT3D::getNY() {
+  return ny_;
+}
+
 void PLOT3D::computeCellAreas() {
   // Function to compute cell areas
 
@@ -237,5 +244,25 @@ void PLOT3D::transformXYtoIJ(int ind, Eigen::MatrixXd& xq, Eigen::MatrixXd& yq, 
     Iq(i) = (X*Jyy - Y*Jxy)/area;
     Jq(i) = (-X*Jyx + Y*Jxx)/area;
   }
+
+}
+
+void PLOT3D::transformXYtoIJ(int ind, double xq, double yq, double Iq, double Jq) {
+  // Function to transform a single query point from physical domain coordinates (x,y)
+  // to computational domain coordinates (I,J), centered at cell center 'ind'
+  
+  double xC = xCENT_(ind);
+  double yC = yCENT_(ind);
+  double area = cellArea_(ind);
+  double Jxx = Jxx_(ind);
+  double Jxy = Jxy_(ind);
+  double Jyx = Jyx_(ind);
+  double Jyy = Jyy_(ind);
+
+  // Inverse Jacobian transformation
+  double X = xq - xC;
+  double Y = yq - yC;
+  Iq = (X*Jyy - Y*Jxy)/area;
+  Jq = (-X*Jyx + Y*Jxx)/area;
 
 }

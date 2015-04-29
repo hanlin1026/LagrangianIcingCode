@@ -26,12 +26,15 @@ class PLOT3D {
   Eigen::MatrixXd getXCENT();  double getXCENT(int ind);
   Eigen::MatrixXd getYCENT();  double getYCENT(int ind);
   void getPROPS(FluidScalars& PROPS);
+  int getNX();
+  int getNY();
   // Cell metrics methods
   void computeCellAreas();
   void computeCellCenters();
   void computeGridMetrics();
   void transformXYtoIJ(int ind, Eigen::MatrixXd& xq, Eigen::MatrixXd& yq, Eigen::MatrixXd& Iq, Eigen::MatrixXd& Jq);
-
+  void transformXYtoIJ(int ind, double xq, double yq, double Iq, double Jq);
+  
  private:
   // Grid coordinates/solution
   Eigen::MatrixXd x_;

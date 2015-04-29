@@ -9,7 +9,8 @@ add_library( IcingLib
   QuadTree/Bucket.cpp
   Cloud/Cloud.cpp
   Cloud/State.cpp
-  Airfoil/Airfoil.cpp )
+  Airfoil/Airfoil.cpp
+  findAll.cpp )
 
 
 add_executable( IcingDriver IcingDriver.cpp )

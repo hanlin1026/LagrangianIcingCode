@@ -7,6 +7,7 @@
 #include "QuadTree/Bucket.h"
 #include "Cloud/Cloud.h"
 #include "Airfoil/Airfoil.h"
+#include <findAll.h>
 
 // Airfoil icing code driver program
 
