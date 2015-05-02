@@ -8,6 +8,7 @@ class Airfoil {
   public:
     Airfoil(Eigen::VectorXd& X, Eigen::VectorXd& Y);
     ~Airfoil();
+    void findPanel(std::vector<double>& XYq, std::vector<double>& XYnn, std::vector<double>& NxNy, std::vector<double>& TxTy);
 
   private:
     Eigen::VectorXd panelX_;

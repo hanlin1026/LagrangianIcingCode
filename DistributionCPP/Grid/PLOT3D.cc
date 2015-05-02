@@ -106,6 +106,9 @@ MatrixXd PLOT3D::getXCENT() {
 MatrixXd PLOT3D::getYCENT() {
   return yCENT_;
 }
+MatrixXd PLOT3D::getLMIN() {
+  return Lmin_;
+}
 double PLOT3D::getX(int ind) {
   return x_(ind);
 }
@@ -129,6 +132,9 @@ double PLOT3D::getXCENT(int ind) {
 }
 double PLOT3D::getYCENT(int ind) {
   return yCENT_(ind);
+}
+double PLOT3D::getLMIN(int ind) {
+  return Lmin_(ind);
 }
 
 void PLOT3D::getPROPS(FluidScalars& PROPS) {

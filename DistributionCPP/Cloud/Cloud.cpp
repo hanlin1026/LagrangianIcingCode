@@ -67,8 +67,8 @@ void Cloud::findInSimulation() {
   // Find and discount those particles which have passed the airfoil
   vector<int> indPast;
   for (int i=0; i<indAdv.size(); i++) {
-    if (indAdv[i] > 1) {
-      indPast.push_back(i);
+    if (state_.x_(indAdv[i]) > 1) {
+      indPast.push_back(indAdv[i]);
     }
   }
   set_difference(indAdv.begin(),indAdv.end(),indPast.begin(),indPast.end(),inserter(diff,diff.begin()));
@@ -205,7 +205,48 @@ void Cloud::computeNewCellLocations(PLOT3D& grid) {
   indCell_ = indCellNew;
 }
 
+void Cloud::calcDtandImpinge(Airfoil& airfoil, PLOT3D& grid) {
+  // Function to set local timesteps based on CFL condition
 
+  this->findInSimulation();
+  if (!indAdv_.empty()) {
+    impinge_.clear();
+    this->computeNewCellLocations(grid);
+    // Set timesteps
+    double x,y,u,v,velMag,normVel,Lmin;
+    int ind,nI;
+    bool flag,flag1,flag2;
+    vector<double> XYq(2);
+    vector<double> XYa(2);
+    vector<double> NxNy(2);
+    vector<double> TxTy(2);
+    nI = grid.getNX();
+    dt_.reserve(indAdv_.size());
+    for (int i=0; i<indAdv_.size(); i++) {
+      x = state_.x_(indAdv_[i]);
+      y = state_.y_(indAdv_[i]);
+      u = state_.u_(indAdv_[i]);
+      v = state_.v_(indAdv_[i]);
+      // Calculate normal velocities
+      XYq[0] = x; XYq[1] = y;
+      airfoil.findPanel(XYq,XYa,NxNy,TxTy);
+      normVel = u*NxNy[0] + v*NxNy[1];
+      ind = indCell_[indAdv_[i]];
+      flag1 = (ind-4*nI <= 0);
+      flag2 = (normVel < 0);
+      flag = flag1 && flag2;
+      if (flag==true) {
+        impinge_.push_back(indAdv_[i]);
+      }
+      // Set timesteps based on CFL condition
+      velMag = sqrt(pow(u,2) + pow(v,2));
+      Lmin = grid.getLMIN(indAdv_[i]);
+      dt_[i] = 0.5*Lmin/velMag;
+      
+    }
+  }
+
+}
 
 
 

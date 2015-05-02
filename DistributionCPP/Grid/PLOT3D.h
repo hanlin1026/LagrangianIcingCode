@@ -25,6 +25,7 @@ class PLOT3D {
   Eigen::MatrixXf getE();      float  getE(int ind);
   Eigen::MatrixXd getXCENT();  double getXCENT(int ind);
   Eigen::MatrixXd getYCENT();  double getYCENT(int ind);
+  Eigen::MatrixXd getLMIN();   double getLMIN(int ind);
   void getPROPS(FluidScalars& PROPS);
   int getNX();
   int getNY();

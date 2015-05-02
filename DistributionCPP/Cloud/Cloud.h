@@ -15,8 +15,6 @@ class Cloud {
   ~Cloud();
   void addParticle(State& state, Bucket& gridQT);
   // Methods for SLD dynamics
-  void findInSimulation();
-  void computeNewCellLocations(PLOT3D& grid);
   void calcDtandImpinge(Airfoil& airfoil, PLOT3D& grid);
   // Set/get methods
   State getState();
@@ -31,6 +29,10 @@ class Cloud {
   std::vector<int> impingeTotal_;
   std::vector<int> indCell_;
   std::vector<int> indAdv_;
+  std::vector<double> dt_;
+  std::vector<int> impinge_;
+  void findInSimulation();
+  void computeNewCellLocations(PLOT3D& grid);
 
 };
 

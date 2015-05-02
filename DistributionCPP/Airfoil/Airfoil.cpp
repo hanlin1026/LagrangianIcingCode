@@ -41,3 +41,19 @@ Airfoil::Airfoil(Eigen::VectorXd& X, Eigen::VectorXd& Y) {
 Airfoil::~Airfoil() {
   
 }
+
+void Airfoil::findPanel(std::vector<double>& XYq, std::vector<double>& XYnn, std::vector<double>& NxNy, std::vector<double>& TxTy) {
+  // Function to return (x,y) coordinates and normal/tangential 
+  // vectors of the point on the airfoil closest to the query
+
+  double xq = XYq[0];
+  double yq = XYq[1];
+  double xnn,ynn,indnn;
+  panelSearcher_.knnSearch(&xq,&yq,&xnn,&ynn,&indnn);
+  XYnn[0] = xnn; XYnn[1] = ynn;
+  NxNy[0] = normal_(indnn,0); 
+  NxNy[1] = normal_(indnn,1);
+  TxTy[0] = tangent_(indnn,0);
+  TxTy[1] = tangent_(indnn,1);
+
+}
