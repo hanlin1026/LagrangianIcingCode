@@ -11,19 +11,24 @@
 
 class Cloud {
  public:
-  Cloud(State& state, Bucket& gridQT, double rhol);
+  Cloud(State& state, PLOT3D& grid, double rhol);
   ~Cloud();
-  void addParticle(State& state, Bucket& gridQT);
+  void addParticle(State& state, PLOT3D& grid);
   // Methods for SLD dynamics
   void calcDtandImpinge(Airfoil& airfoil, PLOT3D& grid);
+  void transportSLD(PLOT3D& grid);
+  void computeImpingementRegimes(Airfoil& airfoil);
+  void bounceDynamics(Airfoil& airfoil);
   // Set/get methods
   State getState();
   void setIndAdv(std::vector<int>& indAdv);
   std::vector<int> getIndAdv();
+  std::vector<int> getIMPINGE();
+  std::vector<int> getIMPINGETOTAL();
 
  private:
   State state_;
-  double rhol_;
+  double rhoL_;
   int particles_;
   double sigma_;
   std::vector<int> impingeTotal_;
@@ -31,6 +36,15 @@ class Cloud {
   std::vector<int> indAdv_;
   std::vector<double> dt_;
   std::vector<int> impinge_;
+  std::vector<int> bounce_;
+  std::vector<int> spread_;
+  std::vector<int> splash_;
+  std::vector<double> K_;
+  std::vector<double> fs_;
+  std::vector<double> fb_;
+  std::vector<double> vNormSq_;
+  std::vector<double> vTang_;
+  double Ks0_,Kb0_;
   void findInSimulation();
   void computeNewCellLocations(PLOT3D& grid);
 

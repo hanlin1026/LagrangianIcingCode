@@ -8,6 +8,7 @@
 #include <string.h>
 #include <eigen3/Eigen/Dense>
 #include "FluidScalars.h"
+#include <QuadTree/Bucket.h>
 
 using namespace std;
 
@@ -26,15 +27,22 @@ class PLOT3D {
   Eigen::MatrixXd getXCENT();  double getXCENT(int ind);
   Eigen::MatrixXd getYCENT();  double getYCENT(int ind);
   Eigen::MatrixXd getLMIN();   double getLMIN(int ind);
+                               double getRHOCENT(int ind);
+                               double getUCENT(int ind);
+                               double getVCENT(int ind);
   void getPROPS(FluidScalars& PROPS);
   int getNX();
   int getNY();
+  double getTINF();
   // Cell metrics methods
   void computeCellAreas();
   void computeCellCenters();
   void computeGridMetrics();
   void transformXYtoIJ(int ind, Eigen::MatrixXd& xq, Eigen::MatrixXd& yq, Eigen::MatrixXd& Iq, Eigen::MatrixXd& Jq);
   void transformXYtoIJ(int ind, double xq, double yq, double Iq, double Jq);
+  // QuadTree methods
+  void createQuadTree();
+  void pointSearch(double xq, double yq, double& xnn, double& ynn, int& indnn);
   
  private:
   // Grid coordinates/solution
@@ -62,6 +70,7 @@ class PLOT3D {
   Eigen::MatrixXd Jyx_;
   Eigen::MatrixXd Jyy_;
   Eigen::MatrixXd Lmin_;
-  // Method to return 
+  // QuadTree object
+  Bucket QT_;
 };
 #endif // PLOT3D_H

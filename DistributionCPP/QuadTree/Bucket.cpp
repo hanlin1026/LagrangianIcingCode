@@ -74,7 +74,7 @@ void Bucket::addNode(int ind, double* sw, double* se, double* nw, double* ne) {
   buckets_[ind] = new Bucket(sw,se,nw,ne,level_+1);
 }
 
-void Bucket::setPoints(double* dataX, double* dataY, vector<double>& indData, int NumPts) {
+void Bucket::setPoints(double* dataX, double* dataY, vector<int>& indData, int NumPts) {
   // Function to pass in a data set and determine the subset contained in bucket
   
   int count = 0;
@@ -100,7 +100,7 @@ void Bucket::setPoints(double* dataX, double* dataY, vector<double>& indData, in
 
 }
 
-void Bucket::getPoints(vector<double>* PX, vector<double>* PY, vector<double>* indXY) {
+void Bucket::getPoints(vector<double>* PX, vector<double>* PY, vector<int>* indXY) {
   // Function to return points in the data set and their indices
   
   PX->reserve(NumPts_); PY->reserve(NumPts_); indXY->reserve(NumPts_);
@@ -158,7 +158,7 @@ void Bucket::calcQuadTree(double* dataX, double* dataY, int NumPts) {
   // Function to handle the entire construction of the quadtree
   
   // Initialize indices of mother bucket
-  vector<double> indData;
+  vector<int> indData;
   indData.reserve(NumPts);
   for (int i=0; i<NumPts; i++) {
     indData.push_back(i);
@@ -176,11 +176,13 @@ void Bucket::calcQuadTree(double* dataX, double* dataY, int NumPts) {
   FILE* fout = fopen("QuadTreeXY.dat","w");
   Bucket* child;
   // Print initial bucket to file
+  /**
   fprintf(fout,"%f\t%f\n", this->SW_[0], this->SW_[1]);
   fprintf(fout,"%f\t%f\n", this->SE_[0], this->SE_[1]);
   fprintf(fout,"%f\t%f\n", this->NE_[0], this->NE_[1]);
   fprintf(fout,"%f\t%f\n", this->NW_[0], this->NW_[1]);
-
+  **/
+  
   while(flag==false) {
     // Divide current
     for (int i=0; i<sizeCurrent; i++) {
@@ -193,10 +195,12 @@ void Bucket::calcQuadTree(double* dataX, double* dataY, int NumPts) {
 	  numNext++;
 	}
 	// Print to file
+        /**
 	fprintf(fout,"%f\t%f\n", child->SW_[0], child->SW_[1]);
 	fprintf(fout,"%f\t%f\n", child->SE_[0], child->SE_[1]);
 	fprintf(fout,"%f\t%f\n", child->NE_[0], child->NE_[1]);
 	fprintf(fout,"%f\t%f\n", child->NW_[0], child->NW_[1]);
+        **/
       }
     }
     if (numNext>0) {
@@ -208,7 +212,7 @@ void Bucket::calcQuadTree(double* dataX, double* dataY, int NumPts) {
     }
     else {
       // Exit; no more divisions needed
-      printf("Quadtree successfully created. Bucket coordinates written to QuadTreeXY.dat. \n");
+      //printf("Quadtree successfully created. Bucket coordinates written to QuadTreeXY.dat. \n");
       flag = true;
       break;
     }
@@ -231,7 +235,7 @@ bool Bucket::calcInBucket(double* Xq, double* Yq) {
   return flag;
 }
 
-void Bucket::knnSearch(double* Xq, double* Yq, double* Xnn, double* Ynn, double* indnn) {
+void Bucket::knnSearch(double* Xq, double* Yq, double* Xnn, double* Ynn, int* indnn) {
   // Function that takes a query point and finds the nearest 
   // neighbor in the data set of the quadtree
 
@@ -267,7 +271,7 @@ void Bucket::knnSearch(double* Xq, double* Yq, double* Xnn, double* Ynn, double*
   double* dist = new double[BS];
   vector<double> x;
   vector<double> y;
-  vector<double> ind;
+  vector<int> ind;
   current->getPoints(&x,&y,&ind);
   for (int i=0; i<BS; i++) {
     dist[i] = pow(x[i]-*Xq,2) + pow(y[i]-*Yq,2);

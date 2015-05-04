@@ -13,19 +13,19 @@ class Bucket {
   Bucket** buckets_;
   void setBounds(double* SW, double* SE, double* NW, double* NE);
   void addNode(int ind, double* sw, double* se, double* nw, double* ne);
-  void setPoints(double* dataX, double* dataY, std::vector<double>& indData, int NumPts);
-  void getPoints(std::vector<double>* PX, std::vector<double>* PY, std::vector<double>* indXY);
+  void setPoints(double* dataX, double* dataY, std::vector<int>& indData, int NumPts);
+  void getPoints(std::vector<double>* PX, std::vector<double>* PY, std::vector<int>* indXY);
   int getNPts();
   int getLevel();
   void setBucketSize(int BS);
   void divideBucket();
   void calcQuadTree(double* dataX, double* dataY, int NumPts);
-  void knnSearch(double* Xq, double* Yq, double* Xnn, double* Ynn, double* indnn);
+  void knnSearch(double* Xq, double* Yq, double* Xnn, double* Ynn, int* indnn);
 
  private:
   std::vector<double> PX_;
   std::vector<double> PY_;
-  std::vector<double> indData_;
+  std::vector<int> indData_;
   int NumPts_;
   int BucketSize_;
   int level_;

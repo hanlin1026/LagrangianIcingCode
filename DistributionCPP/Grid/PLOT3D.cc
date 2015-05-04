@@ -71,6 +71,11 @@ PLOT3D::PLOT3D(const char *meshfname, const char *solnfname, FluidScalars* scala
       iter++;
     }
   }
+  // Initialize searcher object
+  this->computeCellCenters();
+  this->computeCellAreas();
+  this->computeGridMetrics();
+  this->createQuadTree();
   // Close input streams/files, free any allocated memory
   delete[] xy;
   meshfile.close();
@@ -133,6 +138,15 @@ double PLOT3D::getXCENT(int ind) {
 double PLOT3D::getYCENT(int ind) {
   return yCENT_(ind);
 }
+double PLOT3D::getRHOCENT(int ind) {
+  return rhoCENT_(ind);
+}
+double PLOT3D::getUCENT(int ind) {
+  return uCENT_(ind);
+}
+double PLOT3D::getVCENT(int ind) {
+  return vCENT_(ind);
+}
 double PLOT3D::getLMIN(int ind) {
   return Lmin_(ind);
 }
@@ -154,6 +168,9 @@ int PLOT3D::getNX() {
 }
 int PLOT3D::getNY() {
   return ny_;
+}
+double PLOT3D::getTINF() {
+  return Tinf_;
 }
 
 void PLOT3D::computeCellAreas() {
@@ -270,5 +287,29 @@ void PLOT3D::transformXYtoIJ(int ind, double xq, double yq, double Iq, double Jq
   double Y = yq - yC;
   Iq = (X*Jyy - Y*Jxy)/area;
   Jq = (-X*Jyx + Y*Jxx)/area;
+
+}
+
+void PLOT3D::createQuadTree() {
+  // Function to create a quadtree searcher of the grid cell centers
+  
+  // Set bounds of quadtree object
+  double minX,minY,maxX,maxY;
+  minX = xCENT_.minCoeff(); maxX = xCENT_.maxCoeff();
+  minY = yCENT_.minCoeff(); maxY = yCENT_.maxCoeff();
+  double SW[2] = {minX, minY};
+  double SE[2] = {maxX, minY};
+  double NW[2] = {minX, maxY};
+  double NE[2] = {maxX, maxY};
+  QT_.setBounds(&SW[0],&SE[0],&NW[0],&NE[0]);
+  // Create quadtree search object
+  QT_.calcQuadTree(xCENT_.data(),yCENT_.data(),(nx_-1)*(ny_-1));
+
+}
+
+void PLOT3D::pointSearch(double xq, double yq, double& xnn, double& ynn, int& indnn) {
+  // Function to search the quadtree for a query point
+  
+  QT_.knnSearch(&xq,&yq,&xnn,&ynn,&indnn);
 
 }

@@ -1,22 +1,24 @@
 #include "Cloud.h"
+#include <math.h>
 #include <limits>
 
 using namespace std;
 using namespace Eigen;
 
-Cloud::Cloud(State& state, Bucket& gridQT, double rhol) {
+Cloud::Cloud(State& state, PLOT3D& grid, double rhol) {
   // Set initial state of particles
   state_ = state;
-  rhol_ = rhol;
+  rhoL_ = rhol;
   particles_ = state.size_;
   sigma_ = 75.64e-3;
   // Search grid QT for initial cell indices
   indCell_.reserve(particles_);
-  double xq, yq, Xnn, Ynn, indCell;
+  double xq, yq, Xnn, Ynn;
+  int indCell;
   for (int i=0; i<particles_; i++) {
     xq = state.x_(i);
     yq = state.y_(i);
-    gridQT.knnSearch(&xq,&yq,&Xnn,&Ynn,&indCell);
+    grid.pointSearch(xq,yq,Xnn,Ynn,indCell);
     indCell_[i] = indCell;
   }
 
@@ -26,17 +28,18 @@ Cloud::~Cloud() {
 
 }
 
-void Cloud::addParticle(State& state, Bucket& gridQT) {
+void Cloud::addParticle(State& state, PLOT3D& grid) {
   // Function to add new particles to the cloud
 
   // Append new state elements 
   state_.appendState(state);
   // Search grid for new state cell indices
-  double xq, yq, Xnn, Ynn, indCell;
+  double xq, yq, Xnn, Ynn;
+  int indCell;
   for (int i=0; i<state.size_; i++) {
     xq = state.x_(i);
     yq = state.y_(i);
-    gridQT.knnSearch(&xq,&yq,&Xnn,&Ynn,&indCell);
+    grid.pointSearch(xq,yq,Xnn,Ynn,indCell);
     indCell_.push_back(indCell);
   }
 }
@@ -44,6 +47,13 @@ void Cloud::addParticle(State& state, Bucket& gridQT) {
 State Cloud::getState() {
 
   return state_;
+}
+
+vector<int> Cloud::getIMPINGE() {
+  return impinge_;
+}
+vector<int> Cloud::getIMPINGETOTAL() {
+  return impingeTotal_;
 }
 
 void Cloud::findInSimulation() {
@@ -248,8 +258,181 @@ void Cloud::calcDtandImpinge(Airfoil& airfoil, PLOT3D& grid) {
 
 }
 
+void Cloud::transportSLD(PLOT3D& grid) {
+  // Function to advect droplets
 
+  if (!indAdv_.empty()) {
+    double Tinf = grid.getTINF();
+    double x,y,u,v,r,dt;
+    double xnn,ynn;
+    int indnn;
+    double rhoG,uG,vG,muG;
+    double xnp1,ynp1,unp1,vnp1;
+    double Re,CD,tau,m;
+    double g = -9.81;     // m/s
+    double C1 = 1.458e-6; // kg/(ms*sqrt(K))
+    double S = 110.4;     // K
+    for (int i=0; i<indAdv_.size(); i++) {
+      x = state_.x_(i);
+      y = state_.y_(i);
+      u = state_.u_(i);
+      v = state_.v_(i);
+      r = state_.r_(i);
+      dt = dt_[i];
+      // Get fluid properties at nearest neighbor cell
+      grid.pointSearch(x,y,xnn,ynn,indnn);
+      rhoG = grid.getRHOCENT(indnn);
+      uG = grid.getUCENT(indnn);
+      vG = grid.getVCENT(indnn);
+      // Sutherland's law
+      muG = C1*pow(Tinf,1.5)/(Tinf+S);
+      // Force parameter calculations
+      Re = 2*rhoG*r/muG*sqrt( pow(u-uG,2) + pow(v-vG,2) );
+      CD = 24/Re*(1 + 0.15*pow(Re,0.687));
+      if (Re==0) {
+        tau = 0;
+      }
+      else {
+        tau = 24/Re/CD*(2*rhoL_*pow(r,2)/9/muG);
+      }
+      m = 4/3*rhoL_*M_PI*pow(r,3);
+      // Advection equations
+      xnp1 = x + uG*dt + (u-uG)*(1-exp(-dt/tau))*tau;
+      ynp1 = y + vG*dt + (v-vG)*(1-exp(-dt/tau))*tau + (dt-(1-exp(-dt/tau))*tau)*tau*g;
+      unp1 = uG + exp(-dt/tau)*(u-uG);
+      vnp1 = vG + exp(-dt/tau)*(v-vG) + (1-exp(-dt/tau))*tau*g;
+      // Update particle states
+      state_.x_(indAdv_[i]) = xnp1;
+      state_.y_(indAdv_[i]) = ynp1;
+      state_.u_(indAdv_[i]) = unp1;
+      state_.v_(indAdv_[i]) = vnp1;
+    }
+  }
 
+}
+
+void Cloud::computeImpingementRegimes(Airfoil& airfoil) {
+  // Function to divide impinging droplets into 3 classes
+  // (ie. bounce, spread, splash)
+  
+  double x,y,u,v,r,t,temp,muL;
+  vector<double> XYq(2);
+  vector<double> XYnn(2);
+  vector<double> NxNy(2);
+  vector<double> TxTy(2);
+  vector<int> splashSpread;
+  double vNormSq,vTang,We,Oh,K;
+  double Ks0,Kb0,wsr,wsf,wbr,wbf,hr,hf,R,delta,R_tilda,fs,fb;
+  // Parameters used in the impingement regime calculation
+  Ks0 = 3000.0; Ks0_ = Ks0;
+  Kb0 = 600.0;  Kb0_ = Kb0;
+  wsr = 20.0/3.0;
+  wsf = 5.0/6.0;
+  wbr = 32.0;
+  wbf = 1.0;
+  hr = 20e-6;
+  hf = 0.0;
+  // Clear/size vectors as appropriate
+  K_.reserve(impinge_.size());
+  fs_.reserve(impinge_.size());
+  fb_.reserve(impinge_.size());
+  vNormSq_.reserve(impinge_.size());
+  vTang_.reserve(impinge_.size());
+  bounce_.clear();
+  spread_.clear();
+  splash_.clear();
+  for (int i=0; i<impinge_.size(); i++) {
+    x = state_.x_(impinge_[i]);
+    y = state_.y_(impinge_[i]);
+    u = state_.u_(impinge_[i]);
+    v = state_.v_(impinge_[i]);
+    r = state_.r_(impinge_[i]);
+    t = state_.time_(impinge_[i]);
+    temp = state_.temp_(impinge_[i]);
+    muL = (2.414e-5)*pow( 10 , 247.8/(temp-140) );
+    // Find local points of impingement, normal vectors
+    XYq[0] = x; XYq[1] = y;
+    airfoil.findPanel(XYq,XYnn,NxNy,TxTy);
+    // Compute normal velocities at airfoil surface
+    vNormSq = pow( u*NxNy[0] + v*NxNy[1], 2 );
+    vNormSq_[i] = vNormSq;
+    vTang = u*TxTy[0] + v*TxTy[1];
+    vTang_[i] = vTang;
+    We = 2*rhoL_*r*vNormSq/sigma_;
+    Oh = sqrt( muL/2/rhoL_/sigma_/r );
+    K  = We*pow(Oh,-0.4);
+    K_[i] = K;
+    // Intermediate parameter calculations
+    R = hr/2/r; // Dimensionless wall roughness height
+    delta = hf/2/r; // Dimensionless film thickness
+    R_tilda = pow(R,2)/(R+delta); // Modified wall roughness due to presence of film
+    fs = (1 + pow(R_tilda,2))*(1 + pow(delta,2))/(1 + wsr*pow(R_tilda,2))/(1 + wsf*pow(delta,2));
+    fb = (1 + pow(R_tilda,2))*(1 + pow(delta,2))/(1 + wsr*pow(R_tilda,2))/(1 + wbr*pow(R_tilda,4))/(1 + wbf*pow(delta,2));
+    fs_[i] = fs;
+    fb_[i] = fb;
+    // Calculate impingement regime
+    if (K < Kb0*fb) {
+      bounce_.push_back(i);
+    }
+    else if ((K > Kb0*fb) && (K < Ks0*fs)) {
+      spread_.push_back(i);
+      splashSpread.push_back(i);
+    }
+    else {
+      splash_.push_back(i);
+      splashSpread.push_back(i);
+    } 
+  }
+  // Update impingeTotal
+  vector<int> diff;
+  sort(impingeTotal_.begin(),impingeTotal_.end());
+  sort(splashSpread.begin(),splashSpread.end());
+  set_difference(splashSpread.begin(),splashSpread.end(),impingeTotal_.begin(),impingeTotal_.end(),inserter(diff,diff.begin()) );
+  for (int i=0; i<diff.size(); i++) {
+    impingeTotal_.push_back(diff[i]);
+  }
+
+}
+
+void Cloud::bounceDynamics(Airfoil& airfoil) {
+  // Function to compute bounce dynamics
+  
+  if (!bounce_.empty()) {
+    double x,y,u,v,r;
+    double K,Ks,Kb,vNormSq;
+    double vN,vT;
+    double vNorm,vTang,uNew,vNew;
+    vector<double> XYq(2);
+    vector<double> XYa(2);
+    vector<double> NxNy(2);
+    vector<double> TxTy(2);
+    int indBounce;
+    for (int i=0; i<bounce_.size(); i++) {
+      indBounce = impinge_[bounce_[i]];
+      x = state_.x_(indBounce);
+      y = state_.y_(indBounce);
+      u = state_.u_(indBounce);
+      v = state_.v_(indBounce);
+      r = state_.r_(indBounce);
+      K = K_[bounce_[i]];
+      Ks = fs_[bounce_[i]]*Ks0_;
+      Kb = fb_[bounce_[i]]*Kb0_;
+      vNormSq = vNormSq_[bounce_[i]];
+      XYq[0] = x; XYq[1] = y;
+      airfoil.findPanel(XYq,XYa,NxNy,TxTy);
+      vNorm = sqrt(vNormSq);
+      vTang = vTang_[bounce_[i]];
+      // Calculate post-impact velocities
+      vN = 4*vNorm*( sqrt(K/Kb) - K/Kb );
+      vT = 0.8*vTang;
+      uNew = vN*NxNy[0] + vT*TxTy[0];
+      vNew = vN*NxNy[1] + vT*TxTy[1];
+      // Set new bouncing velocity
+      state_.u_[indBounce] = uNew;
+      state_.v_[indBounce] = vNew;
+    }
+  }
+}
 
 void Cloud::setIndAdv(vector<int>& indAdv) {
   

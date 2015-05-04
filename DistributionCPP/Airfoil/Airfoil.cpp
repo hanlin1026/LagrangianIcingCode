@@ -48,7 +48,8 @@ void Airfoil::findPanel(std::vector<double>& XYq, std::vector<double>& XYnn, std
 
   double xq = XYq[0];
   double yq = XYq[1];
-  double xnn,ynn,indnn;
+  double xnn,ynn;
+  int indnn;
   panelSearcher_.knnSearch(&xq,&yq,&xnn,&ynn,&indnn);
   XYnn[0] = xnn; XYnn[1] = ynn;
   NxNy[0] = normal_(indnn,0); 
