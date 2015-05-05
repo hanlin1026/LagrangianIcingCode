@@ -270,7 +270,7 @@ void PLOT3D::transformXYtoIJ(int ind, Eigen::MatrixXd& xq, Eigen::MatrixXd& yq, 
 
 }
 
-void PLOT3D::transformXYtoIJ(int ind, double xq, double yq, double Iq, double Jq) {
+void PLOT3D::transformXYtoIJ(int ind, double xq, double yq, double& Iq, double& Jq) {
   // Function to transform a single query point from physical domain coordinates (x,y)
   // to computational domain coordinates (I,J), centered at cell center 'ind'
   

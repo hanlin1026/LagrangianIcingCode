@@ -55,6 +55,9 @@ vector<int> Cloud::getIMPINGE() {
 vector<int> Cloud::getIMPINGETOTAL() {
   return impingeTotal_;
 }
+vector<int> Cloud::getINDCELL() {
+  return indCell_;
+}
 
 void Cloud::findInSimulation() {
   // Function which calculates which particles are currently being advected
@@ -71,6 +74,9 @@ void Cloud::findInSimulation() {
   if (!impingeTotal_.empty()) {
     sort(impingeTotal_.begin(),impingeTotal_.end());
     set_difference(indT.begin(),indT.end(),impingeTotal_.begin(),impingeTotal_.end(),inserter(diff,diff.begin()) );
+  }
+  else {
+    diff = indT;
   }
   indAdv = diff;
   diff.clear();
@@ -197,22 +203,25 @@ void Cloud::computeNewCellLocations(PLOT3D& grid) {
   }
   // Find minimum distance
   vector<int> indNN(9);
+  vector<double> indDNN(9);
   int min_index;
   vector<int> indCellNew(indAdv_.size());
   for (int i=0; i<indAdv_.size(); i++) {
-    indNN[0] = C[i];
-    indNN[1] = N[i];
-    indNN[2] = S[i];
-    indNN[3] = E[i];
-    indNN[4] = W[i];
-    indNN[5] = SW[i];
-    indNN[6] = SE[i];
-    indNN[7] = NW[i];
-    indNN[8] = NE[i];
-    min_index = min_element(indNN.begin(), indNN.end()) - indNN.begin();
+    indDNN[0] = dC[i];  indNN[0] = C[i];
+    indDNN[1] = dN[i];  indNN[1] = N[i];
+    indDNN[2] = dS[i];  indNN[2] = S[i];
+    indDNN[3] = dE[i];  indNN[3] = E[i];
+    indDNN[4] = dW[i];  indNN[4] = W[i];
+    indDNN[5] = dSW[i]; indNN[5] = SW[i];
+    indDNN[6] = dSE[i]; indNN[6] = SE[i];
+    indDNN[7] = dNW[i]; indNN[7] = NW[i];
+    indDNN[8] = dNE[i]; indNN[8] = NE[i];
+    min_index = min_element(indDNN.begin(), indDNN.end()) - indDNN.begin();
     indCellNew[i] = indNN[min_index];
   }
+  indCell_.clear();
   indCell_ = indCellNew;
+  //printf("CELL = %d\n",indCell_[0]);
 }
 
 void Cloud::calcDtandImpinge(Airfoil& airfoil, PLOT3D& grid) {
@@ -250,10 +259,11 @@ void Cloud::calcDtandImpinge(Airfoil& airfoil, PLOT3D& grid) {
       }
       // Set timesteps based on CFL condition
       velMag = sqrt(pow(u,2) + pow(v,2));
-      Lmin = grid.getLMIN(indAdv_[i]);
+      Lmin = grid.getLMIN(ind);
       dt_[i] = 0.5*Lmin/velMag;
       
     }
+    //printf("V = %f\tLMIN = %f\n",velMag,Lmin);
   }
 
 }
@@ -273,17 +283,16 @@ void Cloud::transportSLD(PLOT3D& grid) {
     double C1 = 1.458e-6; // kg/(ms*sqrt(K))
     double S = 110.4;     // K
     for (int i=0; i<indAdv_.size(); i++) {
-      x = state_.x_(i);
-      y = state_.y_(i);
-      u = state_.u_(i);
-      v = state_.v_(i);
-      r = state_.r_(i);
+      x = state_.x_(indAdv_[i]);
+      y = state_.y_(indAdv_[i]);
+      u = state_.u_(indAdv_[i]);
+      v = state_.v_(indAdv_[i]);
+      r = state_.r_(indAdv_[i]);
       dt = dt_[i];
       // Get fluid properties at nearest neighbor cell
-      grid.pointSearch(x,y,xnn,ynn,indnn);
-      rhoG = grid.getRHOCENT(indnn);
-      uG = grid.getUCENT(indnn);
-      vG = grid.getVCENT(indnn);
+      rhoG = grid.getRHOCENT(indCell_[indAdv_[i]]);
+      uG = grid.getUCENT(indCell_[indAdv_[i]]);
+      vG = grid.getVCENT(indCell_[indAdv_[i]]);
       // Sutherland's law
       muG = C1*pow(Tinf,1.5)/(Tinf+S);
       // Force parameter calculations
@@ -376,11 +385,11 @@ void Cloud::computeImpingementRegimes(Airfoil& airfoil) {
     }
     else if ((K > Kb0*fb) && (K < Ks0*fs)) {
       spread_.push_back(i);
-      splashSpread.push_back(i);
+      splashSpread.push_back(impinge_[i]);
     }
     else {
       splash_.push_back(i);
-      splashSpread.push_back(i);
+      splashSpread.push_back(impinge_[i]);
     } 
   }
   // Update impingeTotal

@@ -39,7 +39,7 @@ class PLOT3D {
   void computeCellCenters();
   void computeGridMetrics();
   void transformXYtoIJ(int ind, Eigen::MatrixXd& xq, Eigen::MatrixXd& yq, Eigen::MatrixXd& Iq, Eigen::MatrixXd& Jq);
-  void transformXYtoIJ(int ind, double xq, double yq, double Iq, double Jq);
+  void transformXYtoIJ(int ind, double xq, double yq, double& Iq, double& Jq);
   // QuadTree methods
   void createQuadTree();
   void pointSearch(double xq, double yq, double& xnn, double& ynn, int& indnn);

@@ -27,8 +27,14 @@ pylab.rcParams.update(params)
 
 fig = plt.figure()
 ax = fig.gca()
-XY = genfromtxt("CloudXY.out", delimiter = '\t')
-plt.scatter(XY[:,0],XY[:,1])
+X = genfromtxt("CloudX.out", delimiter = '\n')
+Y = genfromtxt("CloudY.out", delimiter = '\n')
+XYa = genfromtxt("AirfoilXY.out", delimiter = "\t")
+Xc = genfromtxt("CloudCELLX.out", delimiter = "\n")
+Yc = genfromtxt("CloudCELLY.out", delimiter = "\n")
+plt.scatter(X,Y,c="r")
+plt.scatter(Xc,Yc)
+plt.plot(XYa[:,0],XYa[:,1])
 #for i in xrange(0,size(XY,0)/1000):
 #    ind = 4*i
 #    X = np.append(XY[ind:ind+4,0], XY[ind,0]);

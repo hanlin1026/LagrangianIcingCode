@@ -25,6 +25,7 @@ class Cloud {
   std::vector<int> getIndAdv();
   std::vector<int> getIMPINGE();
   std::vector<int> getIMPINGETOTAL();
+  std::vector<int> getINDCELL();
 
  private:
   State state_;

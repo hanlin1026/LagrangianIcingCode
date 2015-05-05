@@ -30,7 +30,7 @@ int main(int argc, const char *argv[]) {
   float reynolds = PROPS.reynolds_; float time = PROPS.time_;
   printf("mach = %f\nalpha = %f\nreynolds = %f\ntime = %f\n", mach, alpha, reynolds, time);
   // Initialize cloud of particles
-  int particles = 10;
+  int particles = 100;
   State state = State(particles);
   double Rmean = 100e-6;
   double Tmean = 273.15;
@@ -39,7 +39,7 @@ int main(int argc, const char *argv[]) {
   // Search for a query point
   default_random_engine generator;
   uniform_real_distribution<double> distX(-5.1,-5);
-  uniform_real_distribution<double> distY(-0.1,0.1);
+  uniform_real_distribution<double> distY(-0.5,0.1);
   for (int i=0; i<particles; i++) {
     state.x_(i) = distX(generator);
     state.y_(i) = distY(generator);
@@ -72,13 +72,20 @@ int main(int argc, const char *argv[]) {
   // Advect (no splashing/fracture)
   ofstream foutX("CloudX.out");
   ofstream foutY("CloudY.out");
+  ofstream foutCELLX("CloudCELLX.out");
+  ofstream foutCELLY("CloudCELLY.out");
   State stateCloud;
-  iter = 0; int maxiter = 3000;
+  iter = 0; int maxiter = 1000;
   int totalImpinge = 0;
   vector<double> x;
   vector<double> y;
   vector<int> impinge;
   vector<int> totalImpingeInd;
+  vector<int> indAdv;
+  vector<int> indCell;
+  double xCENT,yCENT;
+  vector<double> XCENT;
+  vector<double> YCENT;
   int indtmp = 0;
   while ((totalImpinge < particles) && (iter < maxiter)) {
     cloud.calcDtandImpinge(airfoil,p3d);
@@ -91,24 +98,33 @@ int main(int argc, const char *argv[]) {
     totalImpingeInd = cloud.getIMPINGETOTAL();
     totalImpinge = totalImpingeInd.size();
     // Output state to file
-    if (iter % 2999==0) {
+    if (iter % 1==0) {
+      stateCloud = cloud.getState();
+      indCell = cloud.getINDCELL();
       for (int i=0; i<particles; i++) {
-        stateCloud = cloud.getState();
         x.push_back(stateCloud.x_(i));
         y.push_back(stateCloud.y_(i));
       }
-      indtmp = indtmp + particles;
-      printf("ITER = %d\n",iter);
+      for (int i=0; i<indCell.size(); i++) {
+        xCENT = p3d.getXCENT(indCell[i]);
+        yCENT = p3d.getYCENT(indCell[i]);
+        XCENT.push_back(xCENT);
+        YCENT.push_back(yCENT);
+      }
     }
-    
+    indAdv = cloud.getIndAdv();
+    printf("ITER = %d\t%d\n",iter,indAdv.size());
     iter++;
 
   }
-  ostream_iterator<int> out_itX (foutX,", ");
+  ostream_iterator<double> out_itX (foutX,"\n");
   copy ( x.begin(), x.end(), out_itX );
-  ostream_iterator<int> out_itY (foutY,", ");
+  ostream_iterator<double> out_itY (foutY,"\n");
   copy ( y.begin(), y.end(), out_itY );
-  
+  ostream_iterator<double> out_itCELLX (foutCELLX,"\n");
+  copy ( XCENT.begin(), XCENT.end(), out_itCELLX );
+  ostream_iterator<double> out_itCELLY (foutCELLY,"\n");
+  copy ( YCENT.begin(), YCENT.end(), out_itCELLY );
   // Clear any allocated memory, close files/streams
   
 }

@@ -241,6 +241,7 @@ void Bucket::knnSearch(double* Xq, double* Yq, double* Xnn, double* Ynn, int* in
 
   bool flagFinal = false;
   bool flagChild = false;
+  bool flagHasPts;
   Bucket* current = this;
   int iter;
   // Iteratively search down the tree
@@ -250,12 +251,13 @@ void Bucket::knnSearch(double* Xq, double* Yq, double* Xnn, double* Ynn, int* in
     while((flagChild==false) && (iter<3)) {
       iter++;
       if (current->buckets_[iter] != NULL) {
-        // If child iter exists, search it
+        // If child iter exists, search it and make sure there are pts inside it
         flagChild = current->buckets_[iter]->calcInBucket(Xq,Yq);
+        flagHasPts = current->buckets_[iter]->NumPts_ > 0;
       }
     }
     // If we have found a valid child containing (Xq,Yq), reset current
-    if (flagChild==true) {
+    if ((flagChild==true) && (flagHasPts==true)) {
       current = current->buckets_[iter];
       flagChild = false;
     }
@@ -278,7 +280,7 @@ void Bucket::knnSearch(double* Xq, double* Yq, double* Xnn, double* Ynn, int* in
   }
   int indMin = 0;
   double distMin = dist[0];
-  for (int i=1; i<BS; i++) {
+  for (int i=1; i<current->NumPts_; i++) {
     if (dist[i] < distMin) {
       distMin = dist[i];
       indMin = i;

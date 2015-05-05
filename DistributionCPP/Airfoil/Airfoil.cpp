@@ -35,7 +35,12 @@ Airfoil::Airfoil(Eigen::VectorXd& X, Eigen::VectorXd& Y) {
   panelSearcher_.setBounds(&SW[0],&SE[0],&NW[0],&NE[0]);
   // Create quadtree search object
   panelSearcher_.calcQuadTree(panelX_.data(),panelY_.data(),panelX_.rows());
-
+  // Output to file
+  FILE* fout = fopen("AirfoilXY.out","w");
+  for (int i=0; i<gridPts-1; i++) {
+    fprintf(fout,"%f\t%f\n",panelX_[i],panelY_[i]);
+  }
+  fclose(fout);
 }
 
 Airfoil::~Airfoil() {
