@@ -205,7 +205,10 @@ void Cloud::computeNewCellLocations(PLOT3D& grid) {
   vector<int> indNN(9);
   vector<double> indDNN(9);
   int min_index;
-  vector<int> indCellNew(indAdv_.size());
+  vector<int> indCellNew(particles_);
+  for (int i=0; i<particles_; i++) {
+    indCellNew[i] = indCell_[i];
+  }
   for (int i=0; i<indAdv_.size(); i++) {
     indDNN[0] = dC[i];  indNN[0] = C[i];
     indDNN[1] = dN[i];  indNN[1] = N[i];
@@ -217,7 +220,7 @@ void Cloud::computeNewCellLocations(PLOT3D& grid) {
     indDNN[7] = dNW[i]; indNN[7] = NW[i];
     indDNN[8] = dNE[i]; indNN[8] = NE[i];
     min_index = min_element(indDNN.begin(), indDNN.end()) - indDNN.begin();
-    indCellNew[i] = indNN[min_index];
+    indCellNew[indAdv_[i]] = indNN[min_index];
   }
   indCell_.clear();
   indCell_ = indCellNew;

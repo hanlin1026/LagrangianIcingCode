@@ -32,8 +32,8 @@ Y = genfromtxt("CloudY.out", delimiter = '\n')
 XYa = genfromtxt("AirfoilXY.out", delimiter = "\t")
 Xc = genfromtxt("CloudCELLX.out", delimiter = "\n")
 Yc = genfromtxt("CloudCELLY.out", delimiter = "\n")
-plt.scatter(X,Y,c="r")
-plt.scatter(Xc,Yc)
+plt.scatter(X,Y,c="r",edgecolor='',lw=0)
+plt.scatter(Xc,Yc,edgecolor='',lw=0)
 plt.plot(XYa[:,0],XYa[:,1])
 #for i in xrange(0,size(XY,0)/1000):
 #    ind = 4*i

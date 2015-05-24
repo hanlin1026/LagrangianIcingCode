@@ -39,7 +39,7 @@ int main(int argc, const char *argv[]) {
   // Search for a query point
   default_random_engine generator;
   uniform_real_distribution<double> distX(-5.1,-5);
-  uniform_real_distribution<double> distY(-0.5,0.1);
+  uniform_real_distribution<double> distY(-0.55,-0.45);
   for (int i=0; i<particles; i++) {
     state.x_(i) = distX(generator);
     state.y_(i) = distY(generator);
@@ -75,7 +75,7 @@ int main(int argc, const char *argv[]) {
   ofstream foutCELLX("CloudCELLX.out");
   ofstream foutCELLY("CloudCELLY.out");
   State stateCloud;
-  iter = 0; int maxiter = 1000;
+  iter = 0; int maxiter = 2000;
   int totalImpinge = 0;
   vector<double> x;
   vector<double> y;

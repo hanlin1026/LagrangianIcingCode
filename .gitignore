@@ -9,3 +9,13 @@ Literature/*
 *.dat
 Documentation/*eps-converted-to.pdf
 Distribution/*.m~
+DistributionCPP/*~
+DistributionCPP/*~
+DistributionCPP/*.out
+DistributionCPP/Airfoil/*~
+DistributionCPP/Cloud/*~
+DistributionCPP/IcingDriver
+DistributionCPP/QuadTree/*.dat
+Distribution/*.avi
+Distribution/BatchJobs/
+Distribution/sample*
