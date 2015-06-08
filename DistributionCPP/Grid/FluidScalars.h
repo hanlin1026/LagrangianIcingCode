@@ -15,7 +15,7 @@ struct FluidScalars {
   float mach_;
   float alpha_;
   float reynolds_;
-  float time_; 
+  float time_;
 
 };
 

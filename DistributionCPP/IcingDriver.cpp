@@ -6,40 +6,42 @@
 #include "Grid/PLOT3D.h"
 #include "QuadTree/Bucket.h"
 #include "Cloud/Cloud.h"
+#include "Cloud/ParcelScalars.h"
 #include "Airfoil/Airfoil.h"
+#include "InputData/readInputParams.h"
 #include <iterator>
 #include <findAll.h>
 
 // Airfoil icing code driver program
 
 int main(int argc, const char *argv[]) {
-  // Initialize scalars
+  // Specify initialization files
+  const char *inFileName = "InputData/Input.dat";
+  const char *meshFileName = "Grid/MESH.P3D";
+  const char *solnFileName = "Grid/q103.0.50E+01.bin";
+  // Read in initialization scalars from input file
   FluidScalars scalars;
-  scalars.pinf_ = 1.01325e5;
-  scalars.R_ = 287.058;
-  scalars.Tinf_ = 300;
-  scalars.rhoinf_ = scalars.pinf_/scalars.R_/scalars.Tinf_;
-  scalars.Ubar_ = sqrt(1.4*scalars.pinf_/scalars.rhoinf_);
-  scalars.rhol_ = 1000;
+  ParcelScalars scalarsParcel;
+  readInputParams(scalars,scalarsParcel,inFileName);
   // Initialize plot3D object, read in basic problem data
-  PLOT3D p3d = PLOT3D("Grid/MESH.P3D", "Grid/q103.0.50E+01.bin", &scalars);
-  FluidScalars PROPS;
-  p3d.getPROPS(PROPS);
-  int nx = PROPS.nx_; int ny = PROPS.ny_;
-  float mach = PROPS.mach_; float alpha = PROPS.alpha_;
-  float reynolds = PROPS.reynolds_; float time = PROPS.time_;
-  printf("mach = %f\nalpha = %f\nreynolds = %f\ntime = %f\n", mach, alpha, reynolds, time);
+  PLOT3D p3d = PLOT3D(meshFileName, solnFileName, &scalars);
   // Initialize cloud of particles
-  int particles = 100;
-  State state = State(particles);
-  double Rmean = 100e-6;
-  double Tmean = 273.15;
+  int particles = scalarsParcel.particles_;
+  double Rmean  = scalarsParcel.Rmean_;
+  double Tmean  = scalarsParcel.Tmean_;
+  double Xmin   = scalarsParcel.Xmin_;
+  double Xmax   = scalarsParcel.Xmax_;
+  double Ymin   = scalarsParcel.Ymin_;
+  double Ymax   = scalarsParcel.Ymax_;
+  int maxiter   = scalarsParcel.maxiter_;
+  State state   = State(particles);
   double pg, ug, vg, Xnn, Ynn;
   int indnn;
+  printf("particles = %f\n",scalarsParcel.Rmean_);
   // Search for a query point
   default_random_engine generator;
-  uniform_real_distribution<double> distX(-5.1,-5);
-  uniform_real_distribution<double> distY(-0.55,-0.45);
+  uniform_real_distribution<double> distX(Xmin,Xmax);
+  uniform_real_distribution<double> distY(Ymin,Ymax);
   for (int i=0; i<particles; i++) {
     state.x_(i) = distX(generator);
     state.y_(i) = distY(generator);
@@ -52,7 +54,6 @@ int main(int argc, const char *argv[]) {
     state.numDrop_(i) = 1;
   }
   Cloud cloud(state,p3d,scalars.rhol_);
-  printf("Cloud initialization successful.\n");
   // Intialize airfoil object
   Eigen::MatrixXd Xgrid = p3d.getX();
   Eigen::MatrixXd Ygrid = p3d.getY();
@@ -75,7 +76,7 @@ int main(int argc, const char *argv[]) {
   ofstream foutCELLX("CloudCELLX.out");
   ofstream foutCELLY("CloudCELLY.out");
   State stateCloud;
-  iter = 0; int maxiter = 2000;
+  iter = 0;
   int totalImpinge = 0;
   vector<double> x;
   vector<double> y;

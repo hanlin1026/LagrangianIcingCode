@@ -10,6 +10,7 @@ add_library( IcingLib
   Cloud/Cloud.cpp
   Cloud/State.cpp
   Airfoil/Airfoil.cpp
+  InputData/readInputParams.cpp
   findAll.cpp )
 
 
