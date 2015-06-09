@@ -10,38 +10,34 @@ void readInputParams(FluidScalars& PROPS, ParcelScalars& PARCEL, const char *inF
   // file and return them in a property struct
 
   // Initialize input file stream
-  std:string line = "";
+  std::string line = "";
   std::ifstream inFile;
   inFile.open(inFileName);
-  std::stringstream theLine(line);
-  for (int i=0; i<4; i++) {
-    getline(inFile,line);
+  // Scan through headers
+  for (int i=0; i<3; i++) {
+    std::getline(inFile,line);
   }
   // Physical parameters (pinf,R,Tinf,rhol)
-  std::getline(inFile,line,'\t');
   inFile >> PROPS.pinf_;
-  std::getline(inFile,line,'\t');
   inFile >> PROPS.R_;
-  std::getline(inFile,line,'\t');
   inFile >> PROPS.Tinf_;
-  std::getline(inFile,line,'\t');
   inFile >> PROPS.rhol_;
-  // Parcel cloud properties (particles,Rmean,Tmean,Xmin,Xmax,Ymin,Ymax,maxiter)
-  std::getline(inFile,line,'\t');
+  // Parcel cloud properties (particles,Rmean,Tmean)
+  std::getline(inFile,line);
+  std::getline(inFile,line);
   inFile >> PARCEL.particles_;
-  std::getline(inFile,line,'\t');
   inFile >> PARCEL.Rmean_;
-  std::getline(inFile,line,'\t');
   inFile >> PARCEL.Tmean_;
-  std::getline(inFile,line,'\t');
+  // Domain box properties (Xmin,Xmax,Ymin,Ymax)
+  std::getline(inFile,line);
+  std::getline(inFile,line);
   inFile >> PARCEL.Xmin_;
-  std::getline(inFile,line,'\t');
   inFile >> PARCEL.Xmax_;
-  std::getline(inFile,line,'\t');
   inFile >> PARCEL.Ymin_;
-  std::getline(inFile,line,'\t');
   inFile >> PARCEL.Ymax_;
-  std::getline(inFile,line,'\t');
+  // Simulation properties (maxiter)
+  std::getline(inFile,line);
+  std::getline(inFile,line);
   inFile >> PARCEL.maxiter_;
   // Compute derived parameters
   PROPS.rhoinf_ = PROPS.pinf_/PROPS.R_/PROPS.Tinf_;

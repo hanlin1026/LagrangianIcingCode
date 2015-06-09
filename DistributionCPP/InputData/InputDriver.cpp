@@ -23,4 +23,6 @@ int main(int argc, const char *argv[]) {
   printf("particles = %d\n",PARCEL.particles_);
   printf("Rmean = %f\n",PARCEL.Rmean_);
   printf("Tmean = %f\n",PARCEL.Tmean_);
+  printf("Xmin = %f, Xmax = %f, Ymin = %f, Ymax = %f\n",PARCEL.Xmin_,PARCEL.Xmax_,PARCEL.Ymin_,PARCEL.Ymax_);
+  printf("maxiter = %d\n",PARCEL.maxiter_);
 }

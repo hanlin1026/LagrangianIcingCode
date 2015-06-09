@@ -32,29 +32,8 @@ Y = genfromtxt("CloudY.out", delimiter = '\n')
 XYa = genfromtxt("AirfoilXY.out", delimiter = "\t")
 Xc = genfromtxt("CloudCELLX.out", delimiter = "\n")
 Yc = genfromtxt("CloudCELLY.out", delimiter = "\n")
-plt.scatter(X,Y,c="r",edgecolor='',lw=0)
-plt.scatter(Xc,Yc,edgecolor='',lw=0)
+plt.scatter(X,Y,c="r",edgecolor='',lw=0,s=2)
+#plt.scatter(Xc,Yc,edgecolor='',lw=0)
 plt.plot(XYa[:,0],XYa[:,1])
-#for i in xrange(0,size(XY,0)/1000):
-#    ind = 4*i
-#    X = np.append(XY[ind:ind+4,0], XY[ind,0]);
-#    Y = np.append(XY[ind:ind+4,1], XY[ind,1]);
-#    plt.plot(X,Y,color='k');
-
-#pylab.savefig('temp2.png',bbox_inches=0)
 
 plt.show()
-
-#import Image
-#import numpy as np
-
-#image=Image.open('temp2.png')
-# image=Image.open('temp2.eps')
-#image.load()
-
-#print image.size
-
-#crop_image = image.crop([370,220,1150,950])
-
-#crop_image.save('temp2_cropped.png')
-# crop_image.save('temp2_cropped.eps')

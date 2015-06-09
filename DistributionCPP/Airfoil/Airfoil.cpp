@@ -63,3 +63,24 @@ void Airfoil::findPanel(std::vector<double>& XYq, std::vector<double>& XYnn, std
   TxTy[1] = tangent_(indnn,1);
 
 }
+
+double Airfoil::calcIncidenceAngle = calcIncidenceAngle(XYq,UVq) {
+  // Function to calculate the incidence angle of a droplet impinging
+  // on the airfoil surface
+
+  // Find closest panel
+  std::vector<double> XYa(2);
+  std::vector<double> NxNy(2);
+  std::vector<double> TxTy(2);
+  this->findPanel(XYq,XYa,NxNy,TxTy);
+  // Find angle between airfoil surface normal vector and query velocity
+  double velNorm = sqrt(pow(UVq[0],2) + pow(UVq[1],2));
+  std::vector<double> vel(2);
+  velUnitNorm[0] = UVq[0]/velNorm;
+  velUnitNorm[1] = UVq[1]/velNorm;
+  double projection = velUnitNorm[0]*NxNy[0] + velUnitNorm[1]*NxNy[1];
+  double theta = acos(projection);
+
+  return theta;
+
+}

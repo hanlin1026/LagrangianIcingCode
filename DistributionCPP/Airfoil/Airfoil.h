@@ -9,6 +9,7 @@ class Airfoil {
     Airfoil(Eigen::VectorXd& X, Eigen::VectorXd& Y);
     ~Airfoil();
     void findPanel(std::vector<double>& XYq, std::vector<double>& XYnn, std::vector<double>& NxNy, std::vector<double>& TxTy);
+    double calcIncidenceAngle(XYq,UVq);
 
   private:
     Eigen::VectorXd panelX_;

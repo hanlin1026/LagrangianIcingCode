@@ -19,6 +19,7 @@ class Cloud {
   void transportSLD(PLOT3D& grid);
   void computeImpingementRegimes(Airfoil& airfoil);
   void bounceDynamics(Airfoil& airfoil);
+  void splashDynamics(Airfoil& airfoil);
   // Set/get methods
   State getState();
   void setIndAdv(std::vector<int>& indAdv);

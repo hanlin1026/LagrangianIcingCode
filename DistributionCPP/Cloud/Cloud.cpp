@@ -446,6 +446,40 @@ void Cloud::bounceDynamics(Airfoil& airfoil) {
   }
 }
 
+void Cloud::splashDynamics(Airfoil& airfoil) {
+  // Function to compute splash dynamics
+
+  if (!splash_.isempty()) {
+    double x,y,u,v,r;
+    double K,Ks,Kb,vNormSq;
+    double vN,vT;
+    double vNorm,vTang,uNew,vNew;
+    vector<double> XYq(2);
+    vector<double> XYa(2);
+    vector<double> NxNy(2);
+    vector<double> TxTy(2);
+    int indSplash;
+    // Index over each splashing parcel
+    for (int i=0; i<splash_.size(); i++) {
+      // Get splashing parcel properties
+      indSplash = impinge_[splash_[i]];
+      x = state_.x_(indSplash);
+      y = state_.y_(indSplash);
+      u = state_.u_(indSplash);
+      v = state_.v_(indSplash);
+      r = state_.r_(indSplash);
+      K = K_[splash_[i]];
+      Ks = fs_[splash_[i]]*Ks0_;
+      vNormSq = vNormSq_[splash_[i]];
+      vTang = vTang_[splash_[i]];
+      XYq[0] = x; XYq[1] = y;
+      airfoil.findPanel(XYq,XYa,NxNy,TxTy);
+      // NEED TO WRITE AIRFOIL.FINDTH
+
+    }
+  }
+}
+
 void Cloud::setIndAdv(vector<int>& indAdv) {
   
   indAdv = indAdv_; 
