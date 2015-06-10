@@ -454,7 +454,9 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
     double K,Ks,Kb,vNormSq;
     double vN,vT;
     double vNorm,vTang,uNew,vNew;
+    double theta;
     vector<double> XYq(2);
+    vector<double> UVq(2);
     vector<double> XYa(2);
     vector<double> NxNy(2);
     vector<double> TxTy(2);
@@ -473,8 +475,12 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
       vNormSq = vNormSq_[splash_[i]];
       vTang = vTang_[splash_[i]];
       XYq[0] = x; XYq[1] = y;
+      UVq[0] = u; UVq[1] = v;
+      // Calculate s-coords of impinging parcel
+      sCoord = airfoil.interpXYtoS(XYq);
+      // Calculate impinging incidence angle
       airfoil.findPanel(XYq,XYa,NxNy,TxTy);
-      // NEED TO WRITE AIRFOIL.FINDTH
+      theta = airfoil.calcIncidenceAngle(XYq,UVq);
 
     }
   }

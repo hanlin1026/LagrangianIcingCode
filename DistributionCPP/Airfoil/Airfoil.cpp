@@ -35,6 +35,17 @@ Airfoil::Airfoil(Eigen::VectorXd& X, Eigen::VectorXd& Y) {
   panelSearcher_.setBounds(&SW[0],&SE[0],&NW[0],&NE[0]);
   // Create quadtree search object
   panelSearcher_.calcQuadTree(panelX_.data(),panelY_.data(),panelX_.rows());
+  // Calculate s-coordinates of panel points
+  this->calcSCoords();
+  // Create spline for XY to S coordinates
+  Eigen::MatrixXd XYS;
+  XYS.resize(3,gridPts-1);
+  for (int i=0; i<gridPts-1; i++) {
+    XYS(0,i) = panelX_(i);
+    XYS(1,i) = panelY_(i);
+    XYS(2,i) = panelS_(i);
+  }
+  interpXYtoS_ = Eigen::SplineFitting<Eigen::Spline<double,2>>::Interpolate(XYS,3);
   // Output to file
   FILE* fout = fopen("AirfoilXY.out","w");
   for (int i=0; i<gridPts-1; i++) {
@@ -64,7 +75,7 @@ void Airfoil::findPanel(std::vector<double>& XYq, std::vector<double>& XYnn, std
 
 }
 
-double Airfoil::calcIncidenceAngle = calcIncidenceAngle(XYq,UVq) {
+double Airfoil::calcIncidenceAngle = calcIncidenceAngle(std::vector<double>& XYq, std::vector<double>& UVq) {
   // Function to calculate the incidence angle of a droplet impinging
   // on the airfoil surface
 
@@ -82,5 +93,28 @@ double Airfoil::calcIncidenceAngle = calcIncidenceAngle(XYq,UVq) {
   double theta = acos(projection);
 
   return theta;
+
+}
+
+void Airfoil::calcSCoords() {
+  // Function to calculate s-coordinates of panel center points
+
+  double dx,dy,ds;
+  int numPts = panelX_.size();
+  panelS_.resize(numPts);
+  panelS_(0) = 0;
+  for (int i=0; i<numPts-1; i++) {
+    dx = panelX_(i+1) - panelX_(i);
+    dy = panelY_(i+1) - panelY_(i);
+    ds = sqrt(pow(dx,2) + pow(dy,2));
+    panelS_(i+1) = ds;
+  }
+
+}
+
+double Airfoil::interpXYtoS(std::vector<double>& XYq) {
+  // Function to return s-coords of query point on airfoil
+
+  return this->interpXYtoS(XYq);
 
 }
