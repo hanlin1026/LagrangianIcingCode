@@ -37,15 +37,6 @@ Airfoil::Airfoil(Eigen::VectorXd& X, Eigen::VectorXd& Y) {
   panelSearcher_.calcQuadTree(panelX_.data(),panelY_.data(),panelX_.rows());
   // Calculate s-coordinates of panel points
   this->calcSCoords();
-  // Create spline for XY to S coordinates
-  Eigen::MatrixXd XYS;
-  XYS.resize(3,gridPts-1);
-  for (int i=0; i<gridPts-1; i++) {
-    XYS(0,i) = panelX_(i);
-    XYS(1,i) = panelY_(i);
-    XYS(2,i) = panelS_(i);
-  }
-  interpXYtoS_ = Eigen::SplineFitting<Eigen::Spline<double,2>>::Interpolate(XYS,3);
   // Output to file
   FILE* fout = fopen("AirfoilXY.out","w");
   for (int i=0; i<gridPts-1; i++) {
@@ -75,7 +66,26 @@ void Airfoil::findPanel(std::vector<double>& XYq, std::vector<double>& XYnn, std
 
 }
 
-double Airfoil::calcIncidenceAngle = calcIncidenceAngle(std::vector<double>& XYq, std::vector<double>& UVq) {
+void Airfoil::findPanel(std::vector<double>& XYq, std::vector<double>& XYnn, std::vector<double>& NxNy, std::vector<double>& TxTy, int& indexNN) {
+  // Function to return (x,y) coordinates and normal/tangential 
+  // vectors of the point on the airfoil closest to the query
+  // AS WELL AS the index of the closest panel point
+
+  double xq = XYq[0];
+  double yq = XYq[1];
+  double xnn,ynn;
+  int indnn;
+  panelSearcher_.knnSearch(&xq,&yq,&xnn,&ynn,&indnn);
+  XYnn[0] = xnn; XYnn[1] = ynn;
+  NxNy[0] = normal_(indnn,0); 
+  NxNy[1] = normal_(indnn,1);
+  TxTy[0] = tangent_(indnn,0);
+  TxTy[1] = tangent_(indnn,1);
+  indexNN = indnn;
+
+}
+
+double Airfoil::calcIncidenceAngle(std::vector<double>& XYq, std::vector<double>& UVq) {
   // Function to calculate the incidence angle of a droplet impinging
   // on the airfoil surface
 
@@ -83,6 +93,7 @@ double Airfoil::calcIncidenceAngle = calcIncidenceAngle(std::vector<double>& XYq
   std::vector<double> XYa(2);
   std::vector<double> NxNy(2);
   std::vector<double> TxTy(2);
+  std::vector<double> velUnitNorm(2);
   this->findPanel(XYq,XYa,NxNy,TxTy);
   // Find angle between airfoil surface normal vector and query velocity
   double velNorm = sqrt(pow(UVq[0],2) + pow(UVq[1],2));
@@ -113,8 +124,25 @@ void Airfoil::calcSCoords() {
 }
 
 double Airfoil::interpXYtoS(std::vector<double>& XYq) {
-  // Function to return s-coords of query point on airfoil
+  // Function to approximate s-coords of query pt (x,y) on airfoil surface
+  // NOTE: assumes directionality of tangent vectors!
 
-  return this->interpXYtoS(XYq);
+  double xq = XYq[0]; double yq = XYq[1];
+  // Find closest panel point
+  std::vector<double> XYa(2);
+  std::vector<double> NxNy(2);
+  std::vector<double> TxTy(2);
+  std::vector<double> velUnitNorm(2);
+  int indNN;
+  this->findPanel(XYq,XYa,NxNy,TxTy,indNN);
+  // Find coordinates of query point in panel frame
+  double dx = xq - XYa[0];
+  double dy = yq - XYa[1];
+  // Project displacement vector onto tangent vector
+  double tangDisplacement = dx*TxTy[0] + dy*TxTy[1];
+  // Estimate s-coordinate of query point by adding tangent displacement
+  double sCoord = panelS_(indNN) + tangDisplacement;
+
+  return sCoord;
 
 }

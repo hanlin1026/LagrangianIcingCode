@@ -449,12 +449,12 @@ void Cloud::bounceDynamics(Airfoil& airfoil) {
 void Cloud::splashDynamics(Airfoil& airfoil) {
   // Function to compute splash dynamics
 
-  if (!splash_.isempty()) {
+  if (!splash_.empty()) {
     double x,y,u,v,r;
     double K,Ks,Kb,vNormSq;
     double vN,vT;
     double vNorm,vTang,uNew,vNew;
-    double theta;
+    double theta,sCoord;
     vector<double> XYq(2);
     vector<double> UVq(2);
     vector<double> XYa(2);
