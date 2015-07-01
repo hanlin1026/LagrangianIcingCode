@@ -37,8 +37,7 @@ int main(int argc, const char *argv[]) {
   State state   = State(particles);
   double pg, ug, vg, Xnn, Ynn;
   int indnn;
-  printf("particles = %f\n",scalarsParcel.Rmean_);
-  // Search for a query point
+  // Select particle locations randomly and set state
   default_random_engine generator;
   uniform_real_distribution<double> distX(Xmin,Xmax);
   uniform_real_distribution<double> distY(Ymin,Ymax);

@@ -455,6 +455,7 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
     double vN,vT;
     double vNorm,vTang,uNew,vNew;
     double theta,sCoord;
+    double a,b,ms_m0,m0,ms,mStick,rStick;
     vector<double> XYq(2);
     vector<double> UVq(2);
     vector<double> XYa(2);
@@ -481,8 +482,30 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
       // Calculate impinging incidence angle
       airfoil.findPanel(XYq,XYa,NxNy,TxTy);
       theta = airfoil.calcIncidenceAngle(XYq,UVq);
+      // Calculate impinging mass loss parameters
+      a = 1.0-0.3*sin(theta);
+      b = (1.0/8.0)*(1.0+3.0*cos(theta));
+      // Calculate splashing ejection mass (ms) and sticking mass
+      // (mStick)
+      ms_m0 = max(a - (Ks/K)^b,0);
+      m0 = (4.0/3.0)*M_PI*pow(r,3);
+      ms = ms_m0*m0;
+      mStick = rhoL_*(m0-ms);
+      // Update parent particle properties (mass/radius)
+      rStick = pow(mStick/(rhoL_*(4.0/3.0)*M_PI),1.0/3.0);
+      state_.r_(indSplash) = rStick;
+      // Calculate splashed droplet size
+      double var = 0.2;
+      double A0 = 0.09; double A1 = 0.51; double delK = 1500.0;
+      if (ms != 0) {
+        // Interpolate analytical expression for the CDF to get
+        // droplet size
+        
+
+      }
 
     }
+
   }
 }
 
