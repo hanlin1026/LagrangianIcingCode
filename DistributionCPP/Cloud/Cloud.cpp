@@ -1,6 +1,8 @@
 #include "Cloud.h"
 #include <math.h>
 #include <limits>
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_spline.h>
 
 using namespace std;
 using namespace Eigen;
@@ -450,6 +452,7 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
   // Function to compute splash dynamics
 
   if (!splash_.empty()) {
+    // Declare lots of parameters
     double x,y,u,v,r;
     double K,Ks,Kb,vNormSq;
     double vN,vT;
@@ -462,6 +465,20 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
     vector<double> NxNy(2);
     vector<double> TxTy(2);
     int indSplash;
+    double var = 0.2; double A0 = 0.09; double A1 = 0.51; double delK = 1500.0;
+    double rm_rd,rm,mu;
+    int dropRes = 1000;
+    vector<double> dropsize(dropRes);
+    vector<double> dropsizeCDF(dropRes);
+    vector<double> rnew;
+    double diffDropSize,mCHILD,mPARENT,dsamp;
+    int numnew;
+    // Initialize uniform random number generator
+    default_random_engine generator;
+    uniform_real_distribution<double> randCDF(0.05,0.95);
+    // Initialize spline interpolation
+    gsl_interp_accel *acc = gsl_interp_accel_alloc ();
+    gsl_spline *spline = gsl_spline_alloc (gsl_interp_linear, dropRes);
     // Index over each splashing parcel
     for (int i=0; i<splash_.size(); i++) {
       // Get splashing parcel properties
@@ -494,13 +511,29 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
       // Update parent particle properties (mass/radius)
       rStick = pow(mStick/(rhoL_*(4.0/3.0)*M_PI),1.0/3.0);
       state_.r_(indSplash) = rStick;
-      // Calculate splashed droplet size
-      double var = 0.2;
-      double A0 = 0.09; double A1 = 0.51; double delK = 1500.0;
+      // Interpolate analytical expression for the CDF to get droplet size
       if (ms != 0) {
-        // Interpolate analytical expression for the CDF to get
-        // droplet size
-        
+	// Calculate dropsize CDF
+        rm_rd = A0 + A1*exp(-K/delK);
+        rm = rm_rd*r;
+        mu = log(rm);
+        diffDropSize = (r-0.05*rm)/(dropRes-1);
+        for (int j=0; j<dropRes; j++) {
+	  dropsize[j] = 0.05*rm + j*diffDropSize;
+	  dropsizeCDF[j] = 0.5 + 0.5*erf((1/sqrt(2*var))*(log(dropsize[j])-mu));
+	}
+        // Create spline of CDF for interpolation
+        gsl_spline_init(spline, dropsizeCDF, dropsize, dropRes);
+        // Draw child particles until mass is conserved
+        mCHILD = 0;
+        mPARENT = ms*rhoL_;
+        numnew = 0;
+        while (mCHILD < mPARENT) {
+            numnew = numnew+1;
+            dsamp = randCDF(generator);
+	    rnew.push_back(gsl_spline_eval(spline, dsamp, acc));
+            mCHILD = mCHILD + (4.0/3.0)*M_PI*pow(rnew,3)*rhoL_;
+        }
 
       }
 

@@ -15,4 +15,6 @@ add_library( IcingLib
 
 
 add_executable( IcingDriver IcingDriver.cpp )
-target_link_libraries( IcingDriver IcingLib )
+target_link_libraries( IcingDriver 
+                       IcingLib
+                       /usr/lib/libgsl.a )
