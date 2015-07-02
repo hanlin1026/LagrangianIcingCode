@@ -472,13 +472,26 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
     vector<double> dropsizeCDF(dropRes);
     vector<double> rnew;
     double diffDropSize,mCHILD,mPARENT,dsamp;
-    int numnew;
-    // Initialize uniform random number generator
+    int numnew,RandIndex;
+    int vRes = 1000;
+    vector<double> vratio(vRes);
+    vector<double> vratioCDF(vres);
+    vector<double> elev(2);
+    vector<double> v1(2);
+    vector<double> v2(2);
+    double diffVratio,vCDFSamp,vrat,v2mag,e1,e2,elevation,foilangle;
+    // Initialize uniform random number generators
     default_random_engine generator;
     uniform_real_distribution<double> randCDF(0.05,0.95);
+    uniform_real_distribution<double> randVelCDF(0,1);
+    uniform_real_distribution<double> randE1(0,25.0*M_PI/180.0);
+    uniform_real_distribution<double> randE2(M_PI-25.0*M_PI/180.0,M_PI);
     // Initialize spline interpolation
     gsl_interp_accel *acc = gsl_interp_accel_alloc ();
     gsl_spline *spline = gsl_spline_alloc (gsl_interp_linear, dropRes);
+    gsl_spline *splineVel = gsl_spline_alloc(gsl_interp_linear, dropRes);
+    // Initialize random seed
+    srand ( time(NULL) );
     // Index over each splashing parcel
     for (int i=0; i<splash_.size(); i++) {
       // Get splashing parcel properties
@@ -504,7 +517,7 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
       b = (1.0/8.0)*(1.0+3.0*cos(theta));
       // Calculate splashing ejection mass (ms) and sticking mass
       // (mStick)
-      ms_m0 = max(a - (Ks/K)^b,0);
+      ms_m0 = max(a - pow(Ks/K,b),0.);
       m0 = (4.0/3.0)*M_PI*pow(r,3);
       ms = ms_m0*m0;
       mStick = rhoL_*(m0-ms);
@@ -523,17 +536,53 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
 	  dropsizeCDF[j] = 0.5 + 0.5*erf((1/sqrt(2*var))*(log(dropsize[j])-mu));
 	}
         // Create spline of CDF for interpolation
-        gsl_spline_init(spline, dropsizeCDF, dropsize, dropRes);
+        gsl_spline_init(spline, dropsizeCDF.data(), dropsize.data(), dropRes);
         // Draw child particles until mass is conserved
         mCHILD = 0;
         mPARENT = ms*rhoL_;
         numnew = 0;
         while (mCHILD < mPARENT) {
-            numnew = numnew+1;
             dsamp = randCDF(generator);
 	    rnew.push_back(gsl_spline_eval(spline, dsamp, acc));
-            mCHILD = mCHILD + (4.0/3.0)*M_PI*pow(rnew,3)*rhoL_;
+            mCHILD = mCHILD + (4.0/3.0)*M_PI*pow(rnew[numnew],3)*rhoL_;
+	    numnew = numnew+1;
         }
+	// Calculate post splashing droplet velocities, interpolate
+	// analytical expression for the CDF to get magnitude of v2
+	// for splash droplets, where v_new = v1 + v2
+	diffVratio = 1.0/(vRes-1);
+	for (int j=0; j<vRes; j++) {
+	  vratio[j] = j*diffVratio;
+	  vratioCDF[j] = 1 - exp(-13.7984.*pow(vratio[j],2.5));
+	}
+	// Create spline of velocity CDF for interpolation
+        gsl_spline_init(splineVel, vratioCDF.data(), vratio.data(), vRes);
+	for (int j=0; j<numnew; j++) {
+	  // Interpolate velocity spline
+	  vCDFSamp = randVelCDF(generator);
+	  vrat = gsl_spline_eval(splineVel,vCDFSamp,acc);
+	  v2mag = vrat*sqrt(vNormSq);
+	  // Calculate elevation (relative to surface tangent) of splash droplet rebounds
+	  e1 = randE1(generator);
+	  e2 = randE2(generator);
+	  elev[0] = e1; elev[1] = e2;
+	  RandIndex = rand() % 2;
+	  elevation = elev[RandIndex];
+	  foilAngle = atan2(TxTy(1),TxTy(0));
+	  // Calculate v2
+	  v2[0] = v2mag*cos(foilAngle+elevation);
+	  v2[1] = v2mag*sin(foilAngle+elevation);
+	  // Calculate v1
+	  v1[0] = 
+	}
+	
+
+	// Append new child particles to the cloud
+	State stateChildren(numnew);
+	for (int j=0; i<numnew; i++) {
+	  stateChildren.r(j) = rnew[j];
+	}
+	state_.appendState(stateChildren);
 
       }
 
