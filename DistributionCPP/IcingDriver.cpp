@@ -83,10 +83,12 @@ int main(int argc, const char *argv[]) {
   vector<int> totalImpingeInd;
   vector<int> indAdv;
   vector<int> indCell;
+  vector<int> indSplash;
   double xCENT,yCENT;
   vector<double> XCENT;
   vector<double> YCENT;
   int indtmp = 0;
+  int numSplash = 0;
   while ((totalImpinge < particles) && (iter < maxiter)) {
     cloud.calcDtandImpinge(airfoil,p3d);
     cloud.transportSLD(p3d);
@@ -94,6 +96,13 @@ int main(int argc, const char *argv[]) {
     if (!impinge.empty()) {
       cloud.computeImpingementRegimes(airfoil);
       cloud.bounceDynamics(airfoil);
+      cloud.spreadDynamics(airfoil);
+      cloud.splashDynamics(airfoil);
+      indSplash = cloud.getIndSplash();
+      numSplash = indSplash.size();
+    }
+    else {
+      numSplash = 0;
     }
     totalImpingeInd = cloud.getIMPINGETOTAL();
     totalImpinge = totalImpingeInd.size();
@@ -101,6 +110,7 @@ int main(int argc, const char *argv[]) {
     if (iter % 1==0) {
       stateCloud = cloud.getState();
       indCell = cloud.getINDCELL();
+      particles = stateCloud.size_;
       for (int i=0; i<particles; i++) {
         x.push_back(stateCloud.x_(i));
         y.push_back(stateCloud.y_(i));
@@ -113,7 +123,7 @@ int main(int argc, const char *argv[]) {
       }
     }
     indAdv = cloud.getIndAdv();
-    printf("ITER = %d\t%d\n",iter,indAdv.size());
+    printf("ITER = %d\t%d\t%d\n",iter,indAdv.size(),numSplash);
     iter++;
 
   }

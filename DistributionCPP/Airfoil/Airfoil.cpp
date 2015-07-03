@@ -39,10 +39,14 @@ Airfoil::Airfoil(Eigen::VectorXd& X, Eigen::VectorXd& Y) {
   this->calcSCoords();
   // Output to file
   FILE* fout = fopen("AirfoilXY.out","w");
+  FILE* foutT = fopen("AirfoilTxTy.out","w");
+  FILE* foutN = fopen("AirfoilNxNy.out","w");
   for (int i=0; i<gridPts-1; i++) {
     fprintf(fout,"%f\t%f\n",panelX_[i],panelY_[i]);
+    fprintf(foutT,"%f\t%f\n",tangent_(i,0),tangent_(i,1));
+    fprintf(foutN,"%f\t%f\n",normal_(i,0),normal_(i,1));
   }
-  fclose(fout);
+  fclose(fout); fclose(foutT); fclose(foutN);
 }
 
 Airfoil::~Airfoil() {
@@ -85,7 +89,7 @@ void Airfoil::findPanel(std::vector<double>& XYq, std::vector<double>& XYnn, std
 
 }
 
-double Airfoil::calcIncidenceAngle(std::vector<double>& XYq, std::vector<double>& UVq) {
+double Airfoil::calcIncidenceAngle(std::vector<double>& XYq, std::vector<double>& UVq, int indNN) {
   // Function to calculate the incidence angle of a droplet impinging
   // on the airfoil surface
 
@@ -94,10 +98,10 @@ double Airfoil::calcIncidenceAngle(std::vector<double>& XYq, std::vector<double>
   std::vector<double> NxNy(2);
   std::vector<double> TxTy(2);
   std::vector<double> velUnitNorm(2);
-  this->findPanel(XYq,XYa,NxNy,TxTy);
+  NxNy[0] = normal_(indNN,0);
+  NxNy[1] = normal_(indNN,1);
   // Find angle between airfoil surface normal vector and query velocity
   double velNorm = sqrt(pow(UVq[0],2) + pow(UVq[1],2));
-  std::vector<double> vel(2);
   velUnitNorm[0] = UVq[0]/velNorm;
   velUnitNorm[1] = UVq[1]/velNorm;
   double projection = velUnitNorm[0]*NxNy[0] + velUnitNorm[1]*NxNy[1];
@@ -144,5 +148,11 @@ double Airfoil::interpXYtoS(std::vector<double>& XYq) {
   double sCoord = panelS_(indNN) + tangDisplacement;
 
   return sCoord;
+
+}
+
+void Airfoil::appendFilm(double sCoord, double mass) {
+  FilmScoords_.push_back(sCoord);
+  FilmMass_.push_back(mass);
 
 }

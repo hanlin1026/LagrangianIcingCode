@@ -453,7 +453,7 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
 
   if (!splash_.empty()) {
     // Declare lots of parameters
-    double x,y,u,v,r;
+    double x,y,u,v,r,temp,Time,numDrop;
     double K,Ks,Kb,vNormSq;
     double vN,vT;
     double vNorm,vTang,uNew,vNew;
@@ -472,14 +472,14 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
     vector<double> dropsizeCDF(dropRes);
     vector<double> rnew;
     double diffDropSize,mCHILD,mPARENT,dsamp;
-    int numnew,RandIndex;
+    int numnew,RandIndex,indNN;
     int vRes = 1000;
     vector<double> vratio(vRes);
-    vector<double> vratioCDF(vres);
+    vector<double> vratioCDF(vRes);
     vector<double> elev(2);
     vector<double> v1(2);
     vector<double> v2(2);
-    double diffVratio,vCDFSamp,vrat,v2mag,e1,e2,elevation,foilangle;
+    double diffVratio,vCDFSamp,vrat,v2mag,e1,e2,elevation,foilAngle;
     // Initialize uniform random number generators
     default_random_engine generator;
     uniform_real_distribution<double> randCDF(0.05,0.95);
@@ -501,6 +501,9 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
       u = state_.u_(indSplash);
       v = state_.v_(indSplash);
       r = state_.r_(indSplash);
+      temp = state_.temp_(indSplash);
+      Time = state_.time_(indSplash);
+      numDrop = state_.numDrop_(indSplash);
       K = K_[splash_[i]];
       Ks = fs_[splash_[i]]*Ks0_;
       vNormSq = vNormSq_[splash_[i]];
@@ -510,8 +513,8 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
       // Calculate s-coords of impinging parcel
       sCoord = airfoil.interpXYtoS(XYq);
       // Calculate impinging incidence angle
-      airfoil.findPanel(XYq,XYa,NxNy,TxTy);
-      theta = airfoil.calcIncidenceAngle(XYq,UVq);
+      airfoil.findPanel(XYq,XYa,NxNy,TxTy,indNN);
+      theta = airfoil.calcIncidenceAngle(XYq,UVq,indNN);
       // Calculate impinging mass loss parameters
       a = 1.0-0.3*sin(theta);
       b = (1.0/8.0)*(1.0+3.0*cos(theta));
@@ -526,6 +529,7 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
       state_.r_(indSplash) = rStick;
       // Interpolate analytical expression for the CDF to get droplet size
       if (ms != 0) {
+	printf("SPLASH");
 	// Calculate dropsize CDF
         rm_rd = A0 + A1*exp(-K/delK);
         rm = rm_rd*r;
@@ -545,7 +549,7 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
             dsamp = randCDF(generator);
 	    rnew.push_back(gsl_spline_eval(spline, dsamp, acc));
             mCHILD = mCHILD + (4.0/3.0)*M_PI*pow(rnew[numnew],3)*rhoL_;
-	    numnew = numnew+1;
+	    numnew++;
         }
 	// Calculate post splashing droplet velocities, interpolate
 	// analytical expression for the CDF to get magnitude of v2
@@ -553,10 +557,11 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
 	diffVratio = 1.0/(vRes-1);
 	for (int j=0; j<vRes; j++) {
 	  vratio[j] = j*diffVratio;
-	  vratioCDF[j] = 1 - exp(-13.7984.*pow(vratio[j],2.5));
+	  vratioCDF[j] = 1 - exp(-13.7984*pow(vratio[j],2.5));
 	}
 	// Create spline of velocity CDF for interpolation
         gsl_spline_init(splineVel, vratioCDF.data(), vratio.data(), vRes);
+	State stateChildren(numnew);
 	for (int j=0; j<numnew; j++) {
 	  // Interpolate velocity spline
 	  vCDFSamp = randVelCDF(generator);
@@ -568,27 +573,60 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
 	  elev[0] = e1; elev[1] = e2;
 	  RandIndex = rand() % 2;
 	  elevation = elev[RandIndex];
-	  foilAngle = atan2(TxTy(1),TxTy(0));
+	  foilAngle = atan2(TxTy[1],TxTy[0]);
 	  // Calculate v2
 	  v2[0] = v2mag*cos(foilAngle+elevation);
 	  v2[1] = v2mag*sin(foilAngle+elevation);
 	  // Calculate v1
-	  v1[0] = 
+	  v1[0] = 0.8*vTang*cos(foilAngle);
+	  v1[1] = 0.8*vTang*sin(foilAngle);
+	  // Total splashed velocity = v1 + v2
+	  stateChildren.u_(j) = v1[0] + v2[0];
+	  stateChildren.v_(j) = v1[1] + v2[1];
+	  // Set other child properties (inherited from parent)
+	  stateChildren.x_(j) = x;
+	  stateChildren.y_(j) = y;
+	  stateChildren.r_(j) = rnew[j];
+	  stateChildren.temp_(j) = temp;
+	  stateChildren.time_(j) = Time;
+	  stateChildren.numDrop_(j) = numDrop;
 	}
-	
-
-	// Append new child particles to the cloud
-	State stateChildren(numnew);
-	for (int j=0; i<numnew; i++) {
-	  stateChildren.r(j) = rnew[j];
-	}
+	// Append child particles to cloud
 	state_.appendState(stateChildren);
+	// Add mass which has "stuck" to the airfoil
+	airfoil.appendFilm(sCoord,numDrop*mStick);
 
+      }
+      else {
+	printf("THETA = %f ",theta);
       }
 
     }
 
   }
+}
+
+void Cloud::spreadDynamics(Airfoil& airfoil) {
+  // Function to compute spreading dynamics (pure stick)
+
+  double x,y,r;
+  vector<double> XYq(2);
+  double numDrop,mSpread,sCoord,indSpread;
+  // Index over each spreading parcel
+  for (int i=0; i<spread_.size(); i++) {
+    // Get splashing parcel properties
+    indSpread = impinge_[spread_[i]];
+    x = state_.x_(indSpread);
+    y = state_.y_(indSpread);
+    r = state_.r_(indSpread);
+    numDrop = state_.numDrop_(indSpread);
+    mSpread = (4.0/3.0)*M_PI*pow(r,3)*rhoL_;
+    XYq[0] = x; XYq[1] = y;
+    sCoord = airfoil.interpXYtoS(XYq);
+    airfoil.appendFilm(sCoord,numDrop*mSpread);
+    
+  }
+
 }
 
 void Cloud::setIndAdv(vector<int>& indAdv) {
@@ -599,4 +637,9 @@ void Cloud::setIndAdv(vector<int>& indAdv) {
 vector<int> Cloud::getIndAdv() {
 
   return indAdv_;
+}
+
+vector<int> Cloud::getIndSplash() {
+
+  return splash_;
 }

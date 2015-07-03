@@ -46,4 +46,6 @@ void State::appendState(State& addition) {
     time_(size_+i) = addition.time_(i);
     numDrop_(size_+i) = addition.numDrop_(i);
   }
+  // Update state size
+  size_ += deltaSize;
 }

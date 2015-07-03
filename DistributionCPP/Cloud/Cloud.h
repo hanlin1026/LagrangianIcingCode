@@ -20,6 +20,7 @@ class Cloud {
   void computeImpingementRegimes(Airfoil& airfoil);
   void bounceDynamics(Airfoil& airfoil);
   void splashDynamics(Airfoil& airfoil);
+  void spreadDynamics(Airfoil& airfoil);
   // Set/get methods
   State getState();
   void setIndAdv(std::vector<int>& indAdv);
@@ -27,6 +28,7 @@ class Cloud {
   std::vector<int> getIMPINGE();
   std::vector<int> getIMPINGETOTAL();
   std::vector<int> getINDCELL();
+  std::vector<int> getIndSplash();
 
  private:
   State state_;
