@@ -1,6 +1,7 @@
 #include "Airfoil.h"
 #include <cmath>
 #include <stdlib.h>
+#include <gsl/gsl_histogram.h>
 
 using namespace std;
 
@@ -104,7 +105,7 @@ double Airfoil::calcIncidenceAngle(std::vector<double>& XYq, std::vector<double>
   double velNorm = sqrt(pow(UVq[0],2) + pow(UVq[1],2));
   velUnitNorm[0] = UVq[0]/velNorm;
   velUnitNorm[1] = UVq[1]/velNorm;
-  double projection = velUnitNorm[0]*NxNy[0] + velUnitNorm[1]*NxNy[1];
+  double projection = velUnitNorm[0]*(-NxNy[0]) + velUnitNorm[1]*(-NxNy[1]);
   double theta = acos(projection);
 
   return theta;
@@ -155,4 +156,21 @@ void Airfoil::appendFilm(double sCoord, double mass) {
   FilmScoords_.push_back(sCoord);
   FilmMass_.push_back(mass);
 
+}
+
+gsl_histogram* Airfoil::calcCollectionEfficiency(int numBins) {
+  // Function to calculate collection efficiency of airfoil
+
+  // Create bins
+  double minS = *min_element(FilmScoords_.begin(),FilmScoords_.end());
+  double maxS = *max_element(FilmScoords_.begin(),FilmScoords_.end());
+  double dBins = (maxS-minS)/(numBins-1);
+  // Histogram count of mass in each bin
+  gsl_histogram *h = gsl_histogram_alloc(numBins);
+  gsl_histogram_set_ranges_uniform(h,minS,maxS);
+  for (int i=0; i<FilmMass_.size(); i++) {
+    gsl_histogram_accumulate(h,FilmScoords_[i],FilmMass_[i]);
+  }
+
+  return h;
 }

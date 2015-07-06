@@ -30,20 +30,16 @@ Cloud::~Cloud() {
 
 }
 
-void Cloud::addParticle(State& state, PLOT3D& grid) {
+void Cloud::addParticles(State& state, int indCell) {
   // Function to add new particles to the cloud
 
   // Append new state elements 
   state_.appendState(state);
-  // Search grid for new state cell indices
-  double xq, yq, Xnn, Ynn;
-  int indCell;
+  // Initialize particles as being in same cell as parent
   for (int i=0; i<state.size_; i++) {
-    xq = state.x_(i);
-    yq = state.y_(i);
-    grid.pointSearch(xq,yq,Xnn,Ynn,indCell);
     indCell_.push_back(indCell);
   }
+  particles_ += state.size_;
 }
 
 State Cloud::getState() {
@@ -472,7 +468,7 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
     vector<double> dropsizeCDF(dropRes);
     vector<double> rnew;
     double diffDropSize,mCHILD,mPARENT,dsamp;
-    int numnew,RandIndex,indNN;
+    int numnew,RandIndex,indNN,indCellParent;
     int vRes = 1000;
     vector<double> vratio(vRes);
     vector<double> vratioCDF(vRes);
@@ -504,6 +500,7 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
       temp = state_.temp_(indSplash);
       Time = state_.time_(indSplash);
       numDrop = state_.numDrop_(indSplash);
+      indCellParent = indCell_[indSplash];
       K = K_[splash_[i]];
       Ks = fs_[splash_[i]]*Ks0_;
       vNormSq = vNormSq_[splash_[i]];
@@ -529,7 +526,6 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
       state_.r_(indSplash) = rStick;
       // Interpolate analytical expression for the CDF to get droplet size
       if (ms != 0) {
-	printf("SPLASH");
 	// Calculate dropsize CDF
         rm_rd = A0 + A1*exp(-K/delK);
         rm = rm_rd*r;
@@ -591,14 +587,11 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
 	  stateChildren.time_(j) = Time;
 	  stateChildren.numDrop_(j) = numDrop;
 	}
-	// Append child particles to cloud
-	state_.appendState(stateChildren);
 	// Add mass which has "stuck" to the airfoil
 	airfoil.appendFilm(sCoord,numDrop*mStick);
+	// Add particles to the cloud
+	this->addParticles(stateChildren,indCellParent);
 
-      }
-      else {
-	printf("THETA = %f ",theta);
       }
 
     }

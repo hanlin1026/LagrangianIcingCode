@@ -13,7 +13,7 @@ class Cloud {
  public:
   Cloud(State& state, PLOT3D& grid, double rhol);
   ~Cloud();
-  void addParticle(State& state, PLOT3D& grid);
+  void addParticles(State& state, int indCellParent);
   // Methods for SLD dynamics
   void calcDtandImpinge(Airfoil& airfoil, PLOT3D& grid);
   void transportSLD(PLOT3D& grid);

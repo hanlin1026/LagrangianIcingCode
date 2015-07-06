@@ -74,6 +74,8 @@ int main(int argc, const char *argv[]) {
   ofstream foutY("CloudY.out");
   ofstream foutCELLX("CloudCELLX.out");
   ofstream foutCELLY("CloudCELLY.out");
+  ofstream foutBINS("BetaBins.out");
+  ofstream foutMASS("Beta.out");
   State stateCloud;
   iter = 0;
   int totalImpinge = 0;
@@ -89,6 +91,7 @@ int main(int argc, const char *argv[]) {
   vector<double> YCENT;
   int indtmp = 0;
   int numSplash = 0;
+  printf("maxiter = %d\n",maxiter);
   while ((totalImpinge < particles) && (iter < maxiter)) {
     cloud.calcDtandImpinge(airfoil,p3d);
     cloud.transportSLD(p3d);
@@ -98,19 +101,14 @@ int main(int argc, const char *argv[]) {
       cloud.bounceDynamics(airfoil);
       cloud.spreadDynamics(airfoil);
       cloud.splashDynamics(airfoil);
-      indSplash = cloud.getIndSplash();
-      numSplash = indSplash.size();
-    }
-    else {
-      numSplash = 0;
     }
     totalImpingeInd = cloud.getIMPINGETOTAL();
     totalImpinge = totalImpingeInd.size();
-    // Output state to file
-    if (iter % 1==0) {
-      stateCloud = cloud.getState();
+    stateCloud = cloud.getState();
+    particles = stateCloud.size_;
+    // Save states
+    if (iter % 25==0) {
       indCell = cloud.getINDCELL();
-      particles = stateCloud.size_;
       for (int i=0; i<particles; i++) {
         x.push_back(stateCloud.x_(i));
         y.push_back(stateCloud.y_(i));
@@ -123,10 +121,27 @@ int main(int argc, const char *argv[]) {
       }
     }
     indAdv = cloud.getIndAdv();
-    printf("ITER = %d\t%d\t%d\n",iter,indAdv.size(),numSplash);
+    printf("ITER = %d\t%d\t%d\n",iter,particles,indAdv.size());
     iter++;
 
   }
+  // Get collection efficiency and output to file
+  int numBins = 35;
+  gsl_histogram *h = airfoil.calcCollectionEfficiency(numBins);
+  std::vector<double> bins(numBins+1);
+  std::vector<double> mass(numBins);
+  double upper,lower;
+  for (int i=0; i<numBins; i++) {
+    gsl_histogram_get_range(h,i,&lower,&upper);
+    mass[i] = gsl_histogram_get(h,i);
+    bins[i] = lower;
+    bins[i+1] = upper;
+  }
+  ostream_iterator<double> out_itBINS(foutBINS,"\n");
+  copy ( bins.begin(), bins.end(), out_itBINS );
+  ostream_iterator<double> out_itMASS(foutMASS,"\n");
+  copy ( mass.begin(), mass.end(), out_itMASS );
+  // Output particle state history to file
   ostream_iterator<double> out_itX (foutX,"\n");
   copy ( x.begin(), x.end(), out_itX );
   ostream_iterator<double> out_itY (foutY,"\n");

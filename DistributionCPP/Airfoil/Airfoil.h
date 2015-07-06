@@ -3,6 +3,7 @@
 
 #include <eigen3/Eigen/Dense>
 #include <QuadTree/Bucket.h>
+#include <gsl/gsl_histogram.h>
 
 class Airfoil {
   public:
@@ -13,6 +14,7 @@ class Airfoil {
     double calcIncidenceAngle(std::vector<double>& XYq,std::vector<double>& UVq,int indNN);
     double interpXYtoS(std::vector<double>& XYq);
     void appendFilm(double sCoord, double mass);
+    gsl_histogram* calcCollectionEfficiency(int numBins);
 
   private:
     Eigen::VectorXd panelX_;
