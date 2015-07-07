@@ -2,15 +2,19 @@
 #define __STATE_H__
 
 #include <eigen3/Eigen/Dense>
+#include <Grid/PLOT3D.h>
+#include <Cloud/ParcelScalars.h>
 
 class State {
   public:
-    State();
+    State(const char* distributionType, ParcelScalars& scalarsParcel, PLOT3D& p3d);
     State(int size);
+    State();
     ~State();
+    // Append method
     void appendState(State& addition);
-    int size_;
     // Scalars defining particle state
+    int size_;
     Eigen::VectorXd x_; 
     Eigen::VectorXd y_;
     Eigen::VectorXd u_; 

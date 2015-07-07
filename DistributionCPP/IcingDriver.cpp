@@ -20,39 +20,14 @@ int main(int argc, const char *argv[]) {
   const char *meshFileName = "Grid/MESH.P3D";
   const char *solnFileName = "Grid/q103.0.50E+01.bin";
   // Read in initialization scalars from input file
-  FluidScalars scalars;
+  FluidScalars scalarsFluid;
   ParcelScalars scalarsParcel;
-  readInputParams(scalars,scalarsParcel,inFileName);
+  readInputParams(scalarsFluid,scalarsParcel,inFileName);
   // Initialize plot3D object, read in basic problem data
-  PLOT3D p3d = PLOT3D(meshFileName, solnFileName, &scalars);
+  PLOT3D p3d = PLOT3D(meshFileName, solnFileName, &scalarsFluid);
   // Initialize cloud of particles
-  int particles = scalarsParcel.particles_;
-  double Rmean  = scalarsParcel.Rmean_;
-  double Tmean  = scalarsParcel.Tmean_;
-  double Xmin   = scalarsParcel.Xmin_;
-  double Xmax   = scalarsParcel.Xmax_;
-  double Ymin   = scalarsParcel.Ymin_;
-  double Ymax   = scalarsParcel.Ymax_;
-  int maxiter   = scalarsParcel.maxiter_;
-  State state   = State(particles);
-  double pg, ug, vg, Xnn, Ynn;
-  int indnn;
-  // Select particle locations randomly and set state
-  default_random_engine generator;
-  uniform_real_distribution<double> distX(Xmin,Xmax);
-  uniform_real_distribution<double> distY(Ymin,Ymax);
-  for (int i=0; i<particles; i++) {
-    state.x_(i) = distX(generator);
-    state.y_(i) = distY(generator);
-    p3d.pointSearch(state.x_(i),state.y_(i),Xnn,Ynn,indnn);
-    state.u_(i) = p3d.getUCENT(indnn);
-    state.v_(i) = p3d.getVCENT(indnn);
-    state.r_(i) = Rmean;
-    state.temp_(i) = Tmean;
-    state.time_(i) = 0;
-    state.numDrop_(i) = 1;
-  }
-  Cloud cloud(state,p3d,scalars.rhol_);
+  State state = State("MonoDispersed",scalarsParcel,p3d);
+  Cloud cloud(state,p3d,scalarsFluid.rhol_);
   // Intialize airfoil object
   Eigen::MatrixXd Xgrid = p3d.getX();
   Eigen::MatrixXd Ygrid = p3d.getY();
@@ -91,6 +66,8 @@ int main(int argc, const char *argv[]) {
   vector<double> YCENT;
   int indtmp = 0;
   int numSplash = 0;
+  int maxiter = scalarsParcel.maxiter_;
+  int particles = scalarsParcel.particles_;
   printf("maxiter = %d\n",maxiter);
   while ((totalImpinge < particles) && (iter < maxiter)) {
     cloud.calcDtandImpinge(airfoil,p3d);
@@ -107,7 +84,7 @@ int main(int argc, const char *argv[]) {
     stateCloud = cloud.getState();
     particles = stateCloud.size_;
     // Save states
-    if (iter % 25==0) {
+    if (iter % 1499==0) {
       indCell = cloud.getINDCELL();
       for (int i=0; i<particles; i++) {
         x.push_back(stateCloud.x_(i));
@@ -125,6 +102,15 @@ int main(int argc, const char *argv[]) {
     iter++;
 
   }
+  // Output particle state history to file
+  ostream_iterator<double> out_itX (foutX,"\n");
+  copy ( x.begin(), x.end(), out_itX );
+  ostream_iterator<double> out_itY (foutY,"\n");
+  copy ( y.begin(), y.end(), out_itY );
+  ostream_iterator<double> out_itCELLX (foutCELLX,"\n");
+  copy ( XCENT.begin(), XCENT.end(), out_itCELLX );
+  ostream_iterator<double> out_itCELLY (foutCELLY,"\n");
+  copy ( YCENT.begin(), YCENT.end(), out_itCELLY );
   // Get collection efficiency and output to file
   int numBins = 35;
   gsl_histogram *h = airfoil.calcCollectionEfficiency(numBins);
@@ -141,15 +127,6 @@ int main(int argc, const char *argv[]) {
   copy ( bins.begin(), bins.end(), out_itBINS );
   ostream_iterator<double> out_itMASS(foutMASS,"\n");
   copy ( mass.begin(), mass.end(), out_itMASS );
-  // Output particle state history to file
-  ostream_iterator<double> out_itX (foutX,"\n");
-  copy ( x.begin(), x.end(), out_itX );
-  ostream_iterator<double> out_itY (foutY,"\n");
-  copy ( y.begin(), y.end(), out_itY );
-  ostream_iterator<double> out_itCELLX (foutCELLX,"\n");
-  copy ( XCENT.begin(), XCENT.end(), out_itCELLX );
-  ostream_iterator<double> out_itCELLY (foutCELLY,"\n");
-  copy ( YCENT.begin(), YCENT.end(), out_itCELLY );
   // Clear any allocated memory, close files/streams
   
 }

@@ -161,15 +161,17 @@ void Airfoil::appendFilm(double sCoord, double mass) {
 gsl_histogram* Airfoil::calcCollectionEfficiency(int numBins) {
   // Function to calculate collection efficiency of airfoil
 
-  // Create bins
-  double minS = *min_element(FilmScoords_.begin(),FilmScoords_.end());
-  double maxS = *max_element(FilmScoords_.begin(),FilmScoords_.end());
-  double dBins = (maxS-minS)/(numBins-1);
-  // Histogram count of mass in each bin
   gsl_histogram *h = gsl_histogram_alloc(numBins);
-  gsl_histogram_set_ranges_uniform(h,minS,maxS);
-  for (int i=0; i<FilmMass_.size(); i++) {
-    gsl_histogram_accumulate(h,FilmScoords_[i],FilmMass_[i]);
+  if (!FilmScoords_.empty()) {
+    // Create bins
+    double minS = *min_element(FilmScoords_.begin(),FilmScoords_.end());
+    double maxS = *max_element(FilmScoords_.begin(),FilmScoords_.end());
+    double dBins = (maxS-minS)/(numBins-1);
+    // Histogram count of mass in each bin
+    gsl_histogram_set_ranges_uniform(h,minS,maxS);
+    for (int i=0; i<FilmMass_.size(); i++) {
+      gsl_histogram_accumulate(h,FilmScoords_[i],FilmMass_[i]);
+    }
   }
 
   return h;
