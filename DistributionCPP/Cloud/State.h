@@ -24,6 +24,7 @@ class State {
     Eigen::VectorXd time_;
     Eigen::VectorXd numDrop_;
  private:
+    double Xmin_,Xmax_,Ymin_,Ymax_;
 
 };
 

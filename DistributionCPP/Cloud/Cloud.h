@@ -23,6 +23,7 @@ class Cloud {
   void spreadDynamics(Airfoil& airfoil);
   // Set/get methods
   State getState();
+  void setState(State& state, PLOT3D& grid);
   void setIndAdv(std::vector<int>& indAdv);
   std::vector<int> getIndAdv();
   std::vector<int> getIMPINGE();

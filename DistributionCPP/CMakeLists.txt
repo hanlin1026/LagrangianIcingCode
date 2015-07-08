@@ -9,6 +9,7 @@ add_library( IcingLib
   QuadTree/Bucket.cpp
   Cloud/Cloud.cpp
   Cloud/State.cpp
+  Cloud/calcImpingementLimits.cpp
   Airfoil/Airfoil.cpp
   InputData/readInputParams.cpp
   findAll.cpp )

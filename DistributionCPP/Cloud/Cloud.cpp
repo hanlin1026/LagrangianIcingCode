@@ -636,3 +636,23 @@ vector<int> Cloud::getIndSplash() {
 
   return splash_;
 }
+
+void Cloud::setState(State& state, PLOT3D& grid) {
+  // Function to reset entire state of cloud
+
+  // Set initial state of particles
+  state_ = state;
+  particles_ = state.size_;
+  sigma_ = 75.64e-3;
+  // Search grid QT for initial cell indices
+  indCell_.reserve(particles_);
+  double xq, yq, Xnn, Ynn;
+  int indCell;
+  for (int i=0; i<particles_; i++) {
+    xq = state.x_(i);
+    yq = state.y_(i);
+    grid.pointSearch(xq,yq,Xnn,Ynn,indCell);
+    indCell_[i] = indCell;
+  }
+
+}
