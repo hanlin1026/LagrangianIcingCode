@@ -49,7 +49,9 @@ std::vector<double> calcImpingementLimits(double Xloc,double R,double T,double r
   Airfoil airfoil = Airfoil(X,Y);
   // First advection to find lowest trajectory that hits
   double Yhit,Ymiss;
+  printf("Determining initial impinging trajectory..."); fflush(stdout);
   findInitialHit(cloud,p3d,airfoil,Yhit);
+  printf("done.\n");
   Ymiss = Ylower;
   // Reset cloud state so particles are between missing and hitting lower trajectories
   resetCloud(cloud,p3d,Xloc,Ylower,Yhit);
@@ -57,18 +59,24 @@ std::vector<double> calcImpingementLimits(double Xloc,double R,double T,double r
   iter = 0;
   int indHit;
   // Iterative procedure to determine lower limit
+  printf("Determining lower impingement limit..."); fflush(stdout);
   while (abs(Ymiss-Yhit)>TOL) {
+    resetCloud(cloud,p3d,Xloc,Ymiss,Yhit);
     calcHitMissLower(Yhit,Ymiss,cloud,p3d,airfoil);
   }
+  printf("done.\n");
   vector<double> limits(2);
   limits[0] = Yhit;
   // Reset cloud state so particles are between missing and hitting upper trajectories
   resetCloud(cloud,p3d,Xloc,Yhit,Yupper);
   // Iterative procedure to determine upper limit
   Ymiss = Yupper;
+  printf("Determining upper impingement limit..."); fflush(stdout);
   while (abs(Ymiss-Yhit)>TOL) {
+    resetCloud(cloud,p3d,Xloc,Yhit,Ymiss);
     calcHitMissUpper(Yhit,Ymiss,cloud,p3d,airfoil);
   }
+  printf("done.\n");
   limits[1] = Yhit;
   
   return limits;
@@ -99,6 +107,8 @@ void resetCloud(Cloud& cloud,PLOT3D& p3d,double X,double Ylower,double Yupper) {
     state.time_(i) = 0;
     state.numDrop_(i) = 1; 
   }
+  // Delete old cloud properties
+  cloud.clearData();
   // Update cloud
   cloud.setState(state,p3d);
 
@@ -107,50 +117,76 @@ void resetCloud(Cloud& cloud,PLOT3D& p3d,double X,double Ylower,double Yupper) {
 void calcHitMissLower(double& Yhit,double& Ymiss,Cloud& cloud,PLOT3D& p3d,Airfoil& airfoil) {
   // Function to calculate hit and miss y-locations for a cloud
 
+  // Save initial state
+  State state = cloud.getState();
   // Advect screen of particles
   int maxiter = 2000;
   vector<int> impinge;
+  vector<int> impingeTotal;
   for (int i=0; i<maxiter; i++) {
     cloud.calcDtandImpinge(airfoil,p3d);
     cloud.transportSLD(p3d);
+    impinge = cloud.getIMPINGE();
+    if (!impinge.empty()) {
+      cloud.computeImpingementRegimes(airfoil);
+    }
   }
   // Find hit and miss
-  impinge = cloud.getIMPINGETOTAL();
-  State state = cloud.getState();
+  impingeTotal = cloud.getIMPINGETOTAL();
   int indHit;
-  if (!impinge.empty()) {
-    indHit = *min_element(impinge.begin(),impinge.end());
+  if (!impingeTotal.empty()) {
+    indHit = *min_element(impingeTotal.begin(),impingeTotal.end());
   }
   else {
-    indHit = state.size_;
+    indHit = state.size_-1;
   }
   Yhit = state.y_(indHit);
-  Ymiss = state.y_(indHit-1);
+  if (indHit != 0) {
+    Ymiss = state.y_(indHit-1);
+  }
+  else {
+    Ymiss = Yhit;
+  }
+
+  printf("IndHit = %d, Yhit = %f, Ymiss = %f\n",indHit,Yhit,Ymiss);
 
 }
 
 void calcHitMissUpper(double& Yhit,double& Ymiss,Cloud& cloud,PLOT3D& p3d,Airfoil& airfoil) {
   // Function to calculate hit and miss y-locations for a cloud
 
+  // Save initial state
+  State state = cloud.getState();
   // Advect screen of particles
   int maxiter = 2000;
   vector<int> impinge;
+  vector<int> impingeTotal;
   for (int i=0; i<maxiter; i++) {
     cloud.calcDtandImpinge(airfoil,p3d);
     cloud.transportSLD(p3d);
+    impinge = cloud.getIMPINGE();
+    if (!impinge.empty()) {
+      cloud.computeImpingementRegimes(airfoil);
+    }
   }
   // Find hit and miss
-  impinge = cloud.getIMPINGETOTAL();
-  State state = cloud.getState();
+  impingeTotal = cloud.getIMPINGETOTAL();
   int indHit;
-  if (!impinge.empty()) {
-    indHit = *min_element(impinge.begin(),impinge.end());
+  if (!impingeTotal.empty()) {
+    indHit = *min_element(impingeTotal.begin(),impingeTotal.end());
   }
   else {
     indHit = 0;
   }
   Yhit = state.y_(indHit);
-  Ymiss = state.y_(indHit+1);
+  if (indHit != 0) {
+    Ymiss = state.y_(indHit+1);
+  }
+  else {
+    Ymiss = Yhit;
+  }
+
+  printf("Yhit = %f, Ymiss = %f\n",Yhit,Ymiss);
 
 }
 
@@ -160,31 +196,50 @@ void findInitialHit(Cloud& cloud, PLOT3D& p3d, Airfoil& airfoil, double& Yhit) {
 
   State initialState = cloud.getState();
   double X = initialState.x_(0);
+  double Ylower,Yupper,indHit,dY;
   // Advect screen of particles
   int maxiter = 2000;
   vector<int> impinge;
+  vector<int> impingeTotal;
   for (int i=0; i<maxiter; i++) {
     cloud.calcDtandImpinge(airfoil,p3d);
     cloud.transportSLD(p3d);
+    impinge = cloud.getIMPINGE();
+    if (!impinge.empty()) {
+      cloud.computeImpingementRegimes(airfoil);
+    }
   }
-  impinge = cloud.getIMPINGETOTAL();
+  impingeTotal = cloud.getIMPINGETOTAL();
   State state = cloud.getState();
-  double Ylower = state.y_(0);
-  double Yupper = state.y_(state.size_);
-  while (impinge.empty()) {
+  int iterations = 0;
+  Ylower = initialState.y_(0);
+  Yupper = initialState.y_(initialState.size_-1);
+  while (impingeTotal.empty()) {
     // Reset the screen limits
-    Yupper = Yupper - (Yupper-Ylower)/4;
-    Ylower = Ylower + (Yupper-Ylower)/4;
+    dY = Yupper-Ylower;
+    Yupper = Yupper - dY/4;
+    Ylower = Ylower + dY/4;
     resetCloud(cloud,p3d,X,Ylower,Yupper);
+    // Save initial state
+    initialState = cloud.getState();
     // Re-advect particles
     for (int i=0; i<maxiter; i++) {
       cloud.calcDtandImpinge(airfoil,p3d);
       cloud.transportSLD(p3d);
+      impinge = cloud.getIMPINGE();
+      if (!impinge.empty()) {
+	cloud.computeImpingementRegimes(airfoil);
+      }
     }
-    impinge = cloud.getIMPINGETOTAL();
+    // Check for impingements
+    impingeTotal = cloud.getIMPINGETOTAL();
+    iterations++;
   }
   // Record hit
-  int indHit = *min_element(impinge.begin(),impinge.end());
-  Yhit = state.y_(indHit);
+  indHit = *min_element(impingeTotal.begin(),impingeTotal.end());
+  int indHitMax = *max_element(impingeTotal.begin(),impingeTotal.end());
+  Yhit = initialState.y_(indHit);
+  double YhitMax = initialState.y_(indHitMax);
+  printf("Yhit = %f",Yhit); fflush(stdout);
 
 }

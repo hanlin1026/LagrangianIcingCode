@@ -9,6 +9,7 @@
 #include "Cloud/ParcelScalars.h"
 #include "Airfoil/Airfoil.h"
 #include "InputData/readInputParams.h"
+#include "Cloud/calcImpingementLimits.h"
 #include <iterator>
 #include <findAll.h>
 
@@ -25,6 +26,11 @@ int main(int argc, const char *argv[]) {
   readInputParams(scalarsFluid,scalarsParcel,inFileName);
   // Initialize plot3D object, read in basic problem data
   PLOT3D p3d = PLOT3D(meshFileName, solnFileName, &scalarsFluid);
+  // Over-ride input screen and determine impingement limits
+  std::vector<double> Ylimits(2);
+  Ylimits = calcImpingementLimits(scalarsParcel.Xmax_,scalarsParcel.Rmean_,scalarsParcel.Tmean_,scalarsFluid.rhol_,p3d);
+  scalarsParcel.Ymin_ = Ylimits[0];
+  scalarsParcel.Ymax_ = Ylimits[1];
   // Initialize cloud of particles
   State state = State("MonoDispersed",scalarsParcel,p3d);
   Cloud cloud(state,p3d,scalarsFluid.rhol_);
@@ -84,7 +90,7 @@ int main(int argc, const char *argv[]) {
     stateCloud = cloud.getState();
     particles = stateCloud.size_;
     // Save states
-    if (iter % 1499==0) {
+    if (iter % 100==0) {
       indCell = cloud.getINDCELL();
       for (int i=0; i<particles; i++) {
         x.push_back(stateCloud.x_(i));

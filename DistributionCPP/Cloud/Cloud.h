@@ -30,6 +30,8 @@ class Cloud {
   std::vector<int> getIMPINGETOTAL();
   std::vector<int> getINDCELL();
   std::vector<int> getIndSplash();
+  // Clear data
+  void clearData();
 
  private:
   State state_;

@@ -641,7 +641,27 @@ void Cloud::setState(State& state, PLOT3D& grid) {
   // Function to reset entire state of cloud
 
   // Set initial state of particles
-  state_ = state;
+  int size = state.size_;
+  state_.size_ = size;
+  state_.x_.resize(size);
+  state_.y_.resize(size);
+  state_.u_.resize(size);
+  state_.v_.resize(size);
+  state_.r_.resize(size);
+  state_.temp_.resize(size);
+  state_.time_.resize(size);
+  state_.numDrop_.resize(size);
+  for (int i=0; i<size; i++) {
+    state_.x_(i) = state.x_(i);
+    state_.y_(i) = state.y_(i); 
+    state_.u_(i) = state.u_(i);
+    state_.v_(i) = state.v_(i);
+    state_.r_(i) = state.r_(i);
+    state_.temp_(i) = state.temp_(i);
+    state_.time_(i) = 0;
+    state_.numDrop_(i) = 1;
+  }
+
   particles_ = state.size_;
   sigma_ = 75.64e-3;
   // Search grid QT for initial cell indices
@@ -654,5 +674,26 @@ void Cloud::setState(State& state, PLOT3D& grid) {
     grid.pointSearch(xq,yq,Xnn,Ynn,indCell);
     indCell_[i] = indCell;
   }
+
+}
+
+void Cloud::clearData() {
+  // Function to clear any data associated with cloud
+
+  // Clear other elements
+  particles_ = 0;
+  impingeTotal_.clear();
+  indCell_.clear();
+  indAdv_.clear();
+  dt_.clear();
+  impinge_.clear();
+  bounce_.clear();
+  spread_.clear();
+  splash_.clear();
+  K_.clear();
+  fs_.clear();
+  fb_.clear();
+  vNormSq_.clear();
+  vTang_.clear();
 
 }
