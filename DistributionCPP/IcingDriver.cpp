@@ -81,9 +81,9 @@ int main(int argc, const char *argv[]) {
     impinge = cloud.getIMPINGE();
     if (!impinge.empty()) {
       cloud.computeImpingementRegimes(airfoil);
-      cloud.bounceDynamics(airfoil);
-      cloud.spreadDynamics(airfoil);
-      cloud.splashDynamics(airfoil);
+      //cloud.bounceDynamics(airfoil);
+      //cloud.spreadDynamics(airfoil);
+      //cloud.splashDynamics(airfoil);
     }
     totalImpingeInd = cloud.getIMPINGETOTAL();
     totalImpinge = totalImpingeInd.size();

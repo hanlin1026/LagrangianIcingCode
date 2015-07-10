@@ -14,7 +14,7 @@ std::vector<double> calcImpingementLimits(double Xloc,double R,double T,double r
   double Ylower = -1.0;
   double Yupper = 0.0;
   // Initialize test cloud of particles at X1
-  int numParticles = 1000;
+  int numParticles = 100;
   int indnn;
   double Xnn,Ynn;
   State state(numParticles);
@@ -91,7 +91,7 @@ void resetCloud(Cloud& cloud,PLOT3D& p3d,double X,double Ylower,double Yupper) {
   double R = oldState.r_(0);
   double T = oldState.temp_(0);
   // Create new screen of particles
-  int numParticles = 1000;
+  int numParticles = 100;
   int indnn;
   double Xnn,Ynn;
   State state(numParticles);
@@ -120,7 +120,7 @@ void calcHitMissLower(double& Yhit,double& Ymiss,Cloud& cloud,PLOT3D& p3d,Airfoi
   // Save initial state
   State state = cloud.getState();
   // Advect screen of particles
-  int maxiter = 2000;
+  int maxiter = 1500;
   vector<int> impinge;
   vector<int> impingeTotal;
   for (int i=0; i<maxiter; i++) {
@@ -158,7 +158,7 @@ void calcHitMissUpper(double& Yhit,double& Ymiss,Cloud& cloud,PLOT3D& p3d,Airfoi
   // Save initial state
   State state = cloud.getState();
   // Advect screen of particles
-  int maxiter = 2000;
+  int maxiter = 1500;
   vector<int> impinge;
   vector<int> impingeTotal;
   for (int i=0; i<maxiter; i++) {
@@ -173,7 +173,7 @@ void calcHitMissUpper(double& Yhit,double& Ymiss,Cloud& cloud,PLOT3D& p3d,Airfoi
   impingeTotal = cloud.getIMPINGETOTAL();
   int indHit;
   if (!impingeTotal.empty()) {
-    indHit = *min_element(impingeTotal.begin(),impingeTotal.end());
+    indHit = *max_element(impingeTotal.begin(),impingeTotal.end());
   }
   else {
     indHit = 0;
@@ -198,7 +198,7 @@ void findInitialHit(Cloud& cloud, PLOT3D& p3d, Airfoil& airfoil, double& Yhit) {
   double X = initialState.x_(0);
   double Ylower,Yupper,indHit,dY;
   // Advect screen of particles
-  int maxiter = 2000;
+  int maxiter = 1500;
   vector<int> impinge;
   vector<int> impingeTotal;
   for (int i=0; i<maxiter; i++) {
