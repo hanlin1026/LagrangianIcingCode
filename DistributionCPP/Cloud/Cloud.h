@@ -11,6 +11,7 @@
 
 class Cloud {
  public:
+  Cloud(State& state, PLOT3D& grid, double rhol, const char* TrackSplashParticles);
   Cloud(State& state, PLOT3D& grid, double rhol);
   ~Cloud();
   void addParticles(State& state, int indCellParent);
@@ -30,6 +31,8 @@ class Cloud {
   std::vector<int> getIMPINGETOTAL();
   std::vector<int> getINDCELL();
   std::vector<int> getIndSplash();
+  // Calculate total mass method
+  double calcTotalMass();
   // Clear data
   void clearData();
 
@@ -54,6 +57,7 @@ class Cloud {
   double Ks0_,Kb0_;
   void findInSimulation();
   void computeNewCellLocations(PLOT3D& grid);
+  bool TrackSplashParticles_;
 
 };
 

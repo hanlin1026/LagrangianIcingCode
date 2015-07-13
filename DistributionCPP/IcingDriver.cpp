@@ -31,9 +31,13 @@ int main(int argc, const char *argv[]) {
   Ylimits = calcImpingementLimits(scalarsParcel.Xmax_,scalarsParcel.Rmean_,scalarsParcel.Tmean_,scalarsFluid.rhol_,p3d);
   scalarsParcel.Ymin_ = Ylimits[0];
   scalarsParcel.Ymax_ = Ylimits[1];
+  double dY = Ylimits[1]-Ylimits[0];
   // Initialize cloud of particles
   State state = State("MonoDispersed",scalarsParcel,p3d);
-  Cloud cloud(state,p3d,scalarsFluid.rhol_);
+  Cloud cloud(state,p3d,scalarsFluid.rhol_,"NoSplashTracking");
+  // Calculate initial total droplet mass in cloud
+  double massTotal = cloud.calcTotalMass();
+  double fluxFreeStream = massTotal/dY;
   // Intialize airfoil object
   Eigen::MatrixXd Xgrid = p3d.getX();
   Eigen::MatrixXd Ygrid = p3d.getY();
@@ -81,9 +85,9 @@ int main(int argc, const char *argv[]) {
     impinge = cloud.getIMPINGE();
     if (!impinge.empty()) {
       cloud.computeImpingementRegimes(airfoil);
-      //cloud.bounceDynamics(airfoil);
-      //cloud.spreadDynamics(airfoil);
-      //cloud.splashDynamics(airfoil);
+      cloud.bounceDynamics(airfoil);
+      cloud.spreadDynamics(airfoil);
+      cloud.splashDynamics(airfoil);
     }
     totalImpingeInd = cloud.getIMPINGETOTAL();
     totalImpinge = totalImpingeInd.size();
@@ -119,20 +123,13 @@ int main(int argc, const char *argv[]) {
   copy ( YCENT.begin(), YCENT.end(), out_itCELLY );
   // Get collection efficiency and output to file
   int numBins = 35;
-  gsl_histogram *h = airfoil.calcCollectionEfficiency(numBins);
-  std::vector<double> bins(numBins+1);
-  std::vector<double> mass(numBins);
-  double upper,lower;
-  for (int i=0; i<numBins; i++) {
-    gsl_histogram_get_range(h,i,&lower,&upper);
-    mass[i] = gsl_histogram_get(h,i);
-    bins[i] = lower;
-    bins[i+1] = upper;
-  }
+  airfoil.calcCollectionEfficiency(fluxFreeStream,numBins);
+  std::vector<double> BetaBins = airfoil.getBetaBins();
+  std::vector<double> Beta = airfoil.getBeta();
   ostream_iterator<double> out_itBINS(foutBINS,"\n");
-  copy ( bins.begin(), bins.end(), out_itBINS );
+  copy ( BetaBins.begin(), BetaBins.end(), out_itBINS );
   ostream_iterator<double> out_itMASS(foutMASS,"\n");
-  copy ( mass.begin(), mass.end(), out_itMASS );
+  copy ( Beta.begin(), Beta.end(), out_itMASS );
   // Clear any allocated memory, close files/streams
   
 }

@@ -14,7 +14,10 @@ class Airfoil {
     double calcIncidenceAngle(std::vector<double>& XYq,std::vector<double>& UVq,int indNN);
     double interpXYtoS(std::vector<double>& XYq);
     void appendFilm(double sCoord, double mass);
-    gsl_histogram* calcCollectionEfficiency(int numBins);
+    void calcCollectionEfficiency(double fluxFreeStream,int numBins);
+    // Set/get methods
+    std::vector<double> getBetaBins();
+    std::vector<double> getBeta();
 
   private:
     Eigen::VectorXd panelX_;
@@ -24,6 +27,8 @@ class Airfoil {
     Eigen::MatrixXd normal_;
     std::vector<double> FilmScoords_;
     std::vector<double> FilmMass_;
+    std::vector<double> BetaBins_;
+    std::vector<double> Beta_;
     double impingeLimitUP_;
     double impingeLimitDOWN_;
     double stagPt_;

@@ -35,5 +35,6 @@ Yc = genfromtxt("CloudCELLY.out", delimiter = "\n")
 plt.scatter(X,Y,c="r",edgecolor='',lw=0,s=2)
 #plt.scatter(Xc,Yc,edgecolor='',lw=0)
 plt.plot(XYa[:,0],XYa[:,1])
+axis('equal')
 
 plt.show()

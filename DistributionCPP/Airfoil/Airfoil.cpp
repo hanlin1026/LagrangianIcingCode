@@ -158,7 +158,7 @@ void Airfoil::appendFilm(double sCoord, double mass) {
 
 }
 
-gsl_histogram* Airfoil::calcCollectionEfficiency(int numBins) {
+void Airfoil::calcCollectionEfficiency(double fluxFreeStream,int numBins) {
   // Function to calculate collection efficiency of airfoil
 
   gsl_histogram *h = gsl_histogram_alloc(numBins);
@@ -166,13 +166,36 @@ gsl_histogram* Airfoil::calcCollectionEfficiency(int numBins) {
     // Create bins
     double minS = *min_element(FilmScoords_.begin(),FilmScoords_.end());
     double maxS = *max_element(FilmScoords_.begin(),FilmScoords_.end());
-    double dBins = (maxS-minS)/(numBins-1);
+    double dS = (maxS-minS)/(numBins-1);
     // Histogram count of mass in each bin
     gsl_histogram_set_ranges_uniform(h,minS,maxS);
     for (int i=0; i<FilmMass_.size(); i++) {
       gsl_histogram_accumulate(h,FilmScoords_[i],FilmMass_[i]);
     }
-  }
+    BetaBins_.resize(numBins+1);
+    Beta_.resize(numBins);
+    double upper,lower,mass,fluxLocal;
+    for (int i=0; i<numBins; i++) {
+      gsl_histogram_get_range(h,i,&lower,&upper);
+      BetaBins_[i] = lower;
+      BetaBins_[i+1] = upper;
+      mass = gsl_histogram_get(h,i);
+      fluxLocal = mass/dS;
+      Beta_[i] = fluxLocal/fluxFreeStream;
+    }
 
-  return h;
+  }
+  
+}
+
+vector<double> Airfoil::getBetaBins() {
+
+  return BetaBins_;
+
+}
+
+vector<double> Airfoil::getBeta() {
+
+  return Beta_;
+
 }
