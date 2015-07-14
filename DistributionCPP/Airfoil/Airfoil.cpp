@@ -123,7 +123,8 @@ void Airfoil::calcSCoords() {
     dx = panelX_(i+1) - panelX_(i);
     dy = panelY_(i+1) - panelY_(i);
     ds = sqrt(pow(dx,2) + pow(dy,2));
-    panelS_(i+1) = ds;
+    panelS_(i+1) = panelS_(i) + ds;
+    printf("%f\n",panelS_(i));
   }
 
 }
@@ -177,8 +178,8 @@ void Airfoil::calcCollectionEfficiency(double fluxFreeStream,int numBins) {
     double upper,lower,mass,fluxLocal;
     for (int i=0; i<numBins; i++) {
       gsl_histogram_get_range(h,i,&lower,&upper);
-      BetaBins_[i] = lower;
-      BetaBins_[i+1] = upper;
+      BetaBins_[i] = lower-stagPt_;
+      BetaBins_[i+1] = upper-stagPt_;
       mass = gsl_histogram_get(h,i);
       fluxLocal = mass/dS;
       Beta_[i] = fluxLocal/fluxFreeStream;
@@ -186,6 +187,30 @@ void Airfoil::calcCollectionEfficiency(double fluxFreeStream,int numBins) {
 
   }
   
+}
+
+void Airfoil::calcStagnationPt(PLOT3D& grid) {
+  // Function to calculate the stagnation point
+
+  int I = grid.getNX()-1;
+  Eigen::MatrixXf U = grid.getUCENT();
+  Eigen::MatrixXf V = grid.getVCENT();
+  Eigen::MatrixXd X = grid.getXCENT();
+  Eigen::MatrixXd Y = grid.getYCENT();
+  double u; double v;
+  int i1 = floor(0.30*I);
+  int i2 = floor(0.70*I);
+  vector<double> VelMagSq(i2-i1);
+  // Get first wrap of (u,v)
+  for (int i=i1; i<i2; i++) {
+    u = U(i,0); v = V(i,0);
+    VelMagSq[i-i1] = pow(u,2) + pow(v,2);
+  }
+  // Minimize velMag to find stagnation point
+  int indMin = min_element(VelMagSq.begin(),VelMagSq.end()) - VelMagSq.begin();
+  stagPt_ = panelS_(indMin+i1);
+  printf("indMin = %d, stagPt = %f\n",(indMin+i1),stagPt_);
+
 }
 
 vector<double> Airfoil::getBetaBins() {

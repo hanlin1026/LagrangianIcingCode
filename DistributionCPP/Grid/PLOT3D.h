@@ -28,8 +28,8 @@ class PLOT3D {
   Eigen::MatrixXd getYCENT();  double getYCENT(int ind);
   Eigen::MatrixXd getLMIN();   double getLMIN(int ind);
                                double getRHOCENT(int ind);
-                               double getUCENT(int ind);
-                               double getVCENT(int ind);
+  Eigen::MatrixXf getUCENT();  double getUCENT(int ind);
+  Eigen::MatrixXf getVCENT();  double getVCENT(int ind);
   void getPROPS(FluidScalars& PROPS);
   int getNX();
   int getNY();

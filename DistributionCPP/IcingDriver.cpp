@@ -27,11 +27,12 @@ int main(int argc, const char *argv[]) {
   // Initialize plot3D object, read in basic problem data
   PLOT3D p3d = PLOT3D(meshFileName, solnFileName, &scalarsFluid);
   // Over-ride input screen and determine impingement limits
-  std::vector<double> Ylimits(2);
-  Ylimits = calcImpingementLimits(scalarsParcel.Xmax_,scalarsParcel.Rmean_,scalarsParcel.Tmean_,scalarsFluid.rhol_,p3d);
-  scalarsParcel.Ymin_ = Ylimits[0];
-  scalarsParcel.Ymax_ = Ylimits[1];
-  double dY = Ylimits[1]-Ylimits[0];
+  // std::vector<double> Ylimits(2);
+  // Ylimits = calcImpingementLimits(scalarsParcel.Xmax_,scalarsParcel.Rmean_,scalarsParcel.Tmean_,scalarsFluid.rhol_,p3d);
+  // scalarsParcel.Ymin_ = Ylimits[0];
+  // scalarsParcel.Ymax_ = Ylimits[1];
+  // double dY = Ylimits[1]-Ylimits[0];
+  double dY = 1;
   // Initialize cloud of particles
   State state = State("MonoDispersed",scalarsParcel,p3d);
   Cloud cloud(state,p3d,scalarsFluid.rhol_,"NoSplashTracking");
@@ -54,6 +55,7 @@ int main(int argc, const char *argv[]) {
   X = X.block(0,0,iter,1);
   Y = Y.block(0,0,iter,1);
   Airfoil airfoil = Airfoil(X,Y);
+  airfoil.calcStagnationPt(p3d);
   // Advect (no splashing/fracture)
   ofstream foutX("CloudX.out");
   ofstream foutY("CloudY.out");

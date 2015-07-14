@@ -4,6 +4,7 @@
 #include <eigen3/Eigen/Dense>
 #include <QuadTree/Bucket.h>
 #include <gsl/gsl_histogram.h>
+#include <Grid/PLOT3D.h>
 
 class Airfoil {
   public:
@@ -15,6 +16,7 @@ class Airfoil {
     double interpXYtoS(std::vector<double>& XYq);
     void appendFilm(double sCoord, double mass);
     void calcCollectionEfficiency(double fluxFreeStream,int numBins);
+    void calcStagnationPt(PLOT3D& grid);
     // Set/get methods
     std::vector<double> getBetaBins();
     std::vector<double> getBeta();

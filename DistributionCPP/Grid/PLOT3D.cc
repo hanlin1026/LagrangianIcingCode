@@ -313,3 +313,11 @@ void PLOT3D::pointSearch(double xq, double yq, double& xnn, double& ynn, int& in
   QT_.knnSearch(&xq,&yq,&xnn,&ynn,&indnn);
 
 }
+
+MatrixXf PLOT3D::getUCENT() {
+  return uCENT_;
+}
+
+MatrixXf PLOT3D::getVCENT() {
+  return vCENT_;
+}
