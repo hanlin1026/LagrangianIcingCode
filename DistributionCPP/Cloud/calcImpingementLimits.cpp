@@ -11,8 +11,8 @@ std::vector<double> calcImpingementLimits(double Xloc,double R,double T,double r
   // Function to calculate impingement limits for a particular droplet location/size/temperature/rhoL
 
   // Initial guesses at impingement limits
-  double Ylower = -1.0;
-  double Yupper = 0.0;
+  double Ylower = -0.8;
+  double Yupper = -0.4;
   // Initialize test cloud of particles at X1
   int numParticles = 100;
   int indnn;
@@ -34,18 +34,16 @@ std::vector<double> calcImpingementLimits(double Xloc,double R,double T,double r
   // Intialize airfoil object
   Eigen::MatrixXd Xgrid = p3d.getX();
   Eigen::MatrixXd Ygrid = p3d.getY();
-  Eigen::VectorXd X(Xgrid.rows());
-  Eigen::VectorXd Y(Ygrid.rows());
-  iter = 0;
+  std::vector<double> X;
+  std::vector<double> Y;
+  int iter = 0;
   for (int i=0; i<Xgrid.rows(); i++) {
     if (Xgrid(i,0) <= 1) {
-      X(iter) = Xgrid(i,0);
-      Y(iter) = Ygrid(i,0);
+      X.push_back(Xgrid(i,0));
+      Y.push_back(Ygrid(i,0));
       iter++;
     }
   }
-  X = X.block(0,0,iter,1);
-  Y = Y.block(0,0,iter,1);
   Airfoil airfoil = Airfoil(X,Y);
   // First advection to find lowest trajectory that hits
   double Yhit,Ymiss;
@@ -54,36 +52,36 @@ std::vector<double> calcImpingementLimits(double Xloc,double R,double T,double r
   printf("done.\n");
   Ymiss = Ylower;
   // Reset cloud state so particles are between missing and hitting lower trajectories
-  resetCloud(cloud,p3d,Xloc,Ylower,Yhit);
+  resetCloud(cloud,p3d,Xloc,Ylower,Yhit,numParticles);
   double TOL = 1e-5;
   iter = 0;
   int indHit;
   // Iterative procedure to determine lower limit
   printf("Determining lower impingement limit..."); fflush(stdout);
   while (abs(Ymiss-Yhit)>TOL) {
-    resetCloud(cloud,p3d,Xloc,Ymiss,Yhit);
+    resetCloud(cloud,p3d,Xloc,Ymiss,Yhit,numParticles);
     calcHitMissLower(Yhit,Ymiss,cloud,p3d,airfoil);
   }
-  printf("done.\n");
+  printf("done.\nYlower = %f\n",Yhit);
   vector<double> limits(2);
   limits[0] = Yhit;
   // Reset cloud state so particles are between missing and hitting upper trajectories
-  resetCloud(cloud,p3d,Xloc,Yhit,Yupper);
+  resetCloud(cloud,p3d,Xloc,Yhit,Yupper,numParticles);
   // Iterative procedure to determine upper limit
   Ymiss = Yupper;
   printf("Determining upper impingement limit..."); fflush(stdout);
   while (abs(Ymiss-Yhit)>TOL) {
-    resetCloud(cloud,p3d,Xloc,Yhit,Ymiss);
+    resetCloud(cloud,p3d,Xloc,Yhit,Ymiss,numParticles);
     calcHitMissUpper(Yhit,Ymiss,cloud,p3d,airfoil);
   }
-  printf("done.\n");
+  printf("done.\nYupper = %f\n",Yhit);
   limits[1] = Yhit;
   
   return limits;
 
 }
 
-void resetCloud(Cloud& cloud,PLOT3D& p3d,double X,double Ylower,double Yupper) {
+void resetCloud(Cloud& cloud,PLOT3D& p3d,double X,double Ylower,double Yupper,int numParticles) {
   // Function to re-initialize cloud to screen of particles between Ylower/Yupper
 
   // Get old properties that will not change
@@ -91,7 +89,6 @@ void resetCloud(Cloud& cloud,PLOT3D& p3d,double X,double Ylower,double Yupper) {
   double R = oldState.r_(0);
   double T = oldState.temp_(0);
   // Create new screen of particles
-  int numParticles = 100;
   int indnn;
   double Xnn,Ynn;
   State state(numParticles);
@@ -214,12 +211,12 @@ void findInitialHit(Cloud& cloud, PLOT3D& p3d, Airfoil& airfoil, double& Yhit) {
   int iterations = 0;
   Ylower = initialState.y_(0);
   Yupper = initialState.y_(initialState.size_-1);
+  int numParticles = initialState.size_;
   while (impingeTotal.empty()) {
-    // Reset the screen limits
-    dY = Yupper-Ylower;
-    Yupper = Yupper - dY/4;
-    Ylower = Ylower + dY/4;
-    resetCloud(cloud,p3d,X,Ylower,Yupper);
+    // Increase resolution, keep screen limits the same
+    numParticles = 5*numParticles;
+    resetCloud(cloud,p3d,X,Ylower,Yupper,numParticles);
+    printf("No hit; increasing screen resolution to %d\n",numParticles);
     // Save initial state
     initialState = cloud.getState();
     // Re-advect particles

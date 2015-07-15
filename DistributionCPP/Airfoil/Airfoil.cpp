@@ -5,7 +5,7 @@
 
 using namespace std;
 
-Airfoil::Airfoil(Eigen::VectorXd& X, Eigen::VectorXd& Y) {
+Airfoil::Airfoil(std::vector<double>& X, std::vector<double>& Y) {
   // Constructor: takes grid points X,Y
   
   // Set panel center points, tangent/normal vectors
@@ -16,10 +16,10 @@ Airfoil::Airfoil(Eigen::VectorXd& X, Eigen::VectorXd& Y) {
   normal_.resize(gridPts-1,2);
   double ds_x, ds_y;
   for (int i=0; i<gridPts-1; i++) {
-    ds_x = X(i+1)-X(i);
-    ds_y = Y(i+1)-Y(i);
-    panelX_(i) = X(i) + 0.5*ds_x;
-    panelY_(i) = Y(i) + 0.5*ds_y;
+    ds_x = X[i+1]-X[i];
+    ds_y = Y[i+1]-Y[i];
+    panelX_(i) = X[i] + 0.5*ds_x;
+    panelY_(i) = Y[i] + 0.5*ds_y;
     tangent_(i,0) = ds_x/sqrt( pow(ds_x,2) + pow(ds_y,2) );
     tangent_(i,1) = ds_y/sqrt( pow(ds_x,2) + pow(ds_y,2) );
     normal_(i,0) = -tangent_(i,1);
@@ -124,7 +124,6 @@ void Airfoil::calcSCoords() {
     dy = panelY_(i+1) - panelY_(i);
     ds = sqrt(pow(dx,2) + pow(dy,2));
     panelS_(i+1) = panelS_(i) + ds;
-    printf("%f\n",panelS_(i));
   }
 
 }
