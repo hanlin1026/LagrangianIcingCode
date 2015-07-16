@@ -26,13 +26,19 @@ int main(int argc, const char *argv[]) {
   readInputParams(scalarsFluid,scalarsParcel,inFileName);
   // Initialize plot3D object, read in basic problem data
   PLOT3D p3d = PLOT3D(meshFileName, solnFileName, &scalarsFluid);
-  // Over-ride input screen and determine impingement limits
-  std::vector<double> Ylimits(2);
-  Ylimits = calcImpingementLimits(scalarsParcel.Xmax_,scalarsParcel.Rmean_,scalarsParcel.Tmean_,scalarsFluid.rhol_,p3d);
-  scalarsParcel.Ymin_ = Ylimits[0];
-  scalarsParcel.Ymax_ = Ylimits[1];
-  double dY = Ylimits[1]-Ylimits[0];
-  // double dY = 1.0;
+  double dY;
+  if (scalarsFluid.calcImpingementLimits_ == 1) { 
+    // Over-ride input screen and determine impingement limits
+    std::vector<double> Ylimits(2);
+    Ylimits = calcImpingementLimits(scalarsParcel.Xmax_,scalarsParcel.Rmean_,scalarsParcel.Tmean_,scalarsFluid.rhol_,p3d);
+    scalarsParcel.Ymin_ = Ylimits[0];
+    scalarsParcel.Ymax_ = Ylimits[1];
+    dY = Ylimits[1]-Ylimits[0];
+  }
+  else {
+    // Use input screen provided in input file
+    dY = scalarsParcel.Ymax_ - scalarsParcel.Ymin_;
+  }
   // Initialize cloud of particles
   State state = State("MonoDispersed",scalarsParcel,p3d);
   Cloud cloud(state,p3d,scalarsFluid.rhol_,"NoSplashTracking");
@@ -77,6 +83,7 @@ int main(int argc, const char *argv[]) {
   int indtmp = 0;
   int numSplash = 0;
   int maxiter = scalarsParcel.maxiter_;
+  int refreshRate = scalarsParcel.refreshRate_;
   int particles = scalarsParcel.particles_;
   printf("maxiter = %d\n",maxiter);
   while ((totalImpinge < particles) && (iter < maxiter)) {
@@ -94,7 +101,7 @@ int main(int argc, const char *argv[]) {
     stateCloud = cloud.getState();
     particles = stateCloud.size_;
     // Save states
-    if (iter % 2999==0) {
+    if (iter % refreshRate==0) {
       indCell = cloud.getINDCELL();
       for (int i=0; i<particles; i++) {
         x.push_back(stateCloud.x_(i));

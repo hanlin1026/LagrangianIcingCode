@@ -39,6 +39,10 @@ void readInputParams(FluidScalars& PROPS, ParcelScalars& PARCEL, const char *inF
   std::getline(inFile,line);
   std::getline(inFile,line);
   inFile >> PARCEL.maxiter_;
+  // Driver refresh rate (refreshRate)
+  inFile >> PARCEL.refreshRate_;
+  // Track splash particles (trackSplash)
+  inFile >> PROPS.calcImpingementLimits_;
   // Compute derived parameters
   PROPS.rhoinf_ = PROPS.pinf_/PROPS.R_/PROPS.Tinf_;
   PROPS.Ubar_ = sqrt(1.4*PROPS.pinf_/PROPS.rhoinf_);

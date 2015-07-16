@@ -11,8 +11,8 @@ std::vector<double> calcImpingementLimits(double Xloc,double R,double T,double r
   // Function to calculate impingement limits for a particular droplet location/size/temperature/rhoL
 
   // Initial guesses at impingement limits
-  double Ylower = -0.8;
-  double Yupper = -0.4;
+  double Ylower = -0.7;
+  double Yupper = -0.3;
   // Initialize test cloud of particles at X1
   int numParticles = 100;
   int indnn;
@@ -47,9 +47,8 @@ std::vector<double> calcImpingementLimits(double Xloc,double R,double T,double r
   Airfoil airfoil = Airfoil(X,Y);
   // First advection to find lowest trajectory that hits
   double Yhit,Ymiss;
-  printf("Determining initial impinging trajectory..."); fflush(stdout);
+  printf("Determining initial impinging trajectory...\n");
   findInitialHit(cloud,p3d,airfoil,Yhit);
-  printf("done.\n");
   Ymiss = Ylower;
   // Reset cloud state so particles are between missing and hitting lower trajectories
   resetCloud(cloud,p3d,Xloc,Ylower,Yhit,numParticles);
@@ -57,24 +56,22 @@ std::vector<double> calcImpingementLimits(double Xloc,double R,double T,double r
   iter = 0;
   int indHit;
   // Iterative procedure to determine lower limit
-  printf("Determining lower impingement limit..."); fflush(stdout);
+  printf("Determining lower impingement limit...\n");
   while (abs(Ymiss-Yhit)>TOL) {
     resetCloud(cloud,p3d,Xloc,Ymiss,Yhit,numParticles);
     calcHitMissLower(Yhit,Ymiss,cloud,p3d,airfoil);
   }
-  printf("done.\nYlower = %f\n",Yhit);
+  printf("Ylower = %f\n",Yhit);
   vector<double> limits(2);
   limits[0] = Yhit;
-  // Reset cloud state so particles are between missing and hitting upper trajectories
-  resetCloud(cloud,p3d,Xloc,Yhit,Yupper,numParticles);
   // Iterative procedure to determine upper limit
   Ymiss = Yupper;
-  printf("Determining upper impingement limit..."); fflush(stdout);
+  printf("Determining upper impingement limit...\n");
   while (abs(Ymiss-Yhit)>TOL) {
     resetCloud(cloud,p3d,Xloc,Yhit,Ymiss,numParticles);
     calcHitMissUpper(Yhit,Ymiss,cloud,p3d,airfoil);
   }
-  printf("done.\nYupper = %f\n",Yhit);
+  printf("Yupper = %f\n",Yhit);
   limits[1] = Yhit;
   
   return limits;
@@ -176,14 +173,14 @@ void calcHitMissUpper(double& Yhit,double& Ymiss,Cloud& cloud,PLOT3D& p3d,Airfoi
     indHit = 0;
   }
   Yhit = state.y_(indHit);
-  if (indHit != 0) {
+  if (indHit != state.size_-1) {
     Ymiss = state.y_(indHit+1);
   }
   else {
     Ymiss = Yhit;
   }
 
-  printf("Yhit = %f, Ymiss = %f\n",Yhit,Ymiss);
+  printf("IndHit = %d, Yhit = %f, Ymiss = %f\n",indHit,Yhit,Ymiss);
 
 }
 
@@ -237,6 +234,6 @@ void findInitialHit(Cloud& cloud, PLOT3D& p3d, Airfoil& airfoil, double& Yhit) {
   int indHitMax = *max_element(impingeTotal.begin(),impingeTotal.end());
   Yhit = initialState.y_(indHit);
   double YhitMax = initialState.y_(indHitMax);
-  printf("Yhit = %f",Yhit); fflush(stdout);
+  printf("Yhit = %f\n",Yhit);
 
 }

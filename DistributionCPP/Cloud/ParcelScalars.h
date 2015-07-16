@@ -11,6 +11,7 @@ struct ParcelScalars {
   double Ymin_;
   double Ymax_;
   int maxiter_;
+  int refreshRate_;
 
 };
 

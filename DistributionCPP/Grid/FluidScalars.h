@@ -16,6 +16,8 @@ struct FluidScalars {
   float alpha_;
   float reynolds_;
   float time_;
+  // Track splashed particles indicator
+  int calcImpingementLimits_;
 
 };
 
