@@ -94,7 +94,7 @@ int main(int argc, const char *argv[]) {
     stateCloud = cloud.getState();
     particles = stateCloud.size_;
     // Save states
-    if (iter % 100==0) {
+    if (iter % 2999==0) {
       indCell = cloud.getINDCELL();
       for (int i=0; i<particles; i++) {
         x.push_back(stateCloud.x_(i));

@@ -172,13 +172,13 @@ void Airfoil::calcCollectionEfficiency(double fluxFreeStream,int numBins) {
     for (int i=0; i<FilmMass_.size(); i++) {
       gsl_histogram_accumulate(h,FilmScoords_[i],FilmMass_[i]);
     }
-    BetaBins_.resize(numBins+1);
+    BetaBins_.resize(numBins);
     Beta_.resize(numBins);
-    double upper,lower,mass,fluxLocal;
+    double upper,lower,cent,mass,fluxLocal;
     for (int i=0; i<numBins; i++) {
       gsl_histogram_get_range(h,i,&lower,&upper);
-      BetaBins_[i] = lower-stagPt_;
-      BetaBins_[i+1] = upper-stagPt_;
+      cent = 0.5*(upper+lower);
+      BetaBins_[i] = cent-stagPt_;
       mass = gsl_histogram_get(h,i);
       fluxLocal = mass/dS;
       Beta_[i] = fluxLocal/fluxFreeStream;
@@ -207,8 +207,12 @@ void Airfoil::calcStagnationPt(PLOT3D& grid) {
   }
   // Minimize velMag to find stagnation point
   int indMin = min_element(VelMagSq.begin(),VelMagSq.end()) - VelMagSq.begin();
-  stagPt_ = panelS_(indMin+i1);
-  printf("indMin = %d, stagPt = %f\n",(indMin+i1),stagPt_);
+  stagPtX_ = X(indMin+i1,0);
+  stagPtY_ = Y(indMin+i1,0);
+  std::vector<double> XYstag(2);
+  XYstag[0] = stagPtX_; XYstag[1] = stagPtY_;
+  stagPt_ = this->interpXYtoS(XYstag);
+  printf("stagPtS = %f, stagPtX = %f, stagPtY = %f\n",stagPt_,stagPtX_,stagPtY_);
 
 }
 

@@ -34,6 +34,8 @@ class Airfoil {
     double impingeLimitUP_;
     double impingeLimitDOWN_;
     double stagPt_;
+    double stagPtX_;
+    double stagPtY_;
     Bucket panelSearcher_;
     void calcSCoords();
     
