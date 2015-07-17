@@ -1,6 +1,5 @@
 *.mat
 Figures/*
-Literature/*
 *.fig
 *.aux
 *.log

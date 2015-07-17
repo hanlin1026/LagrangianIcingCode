@@ -16,10 +16,16 @@
 // Airfoil icing code driver program
 
 int main(int argc, const char *argv[]) {
+  // Check that user has specified an input filepath
+  if (argc < 2) {
+    // Tell the user how to run the program
+    std::cerr << "Usage: " << argv[0] << " <InputFilePath>" << std::endl;
+    return 1;
+  }
   // Specify initialization files
-  const char *inFileName = "InputData/Input.dat";
-  const char *meshFileName = "Grid/MESH.P3D";
-  const char *solnFileName = "Grid/q103.0.50E+01.bin";
+  const char *inFileName = argv[1];
+  const char *meshFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/MESH.P3D";
+  const char *solnFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/q103.0.50E+01.bin";
   // Read in initialization scalars from input file
   FluidScalars scalarsFluid;
   ParcelScalars scalarsParcel;
