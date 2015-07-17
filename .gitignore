@@ -5,7 +5,7 @@ Figures/*
 *.log
 *.synctex.gz
 *.o
-*.dat
+*~
 Documentation/*eps-converted-to.pdf
 Distribution/*.m~
 DistributionCPP/*~
