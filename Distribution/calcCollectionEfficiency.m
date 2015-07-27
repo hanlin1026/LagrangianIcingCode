@@ -34,22 +34,23 @@ DISTr = tmpB.MVD52;
 %BIN27(:,1) = BIN27(:,1);
 %rDIST = BIN27;
 % Hacky crap to use a monodistributed PDF for R
-dirnum = [];
-for i=1:length(workdir)
-    tmp = str2num(workdir(i));
-    if (~isempty(tmp)) && (isreal(tmp))
-        dirnum = [dirnum workdir(i)];
-    end
-end
-dirNUM = str2num(dirnum);
-meanR = DISTr(dirNUM,1);
+% dirnum = [];
+% for i=1:length(workdir)
+%     tmp = str2num(workdir(i));
+%     if (~isempty(tmp)) && (isreal(tmp))
+%         dirnum = [dirnum workdir(i)];
+%     end
+% end
+% dirNUM = str2num(dirnum);
+% meanR = DISTr(dirNUM,1);
+meanR = 50.0e-6;
 rDIST = [0.99*meanR 1.01*meanR];
 
 PDFparams = {};
 PDFparams{1} = uDIST; 
 PDFparams{2} = vDIST; 
 PDFparams{3} = rDIST;
-PDFparams{4} = [0 2]+273.15;
+PDFparams{4} = [273.15 0.1];
 PDFparams{5} = [0 simTime];
 LWC = 0.73e-3;
 domain = InjectionDomain(strPDFTypes,PDFparams,fluid,airfoil,LWC,simTime);

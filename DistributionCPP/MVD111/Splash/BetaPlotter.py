@@ -38,8 +38,8 @@ xInterp = numpy.linspace(-0.3,0.1,1000);
 yInterp = numpy.zeros(1000);
 # Interpolate beta
 for i in range(0,27):
-    xName = "S" + str(i+1) + ".out";
-    yName = "Beta" + str(i+1) + ".out";
+    xName = "workdir." + str(i+1) + "/BetaBins.out";
+    yName = "workdir." + str(i+1) + "/Beta.out";
     x = genfromtxt(xName, delimiter = '\n');
     y = genfromtxt(yName, delimiter = '\n');
     yInterp = yInterp + weight[i]*numpy.interp(xInterp,x,y,left=0,right=0)/100.0;

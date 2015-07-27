@@ -12,7 +12,7 @@ std::vector<double> calcImpingementLimits(double Xloc,double R,double T,double r
 
   // Initial guesses at impingement limits
   double Ylower = -0.7;
-  double Yupper = -0.3;
+  double Yupper = -0.1;
   // Initialize test cloud of particles at X1
   int numParticles = 100;
   int indnn;
@@ -73,6 +73,10 @@ std::vector<double> calcImpingementLimits(double Xloc,double R,double T,double r
   }
   printf("Yupper = %f\n",Yhit);
   limits[1] = Yhit;
+  // Padding on limits
+  dY = limits[1]-limits[0];
+  limits[0] = limits[0] - 1*dY;
+  limits[1] = limits[1] + 1*dY;
   
   return limits;
 

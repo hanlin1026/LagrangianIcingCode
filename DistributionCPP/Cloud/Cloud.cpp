@@ -7,7 +7,7 @@
 using namespace std;
 using namespace Eigen;
 
-Cloud::Cloud(State& state, PLOT3D& grid, double rhol, const char* TrackSplashParticles) {
+Cloud::Cloud(State& state, PLOT3D& grid, double rhol, ParcelScalars& PARCEL) {
   // Set initial state of particles
   state_ = state;
   rhoL_ = rhol;
@@ -23,8 +23,15 @@ Cloud::Cloud(State& state, PLOT3D& grid, double rhol, const char* TrackSplashPar
     grid.pointSearch(xq,yq,Xnn,Ynn,indCell);
     indCell_[i] = indCell;
   }
+  // String specifying whether or not to use splashing at all
+  if (PARCEL.SplashFlag_ == 1) {
+    SplashFlag_ = true;
+  }
+  else {
+    SplashFlag_ = false;
+  }
   // String specifying whether or not to track splash particles
-  if (strcmp(TrackSplashParticles,"TrackSplashParticles") == 0) {
+  if (PARCEL.TrackSplashFlag_ == 1) {
     TrackSplashParticles_ = true;
   }
   else {
@@ -365,7 +372,7 @@ void Cloud::computeImpingementRegimes(Airfoil& airfoil) {
   wsf = 5.0/6.0;
   wbr = 32.0;
   wbf = 1.0;
-  hr = 20e-6;
+  hr = 20.0e-6;
   hf = 0.0;
   // Clear/size vectors as appropriate
   K_.reserve(impinge_.size());
@@ -384,7 +391,7 @@ void Cloud::computeImpingementRegimes(Airfoil& airfoil) {
     r = state_.r_(impinge_[i]);
     t = state_.time_(impinge_[i]);
     temp = state_.temp_(impinge_[i]);
-    muL = (2.414e-5)*pow( 10 , 247.8/(temp-140) );
+    muL = (2.414e-5)*pow( 10.0 , 247.8/(temp-140.0) );
     // Find local points of impingement, normal vectors
     XYq[0] = x; XYq[1] = y;
     airfoil.findPanel(XYq,XYnn,NxNy,TxTy);
@@ -398,8 +405,8 @@ void Cloud::computeImpingementRegimes(Airfoil& airfoil) {
     K  = We*pow(Oh,-0.4);
     K_[i] = K;
     // Intermediate parameter calculations
-    R = hr/2/r; // Dimensionless wall roughness height
-    delta = hf/2/r; // Dimensionless film thickness
+    R = (hr/2.0)/r; // Dimensionless wall roughness height
+    delta = (hf/2.0)/r; // Dimensionless film thickness
     R_tilda = pow(R,2)/(R+delta); // Modified wall roughness due to presence of film
     fs = (1 + pow(R_tilda,2))*(1 + pow(delta,2))/(1 + wsr*pow(R_tilda,2))/(1 + wsf*pow(delta,2));
     fb = (1 + pow(R_tilda,2))*(1 + pow(delta,2))/(1 + wsr*pow(R_tilda,2))/(1 + wbr*pow(R_tilda,4))/(1 + wbf*pow(delta,2));
@@ -426,6 +433,8 @@ void Cloud::computeImpingementRegimes(Airfoil& airfoil) {
   for (int i=0; i<diff.size(); i++) {
     impingeTotal_.push_back(diff[i]);
   }
+  // TEMPORARY: output Cossali number to file
+  //plot(s(ind3)-airfoil.stagPt,K(ind3)./(Ks0*fs(ind3)),'b.');
 
 }
 
@@ -458,7 +467,7 @@ void Cloud::bounceDynamics(Airfoil& airfoil) {
       vNorm = sqrt(vNormSq);
       vTang = vTang_[bounce_[i]];
       // Calculate post-impact velocities
-      vN = 4*vNorm*( sqrt(K/Kb) - K/Kb );
+      vN = 4.0*vNorm*( sqrt(K/Kb) - K/Kb );
       vT = 0.8*vTang;
       uNew = vN*NxNy[0] + vT*TxTy[0];
       vNew = vN*NxNy[1] + vT*TxTy[1];
@@ -534,25 +543,32 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
       UVq[0] = u; UVq[1] = v;
       // Calculate s-coords of impinging parcel
       sCoord = airfoil.interpXYtoS(XYq);
-      // Calculate impinging incidence angle
-      airfoil.findPanel(XYq,XYa,NxNy,TxTy,indNN);
-      theta = airfoil.calcIncidenceAngle(XYq,UVq,indNN);
-      // Calculate impinging mass loss parameters
-      a = 1.0-0.3*sin(theta);
-      b = (1.0/8.0)*(1.0+3.0*cos(theta));
-      // Calculate splashing ejection mass (ms) and sticking mass
-      // (mStick)
-      ms_m0 = max(a - pow(Ks/K,b),0.);
-      m0 = (4.0/3.0)*M_PI*pow(r,3);
-      ms = ms_m0*m0;
-      mStick = rhoL_*(m0-ms);
-      // Update parent particle properties (mass/radius)
-      rStick = pow(mStick/(rhoL_*(4.0/3.0)*M_PI),1.0/3.0);
-      state_.r_(indSplash) = rStick;
+      // Check to see whether we are using splashing at all, or not
+      if (SplashFlag_ == true) {
+	// Calculate impinging incidence angle
+	airfoil.findPanel(XYq,XYa,NxNy,TxTy,indNN);
+	theta = airfoil.calcIncidenceAngle(XYq,UVq,indNN);
+	// Calculate impinging mass loss parameters
+	a = 1.0-0.3*sin(theta);
+	b = (1.0/8.0)*(1.0+3.0*cos(theta));
+	// Calculate splashing ejection mass (ms) and sticking mass
+	// (mStick)
+	ms_m0 = max(a - pow(Ks/K,b),0.0);
+	m0 = (4.0/3.0)*M_PI*pow(r,3);
+	ms = ms_m0*m0;
+	mStick = rhoL_*(m0-ms);
+	// Update parent particle properties (mass/radius)
+	rStick = pow(mStick/(rhoL_*(4.0/3.0)*M_PI),1.0/3.0);
+	state_.r_(indSplash) = rStick;
+      }
+      else {
+	// Simply treat particles marked as "splash" as spreading
+	mStick = rhoL_*(4.0/3.0)*M_PI*pow(r,3);
+	ms = 0;
+      }
       // Check to see whether we are tracking child splash particles
       // Interpolate analytical expression for the CDF to get child droplet size
       if ((ms != 0) && (TrackSplashParticles_ == true)) {
-	printf("Hello\n");
 	// Calculate dropsize CDF
 	rm_rd = A0 + A1*exp(-K/delK);
 	rm = rm_rd*r;

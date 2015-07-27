@@ -12,7 +12,7 @@ Basedir = "/home/adegenna/LagrangianIcingCode/DistributionCPP/";
 InputRadiusFile = Basedir + "MVD111/MVD111Distribution.dat";
 InputFile = Basedir + "InputData/Input.dat";
 PBSFile = Basedir + "MVD111/pbsbase.dat";
-numSims = 5;
+numSims = 27;
 
 RDist = genfromtxt(InputRadiusFile, delimiter = ',');
 radius = RDist[:,0];

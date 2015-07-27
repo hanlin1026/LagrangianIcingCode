@@ -8,10 +8,11 @@
 #include <Grid/PLOT3D.h>
 #include <findAll.h>
 #include <eigen3/Eigen/Dense>
+#include "ParcelScalars.h"
 
 class Cloud {
  public:
-  Cloud(State& state, PLOT3D& grid, double rhol, const char* TrackSplashParticles);
+  Cloud(State& state, PLOT3D& grid, double rhol, ParcelScalars& PARCEL);
   Cloud(State& state, PLOT3D& grid, double rhol);
   ~Cloud();
   void addParticles(State& state, int indCellParent);
@@ -58,6 +59,7 @@ class Cloud {
   void findInSimulation();
   void computeNewCellLocations(PLOT3D& grid);
   bool TrackSplashParticles_;
+  bool SplashFlag_;
 
 };
 

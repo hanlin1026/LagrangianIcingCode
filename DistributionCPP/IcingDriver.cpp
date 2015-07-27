@@ -25,7 +25,7 @@ int main(int argc, const char *argv[]) {
   // Specify initialization files
   const char *inFileName = argv[1];
   const char *meshFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/MESH.P3D";
-  const char *solnFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/q103.0.50E+01.bin";
+  const char *solnFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/q103.0.25E+01.bin";
   // Read in initialization scalars from input file
   FluidScalars scalarsFluid;
   ParcelScalars scalarsParcel;
@@ -47,7 +47,7 @@ int main(int argc, const char *argv[]) {
   }
   // Initialize cloud of particles
   State state = State("MonoDispersed",scalarsParcel,p3d);
-  Cloud cloud(state,p3d,scalarsFluid.rhol_,"NoSplashTracking");
+  Cloud cloud(state,p3d,scalarsFluid.rhol_,scalarsParcel);
   // Calculate initial total droplet mass in cloud
   double massTotal = cloud.calcTotalMass();
   double fluxFreeStream = massTotal/dY;
