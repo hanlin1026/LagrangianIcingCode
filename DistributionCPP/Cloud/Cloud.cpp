@@ -510,6 +510,7 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
     vector<double> v1(2);
     vector<double> v2(2);
     double diffVratio,vCDFSamp,vrat,v2mag,e1,e2,elevation,foilAngle;
+    int numChildSplash,numDropChild;
     // Initialize uniform random number generators
     default_random_engine generator;
     uniform_real_distribution<double> randCDF(0.05,0.95);
@@ -569,6 +570,7 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
       // Check to see whether we are tracking child splash particles
       // Interpolate analytical expression for the CDF to get child droplet size
       if ((ms != 0) && (TrackSplashParticles_ == true)) {
+	numChildSplash = 100;
 	// Calculate dropsize CDF
 	rm_rd = A0 + A1*exp(-K/delK);
 	rm = rm_rd*r;
@@ -584,11 +586,16 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
 	mCHILD = 0;
 	mPARENT = ms*rhoL_;
 	numnew = 0;
-	while (mCHILD < mPARENT) {
+	while ((mCHILD < mPARENT) && (numnew < numChildSplash)) {
 	  dsamp = randCDF(generator);
 	  rnew.push_back(gsl_spline_eval(spline, dsamp, acc));
 	  mCHILD = mCHILD + (4.0/3.0)*M_PI*pow(rnew[numnew],3)*rhoL_;
 	  numnew++;
+	}
+	// Calculate child parcel number density
+	numDropChild = round(mPARENT/mCHILD);
+	if (numDropChild == 0) {
+	  numDropChild = 1;
 	}
 	// Calculate post splashing droplet velocities, interpolate
 	// analytical expression for the CDF to get magnitude of v2
@@ -628,7 +635,7 @@ void Cloud::splashDynamics(Airfoil& airfoil) {
 	  stateChildren.r_(j) = rnew[j];
 	  stateChildren.temp_(j) = temp;
 	  stateChildren.time_(j) = Time;
-	  stateChildren.numDrop_(j) = numDrop;
+	  stateChildren.numDrop_(j) = numDrop*numDropChild;
 	}
 	// Add child particles to the cloud
 	this->addParticles(stateChildren,indCellParent);

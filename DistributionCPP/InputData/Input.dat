@@ -7,6 +7,6 @@ particles   Rmean	     Tmean
 Xmin	    Xmax	     Ymin		Ymax
 -5.0001	    -5.0	     -0.3073		-0.2180
 maxiter	    RefreshRate	     calcImpLimits
-2000	    999		     1
+2000	    1999	     1
 Splashing   TrackSplash
-0	    0
+1	    0

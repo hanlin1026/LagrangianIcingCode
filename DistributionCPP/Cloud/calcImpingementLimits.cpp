@@ -75,8 +75,8 @@ std::vector<double> calcImpingementLimits(double Xloc,double R,double T,double r
   limits[1] = Yhit;
   // Padding on limits
   dY = limits[1]-limits[0];
-  limits[0] = limits[0] - 1*dY;
-  limits[1] = limits[1] + 1*dY;
+  limits[0] = limits[0] - 0.05*dY;
+  limits[1] = limits[1] + 0.05*dY;
   
   return limits;
 

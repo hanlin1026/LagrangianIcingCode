@@ -107,6 +107,9 @@ double Airfoil::calcIncidenceAngle(std::vector<double>& XYq, std::vector<double>
   velUnitNorm[1] = UVq[1]/velNorm;
   double projection = velUnitNorm[0]*(-NxNy[0]) + velUnitNorm[1]*(-NxNy[1]);
   double theta = acos(projection);
+  // Incidence angle is defined as the angle between the surface and
+  // the velocity
+  theta = abs(M_PI/2.0 - theta);
 
   return theta;
 
