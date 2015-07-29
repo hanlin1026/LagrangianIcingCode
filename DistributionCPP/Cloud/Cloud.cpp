@@ -414,14 +414,27 @@ void Cloud::computeImpingementRegimes(Airfoil& airfoil) {
     fb_[i] = fb;
     // Calculate impingement regime
     if (K < Kb0*fb) {
-      bounce_.push_back(i);
+      if (SplashFlag_ == true) {
+	bounce_.push_back(i);
+      }
+      else {
+	// If we are not using splashing, turn off bouncing by treating it as a spread
+	spread_.push_back(i);
+	splashSpread.push_back(impinge_[i]);
+      }
     }
     else if ((K > Kb0*fb) && (K < Ks0*fs)) {
       spread_.push_back(i);
       splashSpread.push_back(impinge_[i]);
     }
     else {
-      splash_.push_back(i);
+      if (SplashFlag_ == true) {
+	splash_.push_back(i);
+      }
+      else {
+	// If we are not using splashing, turn it off by treating it as a spread
+	spread_.push_back(i);
+      }
       splashSpread.push_back(impinge_[i]);
     } 
   }

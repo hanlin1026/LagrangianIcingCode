@@ -1,0 +1,12 @@
+// Input parameters for IcingDriver
+
+pinf	    R		     Tinf		rhol
+1.01325e5   287.058	     300.0		1000.0
+particles   Rmean	     Tmean
+5000	    0.00024731	     273.15
+Xmin	    Xmax	     Ymin		Ymax
+-5.0001	    -5.0	     -0.3073		-0.2180
+maxiter	    RefreshRate	     calcImpLimits
+2000	    1999	     1
+Splashing   TrackSplash
+0	    0
