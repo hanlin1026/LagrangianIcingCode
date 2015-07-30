@@ -15,7 +15,7 @@ class Airfoil {
     double calcIncidenceAngle(std::vector<double>& XYq,std::vector<double>& UVq,int indNN);
     double interpXYtoS(std::vector<double>& XYq);
     void appendFilm(double sCoord, double mass);
-    void calcCollectionEfficiency(double fluxFreeStream,int numBins);
+    void calcCollectionEfficiency(double fluxFreeStream,double dS);
     void calcStagnationPt(PLOT3D& grid);
     // Set/get methods
     std::vector<double> getBetaBins();

@@ -135,8 +135,8 @@ int main(int argc, const char *argv[]) {
   ostream_iterator<double> out_itCELLY (foutCELLY,"\n");
   copy ( YCENT.begin(), YCENT.end(), out_itCELLY );
   // Get collection efficiency and output to file
-  int numBins = 35;
-  airfoil.calcCollectionEfficiency(fluxFreeStream,numBins);
+  double dS = 0.001;
+  airfoil.calcCollectionEfficiency(fluxFreeStream,dS);
   std::vector<double> BetaBins = airfoil.getBetaBins();
   std::vector<double> Beta = airfoil.getBeta();
   ostream_iterator<double> out_itBINS(foutBINS,"\n");

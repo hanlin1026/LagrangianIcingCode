@@ -148,8 +148,15 @@ double Airfoil::interpXYtoS(std::vector<double>& XYq) {
   double dy = yq - XYa[1];
   // Project displacement vector onto tangent vector
   double tangDisplacement = dx*TxTy[0] + dy*TxTy[1];
+  double sCoord;
+  if (tangDisplacement > 0) {
+    sCoord = panelS_(indNN) + sqrt(pow(dx,2) + pow(dy,2));
+  }
+  else {
+    sCoord = panelS_(indNN) - sqrt(pow(dx,2) + pow(dy,2));
+  }
   // Estimate s-coordinate of query point by adding tangent displacement
-  double sCoord = panelS_(indNN) + tangDisplacement;
+  // sCoord = panelS_(indNN) + tangDisplacement;
 
   return sCoord;
 
@@ -161,15 +168,16 @@ void Airfoil::appendFilm(double sCoord, double mass) {
 
 }
 
-void Airfoil::calcCollectionEfficiency(double fluxFreeStream,int numBins) {
+void Airfoil::calcCollectionEfficiency(double fluxFreeStream,double dS) {
   // Function to calculate collection efficiency of airfoil
 
-  gsl_histogram *h = gsl_histogram_alloc(numBins);
   if (!FilmScoords_.empty()) {
     // Create bins
     double minS = *min_element(FilmScoords_.begin(),FilmScoords_.end());
     double maxS = *max_element(FilmScoords_.begin(),FilmScoords_.end());
-    double dS = (maxS-minS)/(numBins-1);
+    // double dS = (maxS-minS)/(numBins-1);
+    int numBins = (maxS-minS)/dS + 1;
+    gsl_histogram *h = gsl_histogram_alloc(numBins);
     // Histogram count of mass in each bin
     gsl_histogram_set_ranges_uniform(h,minS,maxS);
     for (int i=0; i<FilmMass_.size(); i++) {

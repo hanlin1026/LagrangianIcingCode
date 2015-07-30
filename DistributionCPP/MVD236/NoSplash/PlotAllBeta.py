@@ -40,5 +40,7 @@ for i in range(0,27):
     y = genfromtxt(yName, delimiter = '\n');
     yInterp = numpy.interp(xInterp,x,y,left=0,right=0);
     plt.plot(xInterp,yInterp);
+grid(True)
 
 plt.show()
+
