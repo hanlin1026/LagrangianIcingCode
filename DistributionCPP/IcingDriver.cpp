@@ -66,6 +66,7 @@ int main(int argc, const char *argv[]) {
   }
   Airfoil airfoil = Airfoil(X,Y);
   airfoil.calcStagnationPt(p3d);
+  //airfoil.setStagPt(1.0238);
   // Advect (no splashing/fracture)
   ofstream foutX("CloudX.out");
   ofstream foutY("CloudY.out");

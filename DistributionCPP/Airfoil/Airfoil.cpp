@@ -238,3 +238,8 @@ vector<double> Airfoil::getBeta() {
   return Beta_;
 
 }
+
+void Airfoil::setStagPt(double sLoc) {
+  stagPt_ = sLoc;
+
+}

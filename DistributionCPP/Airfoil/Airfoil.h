@@ -20,6 +20,7 @@ class Airfoil {
     // Set/get methods
     std::vector<double> getBetaBins();
     std::vector<double> getBeta();
+    void setStagPt(double sLoc);
 
   private:
     Eigen::VectorXd panelX_;
