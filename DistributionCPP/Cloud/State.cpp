@@ -22,7 +22,12 @@ State::State(int size) {
 State::State(const char* distributionType, ParcelScalars& scalars, PLOT3D& p3d) {
   // Constructor
 
-  size_ = scalars.particles_;
+  if (scalars.parcels_ == 0) {
+    size_ = scalars.particles_;
+  }
+  else {
+    size_ = scalars.parcels_;
+  }
   x_.resize(size_);
   y_.resize(size_);
   u_.resize(size_);
@@ -33,45 +38,58 @@ State::State(const char* distributionType, ParcelScalars& scalars, PLOT3D& p3d) 
   numDrop_.resize(size_);
   double Xnn, Ynn;
   int indnn;
-  if (strcmp(distributionType,"MonoDispersed") == 0) {
-    if (scalars.Xmin_ != scalars.Xmax_) {
-      // Initialize all particles as having the same size
-      // Select particle locations randomly and set state
-      default_random_engine generator;
-      uniform_real_distribution<double> distX(scalars.Xmin_,scalars.Xmax_);
-      uniform_real_distribution<double> distY(scalars.Ymin_,scalars.Ymax_);
-      for (int i=0; i<size_; i++) {
-	x_(i) = distX(generator);
-	y_(i) = distY(generator);
-	p3d.pointSearch(x_(i),y_(i),Xnn,Ynn,indnn);
-	u_(i) = p3d.getUCENT(indnn);
-	v_(i) = p3d.getVCENT(indnn);
-	r_(i) = scalars.Rmean_;
-	temp_(i) = scalars.Tmean_;
-	time_(i) = 0;
-	numDrop_(i) = 1;
-      }
+  
+  if (scalars.Xmin_ != scalars.Xmax_) {
+    // Initialize all particles as having the same size
+    // Select particle locations randomly and set state
+    default_random_engine generator;
+    uniform_real_distribution<double> distX(scalars.Xmin_,scalars.Xmax_);
+    uniform_real_distribution<double> distY(scalars.Ymin_,scalars.Ymax_);
+    for (int i=0; i<size_; i++) {
+      x_(i) = distX(generator);
+      y_(i) = distY(generator);
+      p3d.pointSearch(x_(i),y_(i),Xnn,Ynn,indnn);
+      u_(i) = p3d.getUCENT(indnn);
+      v_(i) = p3d.getVCENT(indnn);
+      r_(i) = scalars.Rmean_;
+      temp_(i) = scalars.Tmean_;
+      time_(i) = 0;
     }
-    else {
-      // Initialize particles along line of constant X
-      double dY = (scalars.Ymax_-scalars.Ymin_)/(size_-1);
-      for (int i=0; i<size_; i++) {
-	x_(i) = scalars.Xmax_;
-	y_(i) = scalars.Ymin_ + i*dY;
-	p3d.pointSearch(x_(i),y_(i),Xnn,Ynn,indnn);
-	u_(i) = p3d.getUCENT(indnn);
-	v_(i) = p3d.getVCENT(indnn);
-	r_(i) = scalars.Rmean_;
-	temp_(i) = scalars.Tmean_;
-	time_(i) = 0;
-	numDrop_(i) = 1;
-      }
+  }
+  else {
+    // Initialize particles along line of constant X
+    double dY = (scalars.Ymax_-scalars.Ymin_)/(size_-1);
+    for (int i=0; i<size_; i++) {
+      x_(i) = scalars.Xmax_;
+      y_(i) = scalars.Ymin_ + i*dY;
+      p3d.pointSearch(x_(i),y_(i),Xnn,Ynn,indnn);
+      u_(i) = p3d.getUCENT(indnn);
+      v_(i) = p3d.getVCENT(indnn);
+      r_(i) = scalars.Rmean_;
+      temp_(i) = scalars.Tmean_;
+      time_(i) = 0;
     }
+  }
 
+  if (strcmp(distributionType,"MonoDispersed") == 0) {
+    for (int i=0; i<size_; i++) {
+      numDrop_(i) = 1;
+    }
   }
 
   else if (strcmp(distributionType,"Parcels") == 0) {
-    
+    int meanNumDensity = round(scalars.particles_/scalars.parcels_);
+    int lowerBound = floor(0.5*meanNumDensity);
+    if (lowerBound == 0) {
+      lowerBound = 1;
+    }
+    int upperBound = ceil(2.0*meanNumDensity);
+    default_random_engine generatorN;
+    uniform_real_distribution<double> distNumDensity(lowerBound,upperBound);
+    for (int i=0; i<size_; i++) {
+      // Draw number density randomly
+      numDrop_(i) = distNumDensity(generatorN);
+    }
   }
 
   else {

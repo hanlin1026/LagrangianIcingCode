@@ -32,7 +32,7 @@ X = numpy.zeros((sizeX,bins));
 Y = numpy.zeros((sizeX,bins));
 weight = genfromtxt("Weights.dat", delimiter = '\n');
 xyExp = genfromtxt("BetaMVD154Experiment.dat", delimiter = ',');
-xInterp = numpy.linspace(-0.3,0.1,1000);
+xInterp = numpy.linspace(-0.3,0.2,1000);
 yInterp = numpy.zeros(1000);
 # Interpolate beta
 for i in range(0,27):

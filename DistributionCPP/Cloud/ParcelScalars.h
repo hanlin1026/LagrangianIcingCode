@@ -4,6 +4,7 @@
 struct ParcelScalars {
   // Scalars needed at initialization for parcel cloud
   int particles_;
+  int parcels_;
   double Rmean_;
   double Tmean_;
   double Xmin_;
