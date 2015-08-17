@@ -1,14 +1,15 @@
-% Example solver for thermo eqns
+%% Example solver for thermo eqns (quasilinearization method)
 
 % INPUT ****************************
 ds = 1;
 s = [0:ds:999]';
+pw = 1000;
 % Input incoming liquid mass k(s)
-k = exp(-0.5*(s-mean(s)).^2/25^2);
+mimp = exp(-0.5*(s-mean(s)).^2/25^2);
 % Guess ice profile z(s)
-Z = 0.5*k;
+Z = 0.5*mimp;
 % Input droplet impingement energy terms
-k2 = k.^3;
+Eimp = 0.5*100^2;
 % **********************************
 
 dX = 0.1*ones(1000,1); dY = 0.1*ones(1000,1);
@@ -17,7 +18,7 @@ for iter = 1:100
     figure(3); hold on; plot(s,Z); drawnow;
     % MASS EQN *************************
     % Solve mass eqn explicitly (RK4)
-    f = k - Z;
+    f = mimp - Z;
     steps = 999;
     ya = 0;
     if (iter>1)
@@ -43,7 +44,7 @@ for iter = 1:100
     Bf = (1/ds)*X(end);
     M = diag([A1;D;Bf]) + diag([B1;E],1) + diag([C;Af],-1);
     % Set up RHS
-    RHS = k2 + Z;
+    RHS = Eimp + Z;
     % Solve implicit linear system
     Y = M\RHS;
     % Plot
@@ -83,25 +84,51 @@ end
 
 
 
-%% Test
+%% Example solver (nonlinear iteration)
 
-y = 1; K = 10;
-f = @(x1,x2) 0.5*x1^2 - x2 - 10;
-dx = 0.1; Y(1) = y;
-dy = 1; TOL = 0.01;
-i = 1;
-while abs(dy) > TOL
-y = Y(i);
-X(i) = sqrt(2*(y+K));
-F(i) = f(X(i),y);
-% if (i>1)
-% dx = X(i)-X(i-1);
-% end
-DY(i) = X(i)*dx;
-Y(i+1) = Y(i) - DY(i);
-dy = DY(i);
-i = i+1;
-end
+% INPUT ****************************
+ds = 1;
+s = [0:ds:999]';
+pw = 1000;
+uw = 1.787e-3;
+% Input incoming liquid mass k(s)
+mimp = exp(-0.5*(s-mean(s)).^2/25^2);
+% Guess ice profile z(s)
+Z = 0.5*mimp;
+% Input droplet impingement energy terms
+Eimp = 0.5*100^2;
+% **********************************
+% Set up structure for parameters
+scalars.s_ = s;
+scalars.ds_ = ds;
+scalars.pw_ = pw;
+scalars.uw_ = uw;
+scalars.mimp_ = mimp;
+scalars.Z_ = Z;
+scalars.Eimp_ = Eimp;
+% Define exact solution
+xEXACT = sqrt((2*uw/pw)*cumsum(mimp-Z)*ds);
+% Initial guess
+x0 = linspace(0,10e-3,length(s))';
+% Newton-Krylov iteration
+eps = 1e-4;
+xn = NewtonKrylovIteration(@MassBalance,scalars,x0,eps);
+scalars.X_ = xn;
+
+figure; plot(s,xn);
+hold on; plot(s,mimp,'r');
+hold on; plot(s,xEXACT,'g');
+
+
+
+
+
+
+
+
+
+
+
 
 
 
