@@ -27,5 +27,4 @@ for i = 1:nitermax
    
 end
 
-
 end
