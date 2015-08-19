@@ -8,9 +8,7 @@ uw = 1.787e-3;
 % Input incoming liquid mass k(s)
 mimp = exp(-0.5*(s-mean(s)).^2/25^2);
 % Guess ice profile z(s)
-Z = 0.1*mimp;
-% Input droplet impingement energy terms
-Eimp = 0.5*100^2;
+Z = 1*mimp;
 % **********************************
 % Set up structure for parameters
 scalars.s_ = s;
@@ -30,7 +28,8 @@ xEXACT = sqrt((2*uw/pw)*cumsum(mimp-Z)*ds);
 % MASS
 x0 = linspace(0,10e-3,length(s))'; % Initial guess
 eps = 1e-4;
-xn = NewtonKrylovIteration(@MassBalance,scalars,x0,eps);
+%xn = NewtonKrylovIteration(@MassBalance,scalars,x0,eps);
+xn = xEXACT;
 scalars.X_ = xn;
 % ENERGY
 %
@@ -44,7 +43,7 @@ figure(3); plot(s,Z);
 
 XY = X.*Y;
 YZ = Y.*Z;
-if (isempty(X(X<-1e-10)) && isempty(Z(Z<-1e-10)) && isempty(XY(XY<-1e-10)) && isempty(YZ(YZ>1e-10)))
+if (isempty(X(X<-1e-10)) && isempty(Z(Z<-1e-10)) && isempty(XY(XY<-1e-7)) && isempty(YZ(YZ>1e-7)))
     disp('All compatibility relations satisfied');
 end
 
