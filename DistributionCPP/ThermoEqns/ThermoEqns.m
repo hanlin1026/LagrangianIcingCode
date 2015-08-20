@@ -8,7 +8,7 @@ uw = 1.787e-3;
 % Input incoming liquid mass k(s)
 mimp = exp(-0.5*(s-mean(s)).^2/25^2);
 % Guess ice profile z(s)
-Z = 1*mimp;
+Z = 0*mimp;
 % **********************************
 % Set up structure for parameters
 scalars.s_ = s;
@@ -23,31 +23,76 @@ scalars.Lfus_ = 334774; % J/kg
 scalars.ch_ = 100; % W/(m^2 C)
 scalars.mimp_ = mimp;
 scalars.Z_ = Z;
-% Define exact solution
-xEXACT = sqrt((2*uw/pw)*cumsum(mimp-Z)*ds);
-% MASS
-x0 = linspace(0,10e-3,length(s))'; % Initial guess
-eps = 1e-4;
-%xn = NewtonKrylovIteration(@MassBalance,scalars,x0,eps);
-xn = xEXACT;
-scalars.X_ = xn;
-% ENERGY
-%
-y0 = scalars.Td_*ones(length(s),1);
-yn = NewtonKrylovIteration(@EnergyBalance,scalars,y0,eps);
-%}
-X = xn; Y = yn;
-figure(1); plot(s,X); hold on; plot(s,xEXACT,'g');
-figure(2); plot(s,Y);
-figure(3); plot(s,Z);
-
-XY = X.*Y;
-YZ = Y.*Z;
-if (isempty(X(X<-1e-10)) && isempty(Z(Z<-1e-10)) && isempty(XY(XY<-1e-7)) && isempty(YZ(YZ>1e-7)))
-    disp('All compatibility relations satisfied');
+% Set convergence tolerances for water and ice constraints
+epsWATER = -2.5e-5;
+epsICE = 2.5e-5;
+% Iterate on mass/energy eqns until physical solution attained
+C_filmPos = true; C_icePos = true; C_waterWarm = false; C_iceCold = false;
+iter = 1;
+while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter < 6) )
+    iter
+    % MASS (solve for X)
+    %x0 = linspace(0,10e-3,length(s))'; % Initial guess
+    %eps = 1e-4;
+    %xn = NewtonKrylovIteration(@MassBalance,scalars,x0,eps);
+    X = sqrt((2*uw/pw)*cumsum(mimp-Z)*ds);
+    scalars.X_ = X;
+    % Constraint: check that conservation of mass is not violated
+    tolIMAG = 1e-6;
+    indX = find(abs(imag(X)) > tolIMAG);
+    if (~isempty(indX))
+        % Lower ice accretion rate in affected areas
+        indFix = find(Z(indX) > mimp(indX));
+        Z(indX(indFix)) = mimp(indX(indFix));
+        scalars.Z_ = Z;
+        X = real(X); scalars.X_ = X;
+    end
+    % ENERGY (solve for Y)
+    eps = 1e-4;
+    if (iter == 1)
+        Y = scalars.Td_*ones(length(s),1);
+    end
+    Ynew = NewtonKrylovIteration(@EnergyBalance,scalars,Y,eps);
+    Y = Ynew; scalars.Y_ = Y;
+    % Check constraints
+    XY = X.*Y;
+    indWATER = find(XY<epsWATER);
+    % CONSTRAINTS
+    % Water cannot be cold
+    if (isempty(indWATER))
+        C_waterWarm = true;
+    else
+        % If we have freezing water, warm it up using epsWATER
+        C_waterWarm = false;
+        Y(indWATER) = epsWATER./X(indWATER);
+        scalars.Y_ = Y;
+        % Resolve for ice profile (Z)
+        Z = SolveThermoForIceRate(X,Y,scalars);
+        scalars.Z_ = Z;
+    end
+    YZ = Y.*Z;
+    % Ice cannot be warm
+    indICE = find(YZ>epsICE);
+    if (isempty(indICE))
+        C_iceCold = true;
+    else
+        % If we have warm ice, cool it down using epsICE
+        C_iceCold = false;
+        Y(indWATER) = epsICE./Z(indWATER);
+        scalars.Y_ = Y;
+        % Resolve for ice profile
+        Z = SolveThermoForIceRate(X,Y,scalars);
+        scalars.Z_ = Z;
+    end
+    
+    % Plot
+    figure(1); hold on; plot(s,X); drawnow;
+    figure(2); hold on; plot(s,Y); drawnow;
+    figure(3); hold on; plot(s,Z); drawnow;
+    iter = iter + 1;
+    
 end
-
-
+disp('All compatibility relations satisfied');
 
 
 
