@@ -35,7 +35,11 @@ err(k) = df - ds*RHS;
 %RHS = mimp(k)*(cw*Td + 0.5*ud^2) + z(k).*(Lfus - cice.*y(k)) + ch*(Td - y(k));
 %err(2:end-1) = LHS - ds*RHS;
 % Boundary conditions
-err(1) = y(1)-Td;
+if (z(1) < 1e-4)
+    err(1) = y(1)-Td;
+else
+    err(1) = y(1) - 0;
+end
 err(end) = err(end-1);
 
 

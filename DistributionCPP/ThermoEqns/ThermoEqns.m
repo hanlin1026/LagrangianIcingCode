@@ -6,7 +6,7 @@ s = [0:ds:999]';
 pw = 1000;
 uw = 1.787e-3;
 % Input incoming liquid mass k(s)
-mimp = exp(-0.5*(s-mean(s)).^2/25^2);
+mimp = exp(-0.5*(s-100).^2/50^2);
 % Guess ice profile z(s)
 Z = 0*mimp;
 % **********************************
@@ -24,8 +24,8 @@ scalars.ch_ = 100; % W/(m^2 C)
 scalars.mimp_ = mimp;
 scalars.Z_ = Z;
 % Set convergence tolerances for water and ice constraints
-epsWATER = -2.5e-5;
-epsICE = 2.5e-5;
+epsWATER = -1e-8;
+epsICE = 1e-8;
 % Iterate on mass/energy eqns until physical solution attained
 C_filmPos = true; C_icePos = true; C_waterWarm = false; C_iceCold = false;
 iter = 1;
@@ -41,6 +41,7 @@ while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter <
     tolIMAG = 1e-6;
     indX = find(abs(imag(X)) > tolIMAG);
     if (~isempty(indX))
+        disp('Mass balance violated (negative film height)');
         % Lower ice accretion rate in affected areas
         indFix = find(Z(indX) > mimp(indX));
         Z(indX(indFix)) = mimp(indX(indFix));
@@ -62,6 +63,7 @@ while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter <
     if (isempty(indWATER))
         C_waterWarm = true;
     else
+        disp('Water below freezing detected');
         % If we have freezing water, warm it up using epsWATER
         C_waterWarm = false;
         Y(indWATER) = epsWATER./X(indWATER);
@@ -76,6 +78,7 @@ while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter <
     if (isempty(indICE))
         C_iceCold = true;
     else
+        disp('Ice above freezing detected');
         % If we have warm ice, cool it down using epsICE
         C_iceCold = false;
         Y(indWATER) = epsICE./Z(indWATER);
