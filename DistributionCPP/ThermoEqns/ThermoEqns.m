@@ -6,7 +6,7 @@ s = [0:ds:999]';
 pw = 1000;
 uw = 1.787e-3;
 % Input incoming liquid mass k(s)
-mimp = exp(-0.5*(s-100).^2/50^2);
+mimp = exp(-0.5*(s-500).^2/50^2);
 % Guess ice profile z(s)
 Z = 0*mimp;
 % **********************************
@@ -24,18 +24,27 @@ scalars.ch_ = 100; % W/(m^2 C)
 scalars.mimp_ = mimp;
 scalars.Z_ = Z;
 % Set convergence tolerances for water and ice constraints
-epsWATER = -1e-8;
-epsICE = 1e-8;
+epsWATER = -1e-4;
+epsICE = 1e-4;
 % Iterate on mass/energy eqns until physical solution attained
 C_filmPos = true; C_icePos = true; C_waterWarm = false; C_iceCold = false;
 iter = 1;
-while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter < 6) )
+while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter < 2) )
     iter
     % MASS (solve for X)
     %x0 = linspace(0,10e-3,length(s))'; % Initial guess
     %eps = 1e-4;
     %xn = NewtonKrylovIteration(@MassBalance,scalars,x0,eps);
-    X = sqrt((2*uw/pw)*cumsum(mimp-Z)*ds);
+    %X = sqrt((2*uw/pw)*cumsum(mimp-Z)*ds);
+    x0 = zeros(length(s),1);
+    X = x0; epsT = 8e-2; ERR = 1; iterMASS = 0;
+    while ((ERR > 1e-6) && (iterMASS < 10000)) 
+        iterMASS = iterMASS+1;
+        DX = MassBalance(X,scalars);
+        X = X - epsT*DX;
+        X(X<0) = 0;
+        ERR = max(abs(DX));
+    end
     scalars.X_ = X;
     % Constraint: check that conservation of mass is not violated
     tolIMAG = 1e-6;
@@ -53,8 +62,17 @@ while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter <
     if (iter == 1)
         Y = scalars.Td_*ones(length(s),1);
     end
-    Ynew = NewtonKrylovIteration(@EnergyBalance,scalars,Y,eps);
-    Y = Ynew; scalars.Y_ = Y;
+    %Ynew = NewtonKrylovIteration(@EnergyBalance,scalars,Y,eps);
+    %Ynew = IntegrateEnergyEqn(scalars); Y = Ynew;
+    y0 = scalars.Td_*ones(length(s),1);
+    Y = y0; epsT = 5e-2; ERR = 1; iterENERGY = 0;
+    while ((ERR > 1e-6) && (iterENERGY < 10000)) 
+        iterENERGY = iterENERGY+1;
+        DY = EnergyBalance(Y,scalars);
+        Y = Y - epsT*DY;
+        ERR = max(abs(DY));
+    end
+    scalars.Y_ = Y;
     % Check constraints
     XY = X.*Y;
     indWATER = find(XY<epsWATER);
@@ -89,9 +107,9 @@ while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter <
     end
     
     % Plot
-    figure(1); hold on; plot(s,X); drawnow;
-    figure(2); hold on; plot(s,Y); drawnow;
-    figure(3); hold on; plot(s,Z); drawnow;
+    figure(11); hold on; plot(s,X); drawnow;
+    figure(12); hold on; plot(s,Y); drawnow;
+    figure(13); hold on; plot(s,Z); drawnow;
     iter = iter + 1;
     
 end

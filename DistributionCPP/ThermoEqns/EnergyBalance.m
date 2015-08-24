@@ -27,13 +27,11 @@ f = 0.5*(F(k)+F(k+1)) - (0.5*pw*cw/uw)*xFACE.^2.*(y(k+1)-y(k));
 % Calculate error for internal cells
 err = zeros(length(x),1);
 k = [2:length(x)-1];
-df = f(k)-f(k-1);
+D_flux = f(k)-f(k-1);
 RHS = mimp(k)*(cw*Td + 0.5*ud^2) + z(k).*(Lfus - cice.*y(k)) + ch*(Td - y(k));
-err(k) = df - ds*RHS;
+I_sources = ds*RHS;
+err(k) = (1/pw/cw).*(D_flux-I_sources);
 
-%LHS = (pw*cw/16/uw)*((x(k+1)+x(k)).^2.*(y(k+1)+y(k)) - (x(k)+x(k-1)).^2.*(y(k)+y(k-1)));
-%RHS = mimp(k)*(cw*Td + 0.5*ud^2) + z(k).*(Lfus - cice.*y(k)) + ch*(Td - y(k));
-%err(2:end-1) = LHS - ds*RHS;
 % Boundary conditions
 if (z(1) < 1e-4)
     err(1) = y(1)-Td;

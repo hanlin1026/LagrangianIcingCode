@@ -1,13 +1,11 @@
-function [T,Y] = rk4(f,ya,m)
+function [T,Y] = rk4(f,y0,m)
 %---------------------------------------------------------------------------
 %RK4   Runge-Kutta solution for y' = f(t,y) with y(a) = ya.
 % Sample call
 %   [T,Y] = rk4('f',a,b,ya,m)
 % Inputs
-%   f    name of the function
-%   a    left  endpoint of [a,b]
-%   b    right endpoint of [a,b]
-%   ya   initial value
+%   f    [x,y] points of function
+%   y0   initial value
 %   m    number of steps
 % Return
 %   T    solution: vector of abscissas
@@ -31,7 +29,7 @@ h = (b - a)/m;
 T = zeros(1,m+1);
 Y = zeros(1,m+1);
 T(1) = a;
-Y(1) = ya;
+Y(1) = y0;
 for j=1:m,
   tj = T(j);
   yj = Y(j);
