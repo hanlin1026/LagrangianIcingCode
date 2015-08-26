@@ -43,8 +43,9 @@ for i in range(0,27):
     x = genfromtxt(xName, delimiter = '\n');
     y = genfromtxt(yName, delimiter = '\n');
     yInterp = yInterp + weight[i]*numpy.interp(xInterp,x,y,left=0,right=0)/100.0;
-plt.plot(-xInterp,yInterp);
-plt.plot(xyExp[:,0],xyExp[:,1],c='r');
+plt.plot(xInterp+0.01,yInterp,lw=4);
+plt.plot(-xyExp[:,0],xyExp[:,1],c='r',lw=4);
+legend(["Computational","Experimental"])
 
 #plt.scatter(X,Y,c="r",edgecolor='',lw=0,s=15)
 #plt.scatter(Xc,Yc,edgecolor='',lw=0,s=15,c='g')

@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
+#include <fstream>
 #include <math.h>
 #include <string.h>
 #include <random>
@@ -93,6 +95,41 @@ int main(int argc, const char *argv[]) {
   int refreshRate = scalarsParcel.refreshRate_;
   int particles = scalarsParcel.particles_;
   printf("maxiter = %d\n",maxiter);
+
+  // TEMPORARY CODE TO CONVERT (I,0) TO S-COORDS *****
+  const char *File_CF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/SkinFrictionCoeff.dat";
+  std::ifstream inFile_CF;
+  inFile_CF.open(File_CF);
+  int size_CF = 384;
+  vector<int> I_cf(size_CF);
+  std::string line; std::istringstream lin;
+  vector<double> x_cf(size_CF);
+  vector<double> y_cf(size_CF);
+  vector<double> xy_cf(2);
+  vector<double> s_cf(size_CF);
+  vector<double> cf(size_CF);
+  for (int i=0; i<size_CF; i++) {
+    std::getline(inFile_CF, line);
+    lin.clear();
+    lin.str(line);
+    lin >> I_cf[i]; printf("%d\n",I_cf[i]);
+    lin >> cf[i];
+    x_cf[i] = Xgrid(I_cf[i],0);
+    y_cf[i] = Ygrid(I_cf[i],0);
+    xy_cf[0] = x_cf[i]; xy_cf[1] = y_cf[i];
+    s_cf[i] = airfoil.interpXYtoS(xy_cf);
+  }
+  ofstream foutS_CF("CF_Scoords.out");
+  ostream_iterator<double> out_itS_CF (foutS_CF,"\n");
+  copy ( s_cf.begin(), s_cf.end(), out_itS_CF );
+
+  inFile_CF.close();
+  
+  
+  // *************************************************
+
+
+
   while ((totalImpinge < particles) && (iter < maxiter)) {
     cloud.calcDtandImpinge(airfoil,p3d);
     cloud.transportSLD(p3d);

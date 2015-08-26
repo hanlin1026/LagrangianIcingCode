@@ -30,10 +30,10 @@ k = [2:length(x)-1];
 D_flux = f(k)-f(k-1);
 RHS = mimp(k)*(cw*Td + 0.5*ud^2) + z(k).*(Lfus - cice.*y(k)) + ch*(Td - y(k));
 I_sources = ds*RHS;
-err(k) = (1/pw/cw).*(D_flux-I_sources);
+err(k) = D_flux-I_sources;
 
 % Boundary conditions
-if (z(1) < 1e-4)
+if (z(1) < 0.01*max(z))
     err(1) = y(1)-Td;
 else
     err(1) = y(1) - 0;
