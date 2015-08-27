@@ -15,9 +15,9 @@ mimp = scalars.mimp_;
 
 XY = x.^2.*y;
 DXY = zeros(length(x),1);
-DXY(2:end-1) = (XY(3:end)-XY(1:end-2))/(2*ds);
-XY(1) = (XY(2)-XY(1))/ds;
-XY(end) = (XY(end)-XY(end-1))/ds;
+DXY(2:end-1) = (XY(3:end)-XY(1:end-2))./(s(3:end)-s(1:end-2));
+XY(1) = (XY(2)-XY(1))./(s(2)-s(1));
+XY(end) = (XY(end)-XY(end-1))./(s(end)-s(end-1));
 
 LHS = (pw*cw/2/uw)*DXY;
 RHS = mimp.*(cw*Td + 0.5*ud^2) + ch*(Td - y);

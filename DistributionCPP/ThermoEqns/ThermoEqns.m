@@ -3,15 +3,39 @@
 % INPUT ****************************
 % Import skin friction coefficient data
 CF = importdata('SkinFrictionXY.dat',',');
-s_min = min(CF(:,1)); s_max = max(CF(:,1));
-s = linspace(s_min,s_max,1000)';
-tau_wall = interp1(CF(:,1),CF(:,2),s);
-ds = s(2)-s(1);
+% Piecewise interpolation *************
+indDisc = find(abs(diff(CF(:,2)))/mean(abs(diff(CF(:,2)))) > .5e2);
+s_min = 0; s_max = 0.4;
+[val,indFirst] = min(abs(CF(:,1)-s_min));
+[val,indLast] = min(abs(CF(:,1)-s_max));
+indDisc = [indFirst-1;indDisc;indLast];
+NPts = 1000;
+s = []; tau_wall = [];
+for i=1:(length(indDisc)-1)
+    startpt = indDisc(i)+1;
+    breakpt = indDisc(i+1);
+    if startpt == breakpt
+        s = [s; CF(startpt,1)];
+        tau_wall = [tau_wall; CF(startpt,2)];
+    else
+        npts = NPts*(breakpt-startpt)/(indLast-indFirst);
+        snew = linspace(CF(startpt,1),CF(breakpt,1),npts)';
+        s = [s; snew];
+        tau_wall = [tau_wall; interp1(CF(startpt:breakpt,1),CF(startpt:breakpt,2),snew)];
+    end
+end
+% **************************************
+tau_wall(abs(tau_wall) < 0.05*max(abs(tau_wall))) = 0;
+ds = zeros(length(s),1);
+ds(1:end-1) = diff(s); ds(end) = s(end)-s(end-1);
 pw = 1000;
 uw = 1.787e-3;
 % Input incoming liquid mass k(s)
 BETA = importdata('BetaXY.dat',',');
-mimp = interp1(BETA(:,1),BETA(:,2),s);
+Uinf = 75;
+LWC = 1;
+mimp = Uinf*LWC*interp1(BETA(:,1),BETA(:,2),s);
+mimp(isnan(mimp)) = 0;
 % Guess ice profile z(s)
 Z = 0*mimp;
 % **********************************
@@ -35,13 +59,14 @@ epsICE = 1e-4;
 % Iterate on mass/energy eqns until physical solution attained
 C_filmPos = true; C_icePos = true; C_waterWarm = false; C_iceCold = false;
 iter = 1;
-while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter < 11) )
+%%
+%while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter < 11) )
+while (iter<5)
     iter
     % MASS (solve for X)
     %x0 = linspace(0,10e-3,length(s))'; % Initial guess
     %eps = 1e-4;
-    X = NewtonKrylovIteration(@MassBalance,scalars,x0,eps);
-    %X = sqrt((2*uw/pw)*cumtrapz(s,mimp-Z));
+    %X = NewtonKrylovIteration(@MassBalance,scalars,x0,eps);
     %{
     x0 = zeros(length(s),1);
     X = x0; epsT = 1e-8; iterMASS = 1; ERR = 1;
@@ -58,19 +83,11 @@ while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter <
     end
     iterMASS
     %}
-    X(X<0) = 0;
+    X = sqrt((2*uw/pw./tau_wall).*cumtrapz(s,mimp-Z));
     scalars.X_ = X;
     % Constraint: check that conservation of mass is not violated
-    tolIMAG = 1e-6;
-    indX = find(abs(imag(X)) > tolIMAG);
-    if (~isempty(indX))
-        disp('Mass balance violated (negative film height)');
-        % Lower ice accretion rate in affected areas
-        indFix = find(Z(indX) > mimp(indX));
-        Z(indX(indFix)) = mimp(indX(indFix));
-        scalars.Z_ = Z;
-        X = real(X); scalars.X_ = X;
-    end
+    scalars = correctFilmHeight(scalars); 
+    X = scalars.X_;
     % ENERGY (solve for Y)
     eps = 1e-4;
     if (iter == 1)
@@ -93,6 +110,7 @@ while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter <
         scalars.Y_ = Y;
         % Resolve for ice profile (Z)
         Z = SolveThermoForIceRate(X,Y,scalars);
+        Z(Z<0) = 0;
         scalars.Z_ = Z;
     end
     YZ = Y.*Z;
@@ -108,6 +126,7 @@ while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter <
         scalars.Y_ = Y;
         % Resolve for ice profile
         Z = SolveThermoForIceRate(X,Y,scalars);
+        Z(Z<0) = 0;
         scalars.Z_ = Z;
     end
     
