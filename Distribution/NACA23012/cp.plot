@@ -30,12 +30,12 @@ fni setfont
 /Times-Roman findfont    0.14000  scalefont setfont
    0.00000  -0.75000 moveto
    0.00000 rotate
-(cl    0.3626    cd    0.0033    cm    0.0017) show
+(cl    0.4224    cd    0.0011    cm   -0.0071) show
   -0.00000 rotate
 /Times-Roman findfont    0.14000  scalefont setfont
    0.00000  -1.00000 moveto
    0.00000 rotate
-(grid  513x**    ncyc     150    res0.281E-01) show
+(grid  513x**    ncyc     500    res0.340E+00) show
   -0.00000 rotate
     5.0000    0.4733  moveto
     5.0000    0.4733  lineto
@@ -496,2311 +496,2311 @@ fni setfont
  -90.00000 rotate
    0.00000   0.20833 rmoveto
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.99229   1.61955 moveto
+   4.99229   1.70616 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.97668   1.63408 moveto
+   4.97668   1.53157 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.96070   1.62603 moveto
+   4.96070   1.47266 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.94433   1.62928 moveto
+   4.94433   1.47742 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.92759   1.63280 moveto
+   4.92759   1.49981 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.91050   1.63814 moveto
+   4.91050   1.50929 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.89305   1.64464 moveto
+   4.89305   1.51856 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.87524   1.65415 moveto
+   4.87524   1.53995 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.85704   1.66220 moveto
+   4.85704   1.55677 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.83846   1.66756 moveto
+   4.83846   1.56576 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.81948   1.67415 moveto
+   4.81948   1.58138 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.80009   1.67853 moveto
+   4.80009   1.58985 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.78028   1.68276 moveto
+   4.78028   1.59702 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.76006   1.68826 moveto
+   4.76006   1.60762 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.73940   1.69422 moveto
+   4.73940   1.61801 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.71832   1.69985 moveto
+   4.71832   1.62639 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.69679   1.70595 moveto
+   4.69679   1.63632 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.67481   1.71204 moveto
+   4.67481   1.64616 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.65237   1.71792 moveto
+   4.65237   1.65516 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.62947   1.72356 moveto
+   4.62947   1.66357 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.60609   1.72929 moveto
+   4.60609   1.67236 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.58222   1.73491 moveto
+   4.58222   1.68071 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.55786   1.74040 moveto
+   4.55786   1.68864 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.53300   1.74572 moveto
+   4.53300   1.69617 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.50763   1.75086 moveto
+   4.50763   1.70335 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.48174   1.75601 moveto
+   4.48174   1.71070 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.45533   1.76095 moveto
+   4.45533   1.71751 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.42837   1.76549 moveto
+   4.42837   1.72334 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.40088   1.76991 moveto
+   4.40088   1.72896 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.37283   1.77457 moveto
+   4.37283   1.73507 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.34422   1.77974 moveto
+   4.34422   1.74170 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.31504   1.78486 moveto
+   4.31504   1.74706 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.28529   1.79095 moveto
+   4.28529   1.75415 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.25495   1.79842 moveto
+   4.25495   1.76402 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.22401   1.80618 moveto
+   4.22401   1.77404 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.19247   1.81282 moveto
+   4.19247   1.78182 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.16031   1.81741 moveto
+   4.16031   1.78663 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.12753   1.82217 moveto
+   4.12753   1.79391 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.09412   1.82581 moveto
+   4.09412   1.79906 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.06006   1.82746 moveto
+   4.06006   1.80024 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.02535   1.82855 moveto
+   4.02535   1.80111 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.98999   1.83077 moveto
+   3.98999   1.80419 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.95396   1.83504 moveto
+   3.95396   1.80968 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.91727   1.83951 moveto
+   3.91727   1.81312 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.87990   1.84605 moveto
+   3.87990   1.82042 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.84185   1.85422 moveto
+   3.84185   1.83058 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.80311   1.86243 moveto
+   3.80311   1.84013 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.76367   1.86887 moveto
+   3.76367   1.84687 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.72352   1.87431 moveto
+   3.72352   1.85396 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.68265   1.87966 moveto
+   3.68265   1.86234 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.64105   1.88138 moveto
+   3.64105   1.86447 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.59872   1.88131 moveto
+   3.59872   1.86400 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.55567   1.88220 moveto
+   3.55567   1.86500 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.51187   1.88605 moveto
+   3.51187   1.87019 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.46734   1.89049 moveto
+   3.46734   1.87267 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.42207   1.89708 moveto
+   3.42207   1.87874 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.37605   1.90561 moveto
+   3.37605   1.88792 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.32929   1.91397 moveto
+   3.32929   1.89621 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.28176   1.92040 moveto
+   3.28176   1.90202 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.23348   1.92646 moveto
+   3.23348   1.90974 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.18444   1.93070 moveto
+   3.18444   1.91494 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.13464   1.93206 moveto
+   3.13464   1.91530 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.08407   1.93297 moveto
+   3.08407   1.91614 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.03275   1.93581 moveto
+   3.03275   1.92019 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.98068   1.93962 moveto
+   2.98068   1.92411 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.92787   1.94351 moveto
+   2.92787   1.92737 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.87430   1.94799 moveto
+   2.87430   1.93194 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.82000   1.95278 moveto
+   2.82000   1.93688 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.76497   1.95768 moveto
+   2.76497   1.94156 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.70922   1.96281 moveto
+   2.70922   1.94631 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.65274   1.96958 moveto
+   2.65274   1.95372 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.59557   1.97706 moveto
+   2.59557   1.96151 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.53770   1.98351 moveto
+   2.53770   1.96747 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.47916   1.98900 moveto
+   2.47916   1.97309 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.41995   1.99334 moveto
+   2.41995   1.97780 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.36009   1.99532 moveto
+   2.36009   1.97907 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.29961   1.99705 moveto
+   2.29961   1.98086 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.23853   1.99982 moveto
+   2.23853   1.98420 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.17687   2.00253 moveto
+   2.17687   1.98643 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.11466   2.00570 moveto
+   2.11466   1.98934 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.05193   2.00884 moveto
+   2.05193   1.99217 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.98871   2.01145 moveto
+   1.98871   1.99421 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.92503   2.01358 moveto
+   1.92503   1.99582 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.86094   2.01502 moveto
+   1.86094   1.99657 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.79648   2.01616 moveto
+   1.79648   1.99694 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.73168   2.01707 moveto
+   1.73168   1.99665 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.66661   2.01857 moveto
+   1.66661   1.99703 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.60130   2.02145 moveto
+   1.60130   1.99920 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.53583   2.02147 moveto
+   1.53583   1.99686 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.47024   2.01813 moveto
+   1.47024   1.99088 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.40462   2.01004 moveto
+   1.40462   1.97965 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.33902   1.99693 moveto
+   1.33902   1.96072 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.27426   1.98471 moveto
+   1.27426   1.96646 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.21181   1.97501 moveto
+   1.21181   1.92701 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.15230   1.97609 moveto
+   1.15230   1.93321 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.09559   1.97033 moveto
+   1.09559   1.94365 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.04158   1.94976 moveto
+   1.04158   1.91288 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.99013   1.92802 moveto
+   0.99013   1.88977 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.94112   1.90146 moveto
+   0.94112   1.86340 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.89445   1.87389 moveto
+   0.89445   1.83635 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.85000   1.84955 moveto
+   0.85000   1.81255 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.80767   1.82741 moveto
+   0.80767   1.79039 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.76734   1.80391 moveto
+   0.76734   1.76621 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.72893   1.78035 moveto
+   0.72893   1.74232 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.69234   1.75928 moveto
+   0.69234   1.72174 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.65749   1.74171 moveto
+   0.65749   1.70433 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.62430   1.72365 moveto
+   0.62430   1.68520 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.59269   1.70338 moveto
+   0.59269   1.66356 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.56257   1.68454 moveto
+   0.56257   1.64449 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.53389   1.67118 moveto
+   0.53389   1.63167 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.50657   1.66328 moveto
+   0.50657   1.62322 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.48054   1.65525 moveto
+   0.48054   1.61382 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.45575   1.65007 moveto
+   0.45575   1.60756 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.43214   1.64704 moveto
+   0.43214   1.60388 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.40965   1.64427 moveto
+   0.40965   1.59988 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.38823   1.63973 moveto
+   0.38823   1.59366 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.36783   1.63299 moveto
+   0.36783   1.58563 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.34841   1.62649 moveto
+   0.34841   1.57841 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.32992   1.62081 moveto
+   0.32992   1.57210 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.31231   1.61600 moveto
+   0.31231   1.56632 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.29554   1.61171 moveto
+   0.29554   1.56071 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.27957   1.60756 moveto
+   0.27957   1.55510 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.26437   1.60371 moveto
+   0.26437   1.55007 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.24989   1.60164 moveto
+   0.24989   1.54702 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.23611   1.60065 moveto
+   0.23611   1.54454 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.22299   1.59723 moveto
+   0.22299   1.53907 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.21050   1.59101 moveto
+   0.21050   1.53086 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.19861   1.58215 moveto
+   0.19861   1.52047 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.18729   1.57163 moveto
+   0.18729   1.50879 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.17651   1.56073 moveto
+   0.17651   1.49688 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.16625   1.55034 moveto
+   0.16625   1.48540 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.15648   1.54024 moveto
+   0.15648   1.47386 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.14719   1.52925 moveto
+   0.14719   1.46114 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.13835   1.51691 moveto
+   0.13835   1.44704 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.12995   1.50256 moveto
+   0.12995   1.43107 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.12195   1.48564 moveto
+   0.12195   1.41268 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.11436   1.46573 moveto
+   0.11436   1.39145 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.10713   1.44250 moveto
+   0.10713   1.36711 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.10027   1.41576 moveto
+   0.10027   1.33956 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.09374   1.38552 moveto
+   0.09374   1.30868 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.08754   1.35151 moveto
+   0.08754   1.27368 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.08166   1.31215 moveto
+   0.08166   1.23324 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.07608   1.27167 moveto
+   0.07608   1.19290 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.07078   1.23508 moveto
+   0.07078   1.15737 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.06574   1.20078 moveto
+   0.06574   1.12357 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.06096   1.16693 moveto
+   0.06096   1.08924 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.05642   1.13132 moveto
+   0.05642   1.05286 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.05214   1.09152 moveto
+   0.05214   1.01282 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.04810   1.04534 moveto
+   0.04810   0.96729 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.04432   0.99120 moveto
+   0.04432   0.91424 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.04078   0.92840 moveto
+   0.04078   0.85255 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.03748   0.85819 moveto
+   0.03748   0.78467 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.03440   0.78384 moveto
+   0.03440   0.71541 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.03153   0.71266 moveto
+   0.03153   0.65204 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.02882   0.65062 moveto
+   0.02882   0.59786 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.02621   0.58277 moveto
+   0.02621   0.53488 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.02371   0.51218 moveto
+   0.02371   0.46784 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.02132   0.44084 moveto
+   0.02132   0.40201 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.01904   0.36925 moveto
+   0.01904   0.33781 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.01689   0.29948 moveto
+   0.01689   0.27684 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.01486   0.23388 moveto
+   0.01486   0.22081 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.01296   0.17445 moveto
+   0.01296   0.17140 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.01119   0.12250 moveto
+   0.01119   0.12972 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00953   0.07869 moveto
+   0.00953   0.09642 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00800   0.04312 moveto
+   0.00800   0.07157 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00659   0.01556 moveto
+   0.00659   0.05471 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00530  -0.00442 moveto
+   0.00530   0.04527 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00414  -0.01711 moveto
+   0.00414   0.04327 moveto
   45.00000 rotate
 (o) stringwidth pop -.5 mul dup rmoveto 
 (o) show
  -45.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00310  -0.02138 moveto
-  45.00000 rotate
-(o) stringwidth pop -.5 mul dup rmoveto 
-(o) show
- -45.00000 rotate
+   0.00414   0.04327 moveto
+   0.00000 rotate
+(x) stringwidth pop -.5 mul dup rmoveto 
+(x) show
+  -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00310  -0.02138 moveto
+   0.00310   0.04946 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00220  -0.01659 moveto
+   0.00220   0.06252 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00144  -0.00337 moveto
+   0.00144   0.08712 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00085   0.02415 moveto
+   0.00085   0.12757 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00042   0.06346 moveto
+   0.00042   0.18512 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00014   0.11470 moveto
+   0.00014   0.25420 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00002   0.17306 moveto
+   0.00002   0.32638 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00005   0.23558 moveto
+   0.00005   0.39908 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00022   0.30194 moveto
+   0.00022   0.47072 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00052   0.37132 moveto
+   0.00052   0.54604 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00094   0.44377 moveto
+   0.00094   0.62468 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00148   0.52029 moveto
+   0.00148   0.70640 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00214   0.60258 moveto
+   0.00214   0.79289 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00292   0.69194 moveto
+   0.00292   0.88552 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00383   0.78855 moveto
+   0.00383   0.98654 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00490   0.89266 moveto
+   0.00490   1.09947 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00612   0.98846 moveto
+   0.00612   1.20149 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00750   1.07945 moveto
+   0.00750   1.29478 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.00902   1.17076 moveto
+   0.00902   1.38714 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.01069   1.26319 moveto
+   0.01069   1.48070 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.01251   1.35633 moveto
+   0.01251   1.57526 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.01451   1.44947 moveto
+   0.01451   1.66975 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.01670   1.54201 moveto
+   0.01670   1.76234 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.01911   1.63365 moveto
+   0.01911   1.85292 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.02175   1.72464 moveto
+   0.02175   1.94212 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.02467   1.81522 moveto
+   0.02467   2.03048 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.02788   1.90562 moveto
+   0.02788   2.11919 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.03139   1.99532 moveto
+   0.03139   2.20901 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.03521   2.08409 moveto
+   0.03521   2.30239 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.03934   2.16480 moveto
+   0.03934   2.38585 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.04378   2.23948 moveto
+   0.04378   2.45994 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.04856   2.31971 moveto
+   0.04856   2.53688 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.05369   2.40821 moveto
+   0.05369   2.62164 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.05920   2.50318 moveto
+   0.05920   2.71475 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.06510   2.60138 moveto
+   0.06510   2.81185 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.07141   2.69811 moveto
+   0.07141   2.90744 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.07815   2.78572 moveto
+   0.07815   2.99396 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.08534   2.86015 moveto
+   0.08534   3.06714 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.09298   2.92109 moveto
+   0.09298   3.12569 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.10109   2.97204 moveto
+   0.10109   3.17246 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.10970   3.02446 moveto
+   0.10970   3.21979 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.11884   3.07778 moveto
+   0.11884   3.26899 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.12851   3.13002 moveto
+   0.12851   3.31786 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.13874   3.18073 moveto
+   0.13874   3.36518 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.14954   3.22948 moveto
+   0.14954   3.41052 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.16091   3.27552 moveto
+   0.16091   3.45344 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.17286   3.31827 moveto
+   0.17286   3.49344 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.18542   3.35782 moveto
+   0.18542   3.53015 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.19859   3.39563 moveto
+   0.19859   3.56464 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.21241   3.43483 moveto
+   0.21241   3.60025 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.22689   3.47520 moveto
+   0.22689   3.63740 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.24207   3.51482 moveto
+   0.24207   3.67429 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.25795   3.55175 moveto
+   0.25795   3.70896 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.27458   3.58489 moveto
+   0.27458   3.74033 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.29197   3.61474 moveto
+   0.29197   3.76760 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.31015   3.64216 moveto
+   0.31015   3.79006 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.32913   3.67327 moveto
+   0.32913   3.81575 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.34894   3.69998 moveto
+   0.34894   3.84065 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.36961   3.70847 moveto
+   0.36961   3.84959 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.39116   3.70162 moveto
+   0.39116   3.84181 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.41359   3.68827 moveto
+   0.41359   3.82514 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.43694   3.67727 moveto
+   0.43694   3.80933 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.46123   3.67402 moveto
+   0.46123   3.80207 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.48647   3.67320 moveto
+   0.48647   3.79881 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.51271   3.67043 moveto
+   0.51271   3.79352 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.53995   3.66804 moveto
+   0.53995   3.78808 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.56823   3.66232 moveto
+   0.56823   3.78020 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.59759   3.64813 moveto
+   0.59759   3.76442 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.62804   3.62311 moveto
+   0.62804   3.73662 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.65962   3.59188 moveto
+   0.65962   3.70129 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.69235   3.55939 moveto
+   0.69235   3.66540 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.72626   3.52005 moveto
+   0.72626   3.62404 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.76137   3.47418 moveto
+   0.76137   3.57637 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.79748   3.42594 moveto
+   0.79748   3.52535 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.83415   3.37878 moveto
+   0.83415   3.47530 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.87113   3.33403 moveto
+   0.87113   3.42832 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.90840   3.28720 moveto
+   0.90840   3.37953 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.94593   3.23917 moveto
+   0.94593   3.33704 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   0.98370   3.19470 moveto
+   0.98370   3.28967 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.02169   3.15722 moveto
+   1.02169   3.24072 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.05988   3.12554 moveto
+   1.05988   3.18546 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.09825   3.09683 moveto
+   1.09825   3.20702 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.13679   3.07360 moveto
+   1.13679   3.16914 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.17546   3.05334 moveto
+   1.17546   3.12651 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.21427   3.03178 moveto
+   1.21427   3.10466 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.25319   3.00677 moveto
+   1.25319   3.10513 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.29221   2.98090 moveto
+   1.29221   3.08066 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.33131   2.95450 moveto
+   1.33131   3.02742 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.37048   2.92672 moveto
+   1.37048   2.98008 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.40970   2.89927 moveto
+   1.40970   3.00602 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.44896   2.87393 moveto
+   1.44896   2.98294 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.48825   2.85146 moveto
+   1.48825   2.91306 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.52755   2.83032 moveto
+   1.52755   2.91436 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.56685   2.81035 moveto
+   1.56685   2.87936 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.60614   2.79191 moveto
+   1.60614   2.87015 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.64541   2.77434 moveto
+   1.64541   2.85003 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.68464   2.75680 moveto
+   1.68464   2.82679 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.72384   2.73885 moveto
+   1.72384   2.81135 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.76297   2.72089 moveto
+   1.76297   2.79088 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.80205   2.70336 moveto
+   1.80205   2.77075 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.84105   2.68607 moveto
+   1.84105   2.75350 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.87998   2.66894 moveto
+   1.87998   2.73722 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.91881   2.65197 moveto
+   1.91881   2.72158 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.95754   2.63521 moveto
+   1.95754   2.70585 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   1.99617   2.61875 moveto
+   1.99617   2.68998 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.03468   2.60251 moveto
+   2.03468   2.67441 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.07307   2.58609 moveto
+   2.07307   2.65826 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.11133   2.56961 moveto
+   2.11133   2.64180 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.14946   2.55345 moveto
+   2.14946   2.62570 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.18744   2.53785 moveto
+   2.18744   2.61039 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.22528   2.52288 moveto
+   2.22528   2.59659 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.26297   2.50822 moveto
+   2.26297   2.58289 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.30049   2.49412 moveto
+   2.30049   2.56918 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.33786   2.48123 moveto
+   2.33786   2.55729 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.37505   2.46915 moveto
+   2.37505   2.54646 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.41207   2.45700 moveto
+   2.41207   2.53533 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.44891   2.44416 moveto
+   2.44891   2.52304 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.48556   2.43047 moveto
+   2.48556   2.50834 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.52202   2.41676 moveto
+   2.52202   2.49387 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.55829   2.40299 moveto
+   2.55829   2.48037 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.59436   2.38844 moveto
+   2.59436   2.46513 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.63023   2.37340 moveto
+   2.63023   2.44887 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.66590   2.35857 moveto
+   2.66590   2.43317 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.70137   2.34456 moveto
+   2.70137   2.41897 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.73663   2.33164 moveto
+   2.73663   2.40765 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.77168   2.31938 moveto
+   2.77168   2.39775 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.80652   2.30745 moveto
+   2.80652   2.38658 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.84114   2.29687 moveto
+   2.84114   2.37782 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.87555   2.28758 moveto
+   2.87555   2.37130 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.90973   2.27881 moveto
+   2.90973   2.36509 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.94369   2.26963 moveto
+   2.94369   2.35770 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   2.97742   2.25948 moveto
+   2.97742   2.34821 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.01092   2.24842 moveto
+   3.01092   2.33531 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.04418   2.23757 moveto
+   3.04418   2.32412 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.07721   2.22641 moveto
+   3.07721   2.31291 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.11001   2.21448 moveto
+   3.11001   2.29960 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.14257   2.20202 moveto
+   3.14257   2.28514 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.17490   2.18948 moveto
+   3.17490   2.27092 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.20699   2.17732 moveto
+   3.20699   2.25773 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.23885   2.16585 moveto
+   3.23885   2.24625 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.27047   2.15499 moveto
+   3.27047   2.23653 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.30185   2.14426 moveto
+   3.30185   2.22615 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.33300   2.13370 moveto
+   3.33300   2.21583 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.36391   2.12336 moveto
+   3.36391   2.20605 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.39458   2.11327 moveto
+   3.39458   2.19670 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.42500   2.10338 moveto
+   3.42500   2.18756 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.45519   2.09365 moveto
+   3.45519   2.17851 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.48514   2.08399 moveto
+   3.48514   2.16962 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.51484   2.07432 moveto
+   3.51484   2.16053 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.54431   2.06476 moveto
+   3.54431   2.15134 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.57353   2.05549 moveto
+   3.57353   2.14300 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.60252   2.04656 moveto
+   3.60252   2.13528 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.63126   2.03785 moveto
+   3.63126   2.12756 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.65976   2.02918 moveto
+   3.65976   2.11941 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.68802   2.02044 moveto
+   3.68802   2.11063 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.71603   2.01161 moveto
+   3.71603   2.10067 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.74380   2.00288 moveto
+   3.74380   2.09031 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.77134   1.99432 moveto
+   3.77134   2.08085 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.79863   1.98577 moveto
+   3.79863   2.07056 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.82568   1.97718 moveto
+   3.82568   2.05941 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.85250   1.96859 moveto
+   3.85250   2.04815 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.87908   1.96014 moveto
+   3.87908   2.03731 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.90542   1.95189 moveto
+   3.90542   2.02713 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.93153   1.94387 moveto
+   3.93153   2.01825 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.95741   1.93599 moveto
+   3.95741   2.01012 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   3.98306   1.92821 moveto
+   3.98306   2.00111 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.00847   1.92058 moveto
+   4.00847   1.99301 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.03366   1.91322 moveto
+   4.03366   1.98592 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.05861   1.90615 moveto
+   4.05861   1.97914 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.08333   1.89924 moveto
+   4.08333   1.97208 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.10782   1.89237 moveto
+   4.10782   1.96443 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.13207   1.88547 moveto
+   4.13207   1.95567 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.15610   1.87860 moveto
+   4.15610   1.94597 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.17990   1.87181 moveto
+   4.17990   1.93706 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.20348   1.86515 moveto
+   4.20348   1.92778 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.22682   1.85858 moveto
+   4.22682   1.91776 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.24995   1.85204 moveto
+   4.24995   1.90723 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.27285   1.84547 moveto
+   4.27285   1.89645 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.29553   1.83887 moveto
+   4.29553   1.88556 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.31799   1.83224 moveto
+   4.31799   1.87455 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.34023   1.82559 moveto
+   4.34023   1.86386 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.36225   1.81892 moveto
+   4.36225   1.85337 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.38406   1.81218 moveto
+   4.38406   1.84234 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.40566   1.80533 moveto
+   4.40566   1.83100 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.42704   1.79840 moveto
+   4.42704   1.81969 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.44821   1.79138 moveto
+   4.44821   1.80850 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.46918   1.78427 moveto
+   4.46918   1.79799 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.48994   1.77689 moveto
+   4.48994   1.78923 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.51049   1.76925 moveto
+   4.51049   1.77755 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.53084   1.76139 moveto
+   4.53084   1.76717 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.55099   1.75372 moveto
+   4.55099   1.75983 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.57093   1.74642 moveto
+   4.57093   1.75317 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.59067   1.73937 moveto
+   4.59067   1.74512 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.61020   1.73228 moveto
+   4.61020   1.73413 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.62953   1.72504 moveto
+   4.62953   1.71728 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.64866   1.71770 moveto
+   4.64866   1.70222 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.66759   1.71047 moveto
+   4.66759   1.68941 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.68632   1.70330 moveto
+   4.68632   1.67572 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.70487   1.69610 moveto
+   4.70487   1.66149 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.72322   1.68890 moveto
+   4.72322   1.64748 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.74139   1.68168 moveto
+   4.74139   1.63483 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.75938   1.67447 moveto
+   4.75938   1.62056 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.77718   1.66737 moveto
+   4.77718   1.60616 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.79480   1.66050 moveto
+   4.79480   1.59433 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.81223   1.65380 moveto
+   4.81223   1.58109 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.82947   1.64741 moveto
+   4.82947   1.56474 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.84652   1.64147 moveto
+   4.84652   1.55069 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.86339   1.63541 moveto
+   4.86339   1.54067 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.88009   1.62934 moveto
+   4.88009   1.51793 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.89660   1.62334 moveto
+   4.89660   1.49285 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.91295   1.61640 moveto
+   4.91295   1.48570 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.92913   1.60888 moveto
+   4.92913   1.46935 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.94515   1.60094 moveto
+   4.94515   1.43739 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.96102   1.59285 moveto
+   4.96102   1.41901 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.97673   1.56365 moveto
+   4.97673   1.43725 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show
   -0.00000 rotate
 /Times-Roman findfont    0.18000  scalefont setfont
-   4.99227   1.60995 moveto
+   4.99227   1.63475 moveto
    0.00000 rotate
 (x) stringwidth pop -.5 mul dup rmoveto 
 (x) show

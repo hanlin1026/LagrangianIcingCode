@@ -2,9 +2,9 @@ horn  Airfoil
 NX        NY        M MESH    R MESH    IIN
 512.      128.       1.        1.       18.
 NCYC      NPRNT     NOUT      NTIM      IPRNT     LPRNT     N MESH
- 500.      500.       1.        1.        0.        80.       6.
+ 150.      150.       1.        1.        0.        80.       6.
 CFL       BC        VIS 2     VIS 4     ADIS      H FACTOR
--5.         1.       2.        2.        1.         0.
+-5.         1.       1.        1.        1.         0.
 CSTP(1)   CSTP(2)   CSTP(3)   CSTP(4)   CSTP(5)   CSTP(6)
 .25       .16666667  .375      .5        1.
 CDIS(1)   CDIS(2)   CDIS(3)   CDIS(4)   CDIS(5)   CDIS(6)
@@ -18,7 +18,7 @@ MACH      ALPHA
 EULER     LAMINAR   TURBULENT T-MODEL   F-TRANS
 .FALSE.   .TRUE.     .TRUE.    .TRUE.    .TRUE.
 RE-NUMBER T-INF(K)  TRANS-X   PR-NUMBER PR-TURB
-4.6000    262.00     0.10     .75        .92
+4.6000    300.00     0.10     .75        .92
 BOUNDX    BOUNDY    BX        XTE       AX        AY        SY
  .96       .96       0.        .050      1.        1.        .5
 ISYM      NU        NL

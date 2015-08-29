@@ -12,6 +12,7 @@ add_library( IcingLib
   Cloud/calcImpingementLimits.cpp
   Airfoil/Airfoil.cpp
   InputData/readInputParams.cpp
+  ThermoEqns/readSkinFrictionCoeff.cpp
   findAll.cpp )
 
 
