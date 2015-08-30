@@ -12,6 +12,7 @@
 #include "Airfoil/Airfoil.h"
 #include "InputData/readInputParams.h"
 #include "Cloud/calcImpingementLimits.h"
+#include "ThermoEqns/readThermoFiles.h"
 #include <iterator>
 #include <findAll.h>
 
@@ -26,8 +27,8 @@ int main(int argc, const char *argv[]) {
   }
   // Specify initialization files
   const char *inFileName = argv[1];
-  const char *meshFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/MESH.P3D";
-  const char *solnFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/q103.0.25E+01.bin";
+  const char *meshFileName = "/home/anthony/LagrangianIcingCode/DistributionCPP/Grid/MESH.P3D";
+  const char *solnFileName = "/home/anthony/LagrangianIcingCode/DistributionCPP/Grid/q103.0.25E+01.bin";
   // Read in initialization scalars from input file
   FluidScalars scalarsFluid;
   ParcelScalars scalarsParcel;
@@ -97,38 +98,11 @@ int main(int argc, const char *argv[]) {
   printf("maxiter = %d\n",maxiter);
 
   // TEMPORARY CODE TO CONVERT (I,0) TO S-COORDS *****
-  const char *File_CF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/SkinFrictionCoeff.dat";
-  std::ifstream inFile_CF;
-  inFile_CF.open(File_CF);
-  int size_CF = 384;
-  vector<int> I_cf(size_CF);
-  std::string line; std::istringstream lin;
-  vector<double> x_cf(size_CF);
-  vector<double> y_cf(size_CF);
-  vector<double> xy_cf(2);
-  vector<double> s_cf(size_CF);
-  vector<double> cf(size_CF);
-  for (int i=0; i<size_CF; i++) {
-    std::getline(inFile_CF, line);
-    lin.clear();
-    lin.str(line);
-    lin >> I_cf[i]; printf("%d\n",I_cf[i]);
-    lin >> cf[i];
-    x_cf[i] = Xgrid(I_cf[i],0);
-    y_cf[i] = Ygrid(I_cf[i],0);
-    xy_cf[0] = x_cf[i]; xy_cf[1] = y_cf[i];
-    s_cf[i] = airfoil.interpXYtoS(xy_cf);
-  }
-  ofstream foutS_CF("CF_Scoords.out");
-  ostream_iterator<double> out_itS_CF (foutS_CF,"\n");
-  copy ( s_cf.begin(), s_cf.end(), out_itS_CF );
-
-  inFile_CF.close();
-  
+  const char *File_CF = "/home/anthony/LagrangianIcingCode/DistributionCPP/ThermoEqns/skinFrictionCoeff.dat";
+  Eigen::MatrixXd cF;
+  readSkinFrictionCoeff(File_CF,cF);
   
   // *************************************************
-
-
 
   while ((totalImpinge < particles) && (iter < maxiter)) {
     cloud.calcDtandImpinge(airfoil,p3d);
