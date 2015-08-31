@@ -1,14 +1,43 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include "ThermoEqns.h"
 #include <iostream>
 #include <fstream>
 #include <string.h>
-#include <cmath>
 #include <iterator>
 #include <algorithm>
-#include "readThermoFiles.h"
+#include <eigen3/Eigen/Dense>
+#include <math.h>
 
-void readSkinFrictionCoeff(const char* fileSkinFriction,Eigen::MatrixXd& cF) {
+using namespace std;
+using namespace Eigen;
+
+ThermoEqns::ThermoEqns(const char* filenameCF) {
+  // Constructor to read in input files and initialize thermo eqns
+
+  // Import data from file
+  MatrixXd CF = this->readSkinFrictionCoeff(filenameCF);
+  VectorXd s = CF.col(0);
+  VectorXd cf = CF.col(1);
+  // Establish grid
+  
+  
+
+}
+
+
+
+
+
+
+
+
+
+
+
+ThermoEqns::~ThermoEqns() {
+
+}
+
+MatrixXd ThermoEqns::readSkinFrictionCoeff(const char* fileSkinFriction) {
   // Function to read in skin friction coefficient from file
 
   // Initialize file stream
@@ -23,7 +52,7 @@ void readSkinFrictionCoeff(const char* fileSkinFriction,Eigen::MatrixXd& cF) {
   }
   rewind(cfFile);
   // Resize cF matrix
-  cF.resize(sizeCF,2);
+  MatrixXd cF(sizeCF,2);
   double a,b;
   for (int i=0; i<sizeCF; i++) {
     fscanf(cfFile,"%lf %lf",&a,&b);
@@ -35,12 +64,13 @@ void readSkinFrictionCoeff(const char* fileSkinFriction,Eigen::MatrixXd& cF) {
   foutS_CF << cF;
   // Close file streams
   fclose(cfFile);
-  foutS_CF.close();  
+  foutS_CF.close();
+
+  return cF;
 
 }
 
-void readHeatFlux(const char* fileHeatFlux,Eigen::MatrixXd& cH) {
-  // Function to read in convective heat transfer coefficient from file
+MatrixXd ThermoEqns::readHeatFlux(const char* fileHeatFlux) {
+
 
 }
-

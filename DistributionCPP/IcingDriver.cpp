@@ -12,7 +12,7 @@
 #include "Airfoil/Airfoil.h"
 #include "InputData/readInputParams.h"
 #include "Cloud/calcImpingementLimits.h"
-#include "ThermoEqns/readThermoFiles.h"
+#include "ThermoEqns/ThermoEqns.h"
 #include <iterator>
 #include <findAll.h>
 
@@ -98,9 +98,8 @@ int main(int argc, const char *argv[]) {
   printf("maxiter = %d\n",maxiter);
 
   // TEMPORARY CODE TO CONVERT (I,0) TO S-COORDS *****
-  const char *File_CF = "/home/anthony/LagrangianIcingCode/DistributionCPP/ThermoEqns/skinFrictionCoeff.dat";
-  Eigen::MatrixXd cF;
-  readSkinFrictionCoeff(File_CF,cF);
+  const char *filenameCF = "/home/anthony/LagrangianIcingCode/DistributionCPP/ThermoEqns/skinFrictionCoeff.dat";
+  ThermoEqns thermo = ThermoEqns(filenameCF);
   
   // *************************************************
 
