@@ -243,3 +243,7 @@ void Airfoil::setStagPt(double sLoc) {
   stagPt_ = sLoc;
 
 }
+
+double Airfoil::getStagPt() {
+  return stagPt_;
+}
