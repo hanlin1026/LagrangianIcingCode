@@ -3,7 +3,16 @@ project(icing)
 
 add_definitions( -std=c++0x -c -g )
 
-include_directories( ${CMAKE_SOURCE_DIR} )
+include_directories( ${CMAKE_SOURCE_DIR}
+                     Grid/
+		     QuadTree/
+		     Cloud/
+		     Airfoil/
+		     InputData/
+		     ThermoEqns/
+		     /usr/include/eigen3/
+		     /usr/include/gsl/
+ )
 add_library( IcingLib
   Grid/PLOT3D.cc
   QuadTree/Bucket.cpp

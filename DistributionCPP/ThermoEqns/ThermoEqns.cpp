@@ -1,13 +1,7 @@
 #include "ThermoEqns.h"
-#include <iostream>
-#include <fstream>
-#include <string.h>
-#include <iterator>
-#include <algorithm>
-#include <eigen3/Eigen/Dense>
-#include <math.h>
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_spline.h>
+#include <Eigen/Dense>
+#include <gsl_errno.h>
+#include <gsl_spline.h>
 
 using namespace std;
 using namespace Eigen;
@@ -130,4 +124,40 @@ MatrixXd ThermoEqns::readBetaXY(const char* filenameBeta) {
 
   return s_Beta;
 
+}
+
+void NewtonKrylovIteration(void (*f)(vector<double>& X), vector<double>& X, vector<double>& u0) {
+  // Function to take a balance of form f(X) = 0 and do Newton-Krylov iteration
+
+  double tol = 1.e-3;                       // Convergence tolerance
+  int result, maxit = 100, restart = 10;    // GMRES Maximum, restart iterations
+
+  // Initialize Jacobian and RHS, solution vectors
+  int stateSize = u0.size();
+  vector<int> r(pow(stateSize,2));
+  vector<int> c(pow(stateSize,2));
+  vector<double> initVal(pow(stateSize,2));
+  for (int i=0; i<stateSize; i++) {
+    for (int j=0; j<stateSize; j++) {
+      initVal[i*(stateSize-1)+j] = 1.0;
+      r[i] = i;
+      c[i] = j;
+    }
+  }
+  CompCol_Mat_double J(stateSize,stateSize,pow(stateSize,2),&val[0],&r[0],&c[0]);
+  VECTOR_double b, x(J.dim(1), 0.0);
+  // Storage for upper Hessenberg H
+  MATRIX_double H(restart+1, restart, 0.0);
+  // Create diagonal preconditioner
+  DiagPreconditioner_double D(J);
+
+  // Begin iteration
+  int nitermax = 30;
+  double eps = 1.e-6;
+  for (int i=0; i<nitermax; i++) {
+    // Compute approximate Jacobian
+    
+    result = GMRES(J, x, b, D, H, restart, maxit, tol);  // Solve system
+
+  }
 }

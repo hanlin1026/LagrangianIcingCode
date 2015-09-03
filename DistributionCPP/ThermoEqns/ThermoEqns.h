@@ -4,13 +4,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
-#include <eigen3/Eigen/Dense>
-#include <Airfoil/Airfoil.h>
+#include <Eigen/Dense>
+#include <Airfoil.h>
 
 class ThermoEqns {
  public:
   ThermoEqns(const char* filenameCF,Airfoil& airfoil);
   ~ThermoEqns();
+  void NewtonKrylovIteration(void (*f)(std::vector<double>& X),std::vector<double>& X,std::vector<double>& u0);
 
  private:
   // Functions to read in data files
