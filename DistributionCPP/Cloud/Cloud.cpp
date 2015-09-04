@@ -1,8 +1,8 @@
 #include "Cloud.h"
 #include <math.h>
 #include <limits>
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_spline.h>
+#include <gsl_errno.h>
+#include <gsl_spline.h>
 
 using namespace std;
 using namespace Eigen;

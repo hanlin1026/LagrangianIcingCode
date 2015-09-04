@@ -7,7 +7,7 @@
 #include <Airfoil/Airfoil.h>
 #include <Grid/PLOT3D.h>
 #include <findAll.h>
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 #include "ParcelScalars.h"
 
 class Cloud {

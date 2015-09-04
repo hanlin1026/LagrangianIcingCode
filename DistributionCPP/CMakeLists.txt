@@ -1,17 +1,13 @@
 cmake_minimum_required(VERSION 2.6)
 project(icing)
 
-add_definitions( -std=c++0x -c -g )
+add_definitions( -std=c++0x '-DCOMPLEX=std::complex<double>' -c -g -lmv -lsparse -lspblas )
 
 include_directories( ${CMAKE_SOURCE_DIR}
-                     Grid/
-		     QuadTree/
-		     Cloud/
-		     Airfoil/
-		     InputData/
-		     ThermoEqns/
 		     /usr/include/eigen3/
 		     /usr/include/gsl/
+		     /usr/lib/SparseLib++/1.7/include/
+                     /usr/lib/SparseLib++/1.7/mv/include/
  )
 add_library( IcingLib
   Grid/PLOT3D.cc
@@ -28,4 +24,7 @@ add_library( IcingLib
 add_executable( IcingDriver IcingDriver.cpp )
 target_link_libraries( IcingDriver 
                        IcingLib
-                       /usr/lib/libgsl.a )
+                       /usr/lib/libgsl.a 
+		       /usr/lib/SparseLib++/1.7/lib/libmv.a
+		       /usr/lib/SparseLib++/1.7/lib/libsparse.a
+		       /usr/lib/SparseLib++/1.7/lib/libspblas.a )
