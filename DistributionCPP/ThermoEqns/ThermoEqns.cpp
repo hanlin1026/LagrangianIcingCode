@@ -12,27 +12,51 @@
 using namespace std;
 using namespace Eigen;
 
-ThermoEqns::ThermoEqns(const char* filenameCF,Airfoil& airfoil) {
+ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfoil& airfoil) {
   // Constructor to read in input files and initialize thermo eqns
 
-  // Import (s,beta)
-  MatrixXd datatmp = this->readBetaXY(filenameBETA);
-  VectorXd sBeta = datatmp.col(0);
-  VectorXd Beta = datatmp.col(1);
-  // Import data from file
-  MatrixXd data = this->readCHCF(filenameCF);
-  VectorXd s = data.col(0);
-  VectorXd ch = data.col(1);
-  VectorXd cf = data.col(2);
-  double stagPt = airfoil.getStagPt();
-  for (int i=0; i<s.size(); i++) {
-    s(i) -= stagPt;
+  this->interpUpperSurface(filenameCHCF,airfoil,"CHCF");
+  this->interpUpperSurface(filenameBETA,airfoil,"BETA");
+  // Set rhoL_,muL_
+  rhoL_ = 1000.0;
+  muL_ = 1.787e-3;
+  // Set LWC_,Uinf_
+  LWC_ = 1.0;
+  Uinf_ = 100;
+  // Initial guess for ice accretion
+  mice_upper_.resize(NPts_);
+  for (int i=0; i<NPts_; i++)
+    mice_upper_[i] = 0.0;
+
+}
+
+void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, const char* parameter) {
+  // Function to interpolate upper surface
+
+  MatrixXd data; VectorXd s;
+  int numVars;
+  if (strcmp(parameter,"BETA") == 0) {
+    // Import (s,beta)
+    data = this->readBetaXY(filename);
+    s = data.col(0);
+    numVars = 1;
+  }
+  else if (strcmp(parameter,"CHCF") == 0) {
+    // Import (s,ch,cf)
+    data = this->readCHCF(filename);
+    s = data.col(0);
+    numVars = 2;
+    // Set stagPt at s=0
+    double stagPt = airfoil.getStagPt();
+    for (int i=0; i<s.size(); i++) {
+      s(i) -= stagPt;
+    }
   }
   // Find stagnation point
   double zero = 1.0; double zero_new = 1.0;
   int zero_ind = 0;
   for (int i=0; i<s.size(); i++) {
-    zero_new = std::abs(s(i));
+    zero_new = abs(s(i));
     if (zero_new < zero) {
       zero = zero_new;
       zero_ind = i;
@@ -41,45 +65,48 @@ ThermoEqns::ThermoEqns(const char* filenameCF,Airfoil& airfoil) {
   // Split into upper/lower surface grids
   int NPts_orig = s.size() - zero_ind;
   vector<double> s_upper_orig(NPts_orig);
-  vector<double> cf_upper_orig(NPts_orig);
   for (int i=0; i<NPts_orig; i++) {
     s_upper_orig[i] = s(zero_ind+i);
-    cf_upper_orig[i] = cf(zero_ind+i);
-    printf("%lf %lf\n",s_upper_orig[i],cf_upper_orig[i]);
   }
-  // Interpolate upper/lower surface grids
+  vector<vector<double>> vars(numVars,vector<double>(NPts_orig));
+  for (int i=0; i<numVars; i++) {
+    for (int j=0; j<NPts_orig; j++) {
+      vars[i][j] = data(j,i+1);
+    }
+  }
+  // Refine upper surface grid
   NPts_ = 1000;
   s_upper_.resize(NPts_);
-  cF_upper_.resize(NPts_);
   double s_max = s.maxCoeff();
   double ds = (s_max-zero)/NPts_;
   for (int i=0; i<NPts_; i++) {
     s_upper_[i] = zero + i*ds;
   }
-  // Interpolate values on grids
+  // Interpolate parameter values on grids
   gsl_interp_accel *acc = gsl_interp_accel_alloc();
-  gsl_spline *splineCF = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
-  gsl_spline *splineBETA = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
-  gsl_spline_init(splineCF, &s_upper_orig[0], &cf_upper_orig[0], NPts_orig);
-  gsl_spline_init(splineBETA, &sBeta_upper[0], &Beta_upper[0], NPts_orig_beta);
-  for (int i=0; i<NPts_; i++) {
-    cF_upper_[i] = gsl_spline_eval(splineCF, s_upper_[i], acc);
+  if (strcmp(parameter,"CHCF") == 0) {    
+    cH_upper_.resize(NPts_);
+    cF_upper_.resize(NPts_);
+    gsl_spline *splineCH = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
+    gsl_spline *splineCF = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
+    gsl_spline_init(splineCH, &s_upper_orig[0], &vars[0][0], NPts_orig);
+    gsl_spline_init(splineCF, &s_upper_orig[0], &vars[1][0], NPts_orig);
+    for (int i=0; i<NPts_; i++) {
+      cH_upper_[i] = gsl_spline_eval(splineCH, s_upper_[i], acc);
+      cF_upper_[i] = gsl_spline_eval(splineCF, s_upper_[i], acc);
+    }
   }
-  // Set rhoL_,muL_;
-  rhoL_ = 1000;
-  muL_ = 1.787e-3;
+  else if (strcmp(parameter,"BETA") == 0) {
+    beta_upper_.resize(NPts_);
+    gsl_spline *splineBETA = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
+    gsl_spline_init(splineBETA, &s_upper_orig[0], &vars[0][0], NPts_orig);
+    for (int i=0; i<NPts_; i++) {
+      beta_upper_[i] = gsl_spline_eval(splineBETA, s_upper_[i], acc);
+    }
+  }
+
 
 }
-
-
-
-
-
-
-
-
-
-
 
 ThermoEqns::~ThermoEqns() {
 
@@ -128,10 +155,10 @@ MatrixXd ThermoEqns::readBetaXY(const char* filenameBeta) {
   }
   rewind(filept);
   // Resize cF matrix
-  MatrixXd s_Beta(sizeBeta,3);
-  double a,b,d;
+  MatrixXd s_Beta(sizeBeta,2);
+  double a,b;
   for (int i=0; i<sizeBeta; i++) {
-    fscanf(filept,"%lf %lf %lf",&a,&b,&d);
+    fscanf(filept,"%lf,%lf",&a,&b);
     s_Beta(i,0) = a; s_Beta(i,1) = b;
   }
   // Close file streams
@@ -142,15 +169,20 @@ MatrixXd ThermoEqns::readBetaXY(const char* filenameBeta) {
 }
 
 // Define action of Jacobian on vector
-inline vector<double> JX(vector<double> (*f)(vector<double>& Xq), vector<double>& X, vector<double>& u0) {
+vector<double> ThermoEqns::JX(int func, vector<double>& X, vector<double>& u0) {
   vector<double> jx(u0.size());
   double eps = 1.e-6;
   vector<double> X2(u0.size());
   for (int i=0; i<u0.size(); i++) {
     X2[i] = u0[i] + eps*X[i];
   }
-  vector<double> f2 = f(X2);
-  vector<double> f1 = f(u0);
+  // Determine which mass/energy balance to use
+  vector<double> f1;
+  vector<double> f2;
+  if (func==0) {
+    f2 = this->massBalanceUpper(X2);
+    f1 = this->massBalanceUpper(u0);
+  }
   for (int i=0; i<u0.size(); i++) {
     jx[i] = (1./eps)*(f2[i]-f1[i]);
   }
@@ -180,11 +212,12 @@ vector<double> ThermoEqns::massBalanceUpper(vector<double>& x) {
     f[i] = 0.5*(F[i]+F[i+1]) - 0.5*std::abs(DF[i])*(x[i+1]-x[i]);
   }
   // Calculate error for internal cells
-  double ds;
+  double ds,mimp;
   for (int i=1; i<x.size()-1; i++) {
     ds = s_upper_[i+1]-s_upper_[i];
+    mimp = beta_upper_[i]*LWC_*Uinf_;
     D_flux[i-1] = f[i]-f[i-1];
-    I_sources[i-1] = (1./rhoL_)*ds*(mimp_[i]-mice_upper_[i]);
+    I_sources[i-1] = (1./rhoL_)*ds*(mimp-mice_upper_[i]);
     err[i] = D_flux[i] - I_sources[i];
   }
   // Boundary conditions
@@ -195,8 +228,13 @@ vector<double> ThermoEqns::massBalanceUpper(vector<double>& x) {
 
 
 
-void ThermoEqns::NewtonKrylovIteration(vector<double> (*f)(vector<double>& X), vector<double>& u0) {
+void ThermoEqns::NewtonKrylovIteration(const char* balance, vector<double>& u0) {
   // Function to take a balance of form f(X) = 0 and do Newton-Krylov iteration
+
+  // Set balance flag
+  int balFlag;
+  if (strcmp(balance,"MASS")==0)
+    balFlag = 0;
 
   double tol = 1.e-3;                       // Convergence tolerance
   int result, maxit = 100, restart = 10;    // GMRES Maximum, restart iterations
@@ -216,21 +254,24 @@ void ThermoEqns::NewtonKrylovIteration(vector<double> (*f)(vector<double>& X), v
   vector<double> globalerr; double globaltol = 1.0e-5;
   vector<double> r(stateSize);
   double normR,normGlob;
+  
   for (int i=0; i<nitermax; i++) {
     x0 = x;
     // Compute RHS
-    bvec = f(x0);
+    if (balFlag==0)
+      bvec = this->massBalanceUpper(x0);
     for (int j=0; j<stateSize; j++) {
       b(i) = -bvec[i];
     }
     // Compute approximate Jacobian
-    result = GMRES(f, x, x0, b, H, restart, maxit, tol);  // Solve system
+    result = GMRES(this, balFlag, x, x0, b, H, restart, maxit, tol);  // Solve system
     // Compute global error
-    globalerr = f(x);
+    if (balFlag==0)
+      globalerr = this->massBalanceUpper(x);
     for (int j=0; j<x.size(); j++) {
       dx0[j] = x[j]-x0[j];
     }
-    jx = JX(f,dx0,x0);
+    jx = JX(balFlag,dx0,x0);
     for (int j=0; j<dx0.size(); j++) {
       r[j] = -globalerr[j] - jx[j];
     }

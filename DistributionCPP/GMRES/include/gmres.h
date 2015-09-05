@@ -83,25 +83,12 @@ abs(Real x)
   return (x > 0 ? x : -x);
 }
 
-// Define action of Jacobian on vector
-inline vector<double> Jx(vector<double> (*f)(vector<double>& Xq), vector<double>& X, vector<double>& u0) {
-  vector<double> jx(u0.size());
-  double eps = 1.e-6;
-  vector<double> X2(u0.size());
-  for (int i=0; i<u0.size(); i++) {
-    X2[i] = u0[i] + eps*X[i];
-  }
-  vector<double> f2 = f(X2);
-  vector<double> f1 = f(u0);
-  for (int i=0; i<u0.size(); i++) {
-    jx[i] = (1./eps)*(f2[i]-f1[i]);
-  }
-  return jx;
-}
+
+
 
 template < class Vector, class Matrix, class Real >
 int 
-  GMRES(std::vector<double> (*f)(std::vector<double>& xq),
+  GMRES(ThermoEqns* thermo, int balFlag,
 	std::vector<double>& x, std::vector<double>& u0, const Vector &b,
 	Matrix &H, int &m, int &max_iter, Real &tol)
 {
@@ -111,7 +98,7 @@ int
   
   Real normb = norm(b);
   std::vector<double> jx;
-  jx = Jx(f,x,u0);
+  jx = thermo->JX(balFlag,x,u0);
   Vector r;
   for (int ii=0; ii<jx.size(); ii++) {
     r(ii) = b(ii) - jx[ii];
@@ -140,7 +127,7 @@ int
       for (int ii=0; ii<vtmp.size(); ii++) {
 	vv[ii] = vtmp(ii);
       }
-      jx = Jx(f,vv,u0);
+      jx = thermo->JX(balFlag,vv,u0);
       for (int ii=0; ii<jx.size(); ii++) {
 	w(ii) = jx[ii];
       }
@@ -167,7 +154,7 @@ int
       }
     }
     Update(x, m - 1, H, s, v);
-    jx = Jx(f,x,u0);
+    jx = thermo->JX(balFlag,x,u0);
     for (int ii=0; ii<jx.size(); ii++) {
       r(ii) = b(ii) - jx[ii];
     }
