@@ -218,11 +218,13 @@ vector<double> ThermoEqns::massBalanceUpper(vector<double>& x) {
     mimp = beta_upper_[i]*LWC_*Uinf_;
     D_flux[i-1] = f[i]-f[i-1];
     I_sources[i-1] = (1./rhoL_)*ds*(mimp-mice_upper_[i]);
-    err[i] = D_flux[i] - I_sources[i];
+    err[i] = D_flux[i-1] - I_sources[i-1];
   }
   // Boundary conditions
   err[0] = x[0]-0;
   err[x.size()-1] = err[x.size()-2];
+
+  return err;
 }
 
 
@@ -241,13 +243,13 @@ void ThermoEqns::NewtonKrylovIteration(const char* balance, vector<double>& u0) 
 
   // Initialize Jacobian and RHS, solution vectors
   int stateSize = u0.size();
-  VECTOR_double b(stateSize, 0.0); vector<double> bvec(stateSize);
+  vector<double> b(stateSize);
   vector<double> x = u0;
   vector<double> x0;
   vector<double> dx0;
   vector<double> jx;
   // Storage for upper Hessenberg H
-  MATRIX_double H(restart+1, restart, 0.0);
+  MatrixXd H(restart+1, restart);
 
   // Begin iteration
   int nitermax = 30; double eps = 1.e-6;
@@ -259,10 +261,9 @@ void ThermoEqns::NewtonKrylovIteration(const char* balance, vector<double>& u0) 
     x0 = x;
     // Compute RHS
     if (balFlag==0)
-      bvec = this->massBalanceUpper(x0);
-    for (int j=0; j<stateSize; j++) {
-      b(i) = -bvec[i];
-    }
+      b = this->massBalanceUpper(x0);
+    for (int ii=0; ii<b.size(); ii++)
+      b[i] *= -1;
     // Compute approximate Jacobian
     result = GMRES(this, balFlag, x, x0, b, H, restart, maxit, tol);  // Solve system
     // Compute global error

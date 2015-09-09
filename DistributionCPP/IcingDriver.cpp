@@ -27,8 +27,8 @@ int main(int argc, const char *argv[]) {
   }
   // Specify initialization files
   const char *inFileName = argv[1];
-  const char *meshFileName = "/home/anthony/LagrangianIcingCode/DistributionCPP/Grid/MESH.P3D";
-  const char *solnFileName = "/home/anthony/LagrangianIcingCode/DistributionCPP/Grid/q103.0.25E+01.bin";
+  const char *meshFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/MESH.P3D";
+  const char *solnFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/q103.0.25E+01.bin";
   // Read in initialization scalars from input file
   FluidScalars scalarsFluid;
   ParcelScalars scalarsParcel;
@@ -98,8 +98,8 @@ int main(int argc, const char *argv[]) {
   printf("maxiter = %d\n",maxiter);
 
   // TEMPORARY CODE TO CONVERT (I,0) TO S-COORDS *****
-  const char *filenameCHCF = "/home/anthony/LagrangianIcingCode/DistributionCPP/ThermoEqns/heatflux";
-  const char* filenameBETA = "/home/anthony/LagrangianIcingCode/DistributionCPP/ThermoEqns/BetaXY.dat";
+  const char *filenameCHCF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/heatfluxTEST";
+  const char *filenameBETA = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/BetaXY.dat";
   ThermoEqns thermo = ThermoEqns(filenameCHCF,filenameBETA,airfoil);
   std::vector<double> u0(1000);
   for (int i=0; i<1000; i++) {
