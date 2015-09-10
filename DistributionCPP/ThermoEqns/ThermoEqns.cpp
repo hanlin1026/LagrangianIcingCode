@@ -260,7 +260,7 @@ void ThermoEqns::NewtonKrylovIteration(const char* balance, vector<double>& u0) 
     balFlag = 2;
 
   double tol = 1.e-3;                       // Convergence tolerance
-  int result, maxit = 1000, restart = 1000;    // GMRES Maximum, restart iterations
+  int result, maxit = 100, restart = 10;    // GMRES Maximum, restart iterations
 
   // Initialize Jacobian and RHS, solution vectors
   int stateSize = u0.size();
@@ -273,36 +273,33 @@ void ThermoEqns::NewtonKrylovIteration(const char* balance, vector<double>& u0) 
   MatrixXd H(restart+1, restart);
 
   // Begin iteration
-  int nitermax = 3; double eps = 1.e-6;
+  int nitermax = 30; double eps = 1.e-6;
   vector<double> globalerr; double globaltol = 1.0e-5;
   vector<double> r(stateSize);
   double normR,normGlob;
+
+  vector<double> un = u0;
   
   for (int i=0; i<nitermax; i++) {
-    x0 = x;
+    u0 = un;
     // Compute RHS
     if (balFlag==0)
-      b = massBalanceUpper(x0);
+      b = massBalanceUpper(u0);
     else if (balFlag==2)
-      b = testBalance(x0);
+      b = testBalance(u0);
     for (int ii=0; ii<b.size(); ii++) {
-      b[ii] *= -1;
+      b[ii] *= -1.0;
     }
     // Compute approximate Jacobian
-    result = GMRES(this, balFlag, x, x0, b, H, restart, maxit, tol);  // Solve system
-    if (result == 0)
-      printf("GMRES CONVERGED\n");
-    else if (result == 1)
-      printf("GMRES NOT CONVERGED\n");
+    result = GMRES(this, balFlag, x, u0, b, H, restart, maxit, tol);  // Solve system
+    for (int ii=0; ii<un.size(); ii++)
+      un[ii] = u0[ii] + x[ii];
     // Compute global error
     if (balFlag==0)
-      globalerr = massBalanceUpper(x);
+      globalerr = massBalanceUpper(un);
     else if (balFlag==2)
-      globalerr = testBalance(x);
-    for (int j=0; j<x.size(); j++) {
-      dx0[j] = x[j]-x0[j];
-    }
-    jx = JX(balFlag,dx0,x0);
+      globalerr = testBalance(un);
+    jx = JX(balFlag,x,u0);
     for (int j=0; j<dx0.size(); j++) {
       r[j] = -globalerr[j] - jx[j];
     }
@@ -313,15 +310,15 @@ void ThermoEqns::NewtonKrylovIteration(const char* balance, vector<double>& u0) 
     }
     normR = pow(normR,0.5);
     normGlob = pow(normGlob,0.5);
+    printf("JFNK ERROR = %lf\tGLOBAL ERROR = %lf\n",normR,normGlob);
     // Test to see if converged
     if (normGlob < globaltol) {
-      printf("FINAL RESID = %lf\n",normGlob);
       for (int ii=0; ii<stateSize; ii++)
-	printf("%lf\n",x[ii]);
+	printf("%lf\n",un[ii]);
       return;
     }
   }
   printf("FINAL RESID = %lf\n",normGlob);
   for (int ii=0; ii<stateSize; ii++)
-    printf("%lf\n",x[ii]);
+    printf("%lf\n",un[ii]);
 }

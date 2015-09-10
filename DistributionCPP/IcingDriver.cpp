@@ -103,7 +103,7 @@ int main(int argc, const char *argv[]) {
   ThermoEqns thermo = ThermoEqns(filenameCHCF,filenameBETA,airfoil);
   std::vector<double> u0(1000);
   for (int i=0; i<u0.size(); i++) {
-    u0[i] = 0.0;
+    u0[i] = 1.0;
   }
   thermo.NewtonKrylovIteration("MASS",u0);
   // *************************************************

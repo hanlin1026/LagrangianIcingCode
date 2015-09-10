@@ -134,7 +134,7 @@ int GMRES(ThermoEqns* thermo, int balFlag,
     max_iter = 0;
     return 0;
   }
-  printf("RESID = %lf\n",resid);
+  //printf("RESID = %lf\n",resid);
 
   std::vector<std::vector<double>> v(m+1,vector<double>(r.size()));
   std::vector<double> vtmp;
@@ -179,7 +179,7 @@ int GMRES(ThermoEqns* thermo, int balFlag,
         max_iter = j;
         return 0;
       }
-      printf("RESID = %lf\n",resid);
+      //printf("RESID = %lf\n",resid);
     }
     Update(x, m - 1, H, s, v);
     jx.clear();
