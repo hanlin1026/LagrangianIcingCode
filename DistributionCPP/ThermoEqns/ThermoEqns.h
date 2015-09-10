@@ -15,6 +15,7 @@ class ThermoEqns {
   // Mass/Energy balance equations
   std::vector<double> JX(int func, std::vector<double>& X, std::vector<double>& u0);
   std::vector<double> massBalanceUpper(std::vector<double>& X);
+  std::vector<double> testBalance(std::vector<double>& X);
 
  private:
   // Functions to read in data files

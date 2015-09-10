@@ -134,23 +134,22 @@ int GMRES(ThermoEqns* thermo, int balFlag,
     max_iter = 0;
     return 0;
   }
+  printf("RESID = %lf\n",resid);
 
   std::vector<std::vector<double>> v(m+1,vector<double>(r.size()));
   std::vector<double> vtmp;
-  std::vector<double> vv(m+1);
+  std::vector<double> vv(b.size());
   std::vector<double> w(b.size());
   jx.clear();
   while (j <= max_iter) {
-    printf("GMRESiter = %d\n",j);
     v[0] = r * (1.0 / beta);    // ??? r / beta
     for (int jj=0; jj<s.size(); jj++)
       s[jj] = 0.0;
     s[0] = beta;
     
     for (i = 0; i < m && j <= max_iter; i++, j++) {
-      printf("I = %d\n",i);
       vtmp = v[i];
-      for (int ii=0; ii<vtmp.size(); ii++) {
+      for (int ii=0; ii<b.size(); ii++) {
 	vv[ii] = vtmp[ii];
       }
       jx = thermo->JX(balFlag,vv,u0);
@@ -180,6 +179,7 @@ int GMRES(ThermoEqns* thermo, int balFlag,
         max_iter = j;
         return 0;
       }
+      printf("RESID = %lf\n",resid);
     }
     Update(x, m - 1, H, s, v);
     jx.clear();

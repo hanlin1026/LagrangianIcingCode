@@ -102,11 +102,10 @@ int main(int argc, const char *argv[]) {
   const char *filenameBETA = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/BetaXY.dat";
   ThermoEqns thermo = ThermoEqns(filenameCHCF,filenameBETA,airfoil);
   std::vector<double> u0(1000);
-  for (int i=0; i<1000; i++) {
+  for (int i=0; i<u0.size(); i++) {
     u0[i] = 0.0;
   }
   thermo.NewtonKrylovIteration("MASS",u0);
-  
   // *************************************************
 
   while ((totalImpinge < particles) && (iter < maxiter)) {

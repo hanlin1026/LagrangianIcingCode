@@ -180,8 +180,12 @@ vector<double> ThermoEqns::JX(int func, vector<double>& X, vector<double>& u0) {
   vector<double> f1;
   vector<double> f2;
   if (func==0) {
-    f2 = this->massBalanceUpper(X2);
-    f1 = this->massBalanceUpper(u0);
+    f2 = massBalanceUpper(X2);
+    f1 = massBalanceUpper(u0);
+  }
+  else if (func==2) {
+    f2 = testBalance(X2);
+    f1 = testBalance(u0);
   }
   for (int i=0; i<u0.size(); i++) {
     jx[i] = (1./eps)*(f2[i]-f1[i]);
@@ -194,7 +198,7 @@ vector<double> ThermoEqns::massBalanceUpper(vector<double>& x) {
 
   vector<double> err(x.size());
   vector<double> F(x.size());
-  vector<double> f(x.size());
+  vector<double> f(x.size()-1);
   vector<double> xFACE(x.size()-1);
   vector<double> cfFACE(x.size()-1);
   vector<double> DF(x.size()-1);
@@ -205,7 +209,7 @@ vector<double> ThermoEqns::massBalanceUpper(vector<double>& x) {
     F[i] = (0.5/muL_)*pow(x[i],2)*cF_upper_[i];
   }
   // Calculate fluxes at cell faces (Roe scheme upwinding)
-  for (int i=0; i<xFACE.size(); i++) {
+  for (int i=0; i<x.size()-1; i++) {
     xFACE[i] = 0.5*(x[i]+x[i+1]);
     cfFACE[i] = 0.5*(cF_upper_[i]+cF_upper_[i+1]);
     DF[i] = (1/muL_)*(xFACE[i]*cfFACE[i]);
@@ -227,6 +231,21 @@ vector<double> ThermoEqns::massBalanceUpper(vector<double>& x) {
   return err;
 }
 
+vector<double> ThermoEqns::testBalance(vector<double>& x) {
+  // Test function RHS
+
+  vector<double> RHS(3);
+  RHS[0]=1.0; RHS[1]=-1.0; RHS[2]=2.0;
+  vector<double> err(3);
+  Eigen::MatrixXd A(3,3);
+  A << 8,1,6,3,5,7,4,9,2;
+  err[0] = A(0,0)*x[0] + A(0,1)*x[1] + A(0,2)*x[2] - RHS[0];
+  err[1] = A(1,0)*x[0] + A(1,1)*x[1] + A(1,2)*x[2] - RHS[1];
+  err[2] = A(2,0)*x[0] + A(2,1)*x[1] + A(2,2)*x[2] - RHS[2];
+
+  return err;
+}
+
 
 
 
@@ -237,22 +256,24 @@ void ThermoEqns::NewtonKrylovIteration(const char* balance, vector<double>& u0) 
   int balFlag;
   if (strcmp(balance,"MASS")==0)
     balFlag = 0;
+  else if (strcmp(balance,"TEST")==0)
+    balFlag = 2;
 
   double tol = 1.e-3;                       // Convergence tolerance
-  int result, maxit = 100, restart = 10;    // GMRES Maximum, restart iterations
+  int result, maxit = 1000, restart = 1000;    // GMRES Maximum, restart iterations
 
   // Initialize Jacobian and RHS, solution vectors
   int stateSize = u0.size();
   vector<double> b(stateSize);
   vector<double> x = u0;
-  vector<double> x0;
-  vector<double> dx0;
+  vector<double> x0(stateSize);
+  vector<double> dx0(stateSize);
   vector<double> jx;
   // Storage for upper Hessenberg H
   MatrixXd H(restart+1, restart);
 
   // Begin iteration
-  int nitermax = 30; double eps = 1.e-6;
+  int nitermax = 3; double eps = 1.e-6;
   vector<double> globalerr; double globaltol = 1.0e-5;
   vector<double> r(stateSize);
   double normR,normGlob;
@@ -261,14 +282,23 @@ void ThermoEqns::NewtonKrylovIteration(const char* balance, vector<double>& u0) 
     x0 = x;
     // Compute RHS
     if (balFlag==0)
-      b = this->massBalanceUpper(x0);
-    for (int ii=0; ii<b.size(); ii++)
-      b[i] *= -1;
+      b = massBalanceUpper(x0);
+    else if (balFlag==2)
+      b = testBalance(x0);
+    for (int ii=0; ii<b.size(); ii++) {
+      b[ii] *= -1;
+    }
     // Compute approximate Jacobian
     result = GMRES(this, balFlag, x, x0, b, H, restart, maxit, tol);  // Solve system
+    if (result == 0)
+      printf("GMRES CONVERGED\n");
+    else if (result == 1)
+      printf("GMRES NOT CONVERGED\n");
     // Compute global error
     if (balFlag==0)
-      globalerr = this->massBalanceUpper(x);
+      globalerr = massBalanceUpper(x);
+    else if (balFlag==2)
+      globalerr = testBalance(x);
     for (int j=0; j<x.size(); j++) {
       dx0[j] = x[j]-x0[j];
     }
@@ -285,7 +315,13 @@ void ThermoEqns::NewtonKrylovIteration(const char* balance, vector<double>& u0) 
     normGlob = pow(normGlob,0.5);
     // Test to see if converged
     if (normGlob < globaltol) {
+      printf("FINAL RESID = %lf\n",normGlob);
+      for (int ii=0; ii<stateSize; ii++)
+	printf("%lf\n",x[ii]);
       return;
     }
   }
+  printf("FINAL RESID = %lf\n",normGlob);
+  for (int ii=0; ii<stateSize; ii++)
+    printf("%lf\n",x[ii]);
 }
