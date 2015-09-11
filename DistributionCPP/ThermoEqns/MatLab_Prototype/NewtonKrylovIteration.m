@@ -6,7 +6,7 @@ maxit = 100;
 tol = 1e-3;
 globaltol = 1e-5;
 
-r = -F(u0,scalars);
+%r = -F(u0,scalars);
 un = u0;
 
 disp('******* Start JFNK *******');

@@ -3,6 +3,7 @@
 % INPUT ****************************
 % Import skin friction coefficient data
 CF = importdata('SkinFrictionXY.dat',',');
+CF(:,2) = 1;
 % Piecewise interpolation *************
 indDisc = find(abs(diff(CF(:,2)))/mean(abs(diff(CF(:,2)))) > .5e2);
 s_min = 0; s_max = 0.4;
@@ -11,6 +12,7 @@ s_min = 0; s_max = 0.4;
 indDisc = [indFirst-1;indDisc;indLast];
 NPts = 1000;
 s = []; tau_wall = [];
+
 for i=1:(length(indDisc)-1)
     startpt = indDisc(i)+1;
     breakpt = indDisc(i+1);
@@ -32,7 +34,7 @@ pw = 1000;
 uw = 1.787e-3;
 % Input incoming liquid mass k(s)
 BETA = importdata('BetaXY.dat',',');
-Uinf = 75;
+Uinf = 100;
 LWC = 1;
 mimp = Uinf*LWC*interp1(BETA(:,1),BETA(:,2),s);
 mimp(isnan(mimp)) = 0;

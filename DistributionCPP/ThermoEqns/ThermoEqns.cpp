@@ -33,19 +33,21 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
 void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, const char* parameter) {
   // Function to interpolate upper surface
 
-  MatrixXd data; VectorXd s;
-  int numVars;
+  MatrixXd data; VectorXd s; 
+  VectorXd beta;
+  VectorXd ch; VectorXd cf;
   if (strcmp(parameter,"BETA") == 0) {
     // Import (s,beta)
     data = this->readBetaXY(filename);
     s = data.col(0);
-    numVars = 1;
+    beta = data.col(1);
   }
   else if (strcmp(parameter,"CHCF") == 0) {
     // Import (s,ch,cf)
     data = this->readCHCF(filename);
     s = data.col(0);
-    numVars = 2;
+    ch = data.col(1);
+    cf = data.col(2);
     // Set stagPt at s=0
     double stagPt = airfoil.getStagPt();
     for (int i=0; i<s.size(); i++) {
@@ -68,16 +70,11 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
   for (int i=0; i<NPts_orig; i++) {
     s_upper_orig[i] = s(zero_ind+i);
   }
-  vector<vector<double>> vars(numVars,vector<double>(NPts_orig));
-  for (int i=0; i<numVars; i++) {
-    for (int j=0; j<NPts_orig; j++) {
-      vars[i][j] = data(j,i+1);
-    }
-  }
   // Refine upper surface grid
   NPts_ = 1000;
   s_upper_.resize(NPts_);
-  double s_max = s.maxCoeff();
+  //double s_max = s.maxCoeff();
+  double s_max = 0.4;
   double ds = (s_max-zero)/NPts_;
   for (int i=0; i<NPts_; i++) {
     s_upper_[i] = zero + i*ds;
@@ -89,22 +86,30 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     cF_upper_.resize(NPts_);
     gsl_spline *splineCH = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
     gsl_spline *splineCF = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
-    gsl_spline_init(splineCH, &s_upper_orig[0], &vars[0][0], NPts_orig);
-    gsl_spline_init(splineCF, &s_upper_orig[0], &vars[1][0], NPts_orig);
+    gsl_spline_init(splineCH, &s_upper_orig[0], &ch[zero_ind], NPts_orig);
+    gsl_spline_init(splineCF, &s_upper_orig[0], &cf[zero_ind], NPts_orig);
     for (int i=0; i<NPts_; i++) {
-      cH_upper_[i] = gsl_spline_eval(splineCH, s_upper_[i], acc);
-      cF_upper_[i] = gsl_spline_eval(splineCF, s_upper_[i], acc);
+      if (s_upper_[i] <= s.maxCoeff()) { 
+	cH_upper_[i] = gsl_spline_eval(splineCH, s_upper_[i], acc);
+        cF_upper_[i] = gsl_spline_eval(splineCF, s_upper_[i], acc);
+      }
+      else {
+	cH_upper_[i] = 0.0;
+        cF_upper_[i] = 0.0;
+      }
     }
   }
   else if (strcmp(parameter,"BETA") == 0) {
     beta_upper_.resize(NPts_);
     gsl_spline *splineBETA = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
-    gsl_spline_init(splineBETA, &s_upper_orig[0], &vars[0][0], NPts_orig);
+    gsl_spline_init(splineBETA, &s_upper_orig[0], &beta[zero_ind], NPts_orig);
     for (int i=0; i<NPts_; i++) {
-      beta_upper_[i] = gsl_spline_eval(splineBETA, s_upper_[i], acc);
+      if (s_upper_[i] <= s.maxCoeff())
+	beta_upper_[i] = gsl_spline_eval(splineBETA, s_upper_[i], acc);
+      else
+	beta_upper_[i] = 0.0;
     }
   }
-
 
 }
 
@@ -171,7 +176,7 @@ MatrixXd ThermoEqns::readBetaXY(const char* filenameBeta) {
 // Define action of Jacobian on vector
 vector<double> ThermoEqns::JX(int func, vector<double>& X, vector<double>& u0) {
   vector<double> jx(u0.size());
-  double eps = 1.e-6;
+  double eps = 1.e-4;
   vector<double> X2(u0.size());
   for (int i=0; i<u0.size(); i++) {
     X2[i] = u0[i] + eps*X[i];
@@ -260,65 +265,53 @@ void ThermoEqns::NewtonKrylovIteration(const char* balance, vector<double>& u0) 
     balFlag = 2;
 
   double tol = 1.e-3;                       // Convergence tolerance
-  int result, maxit = 100, restart = 10;    // GMRES Maximum, restart iterations
+  int result, maxit = 1000, restart = 5;    // GMRES Maximum, restart iterations
 
   // Initialize Jacobian and RHS, solution vectors
   int stateSize = u0.size();
   vector<double> b(stateSize);
-  vector<double> x = u0;
+  vector<double> x(stateSize);
   vector<double> x0(stateSize);
   vector<double> dx0(stateSize);
   vector<double> jx;
   // Storage for upper Hessenberg H
   MatrixXd H(restart+1, restart);
-
   // Begin iteration
-  int nitermax = 30; double eps = 1.e-6;
-  vector<double> globalerr; double globaltol = 1.0e-5;
+  int nitermax = 20;
+  vector<double> globalerr; double globaltol = 2.0e-5;
   vector<double> r(stateSize);
   double normR,normGlob;
-
+  // Initialize linearization point
   vector<double> un = u0;
   
   for (int i=0; i<nitermax; i++) {
+    // Reset linearization point
     u0 = un;
+    x = u0;
     // Compute RHS
     if (balFlag==0)
       b = massBalanceUpper(u0);
     else if (balFlag==2)
       b = testBalance(u0);
-    for (int ii=0; ii<b.size(); ii++) {
-      b[ii] *= -1.0;
-    }
+    b = b*-1.0;
     // Compute approximate Jacobian
     result = GMRES(this, balFlag, x, u0, b, H, restart, maxit, tol);  // Solve system
-    for (int ii=0; ii<un.size(); ii++)
-      un[ii] = u0[ii] + x[ii];
+    un = u0 + x;
     // Compute global error
     if (balFlag==0)
       globalerr = massBalanceUpper(un);
     else if (balFlag==2)
       globalerr = testBalance(un);
     jx = JX(balFlag,x,u0);
-    for (int j=0; j<dx0.size(); j++) {
-      r[j] = -globalerr[j] - jx[j];
-    }
-    normR=0.0; normGlob=0.0;
-    for (int j=0; j<stateSize; j++) {
-      normR = normR + pow(r[j],2);
-      normGlob = normGlob + pow(globalerr[j],2);
-    }
-    normR = pow(normR,0.5);
-    normGlob = pow(normGlob,0.5);
+    r = globalerr*-1.0 + jx*-1.0;
+    normR = NORM(r);
+    normGlob = NORM(globalerr);
     printf("JFNK ERROR = %lf\tGLOBAL ERROR = %lf\n",normR,normGlob);
     // Test to see if converged
     if (normGlob < globaltol) {
-      for (int ii=0; ii<stateSize; ii++)
-	printf("%lf\n",un[ii]);
-      return;
+      break;
     }
   }
-  printf("FINAL RESID = %lf\n",normGlob);
   for (int ii=0; ii<stateSize; ii++)
-    printf("%lf\n",un[ii]);
+    printf("%e\t%e\n",s_upper_[ii],un[ii]);
 }

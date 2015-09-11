@@ -107,6 +107,17 @@ std::vector<double> operator*(std::vector<double> vec, double scal) {
   return vec;
 }
 
+std::vector<double> operator+(std::vector<double> a, std::vector<double> b) {
+  std::vector<double> c(a.size());
+  for (int i=0; i<a.size(); i++)
+    c[i] = a[i] + b[i];
+  return c;
+}
+
+void SETEQ(std::vector<double> vec, double num) {
+  for (int i; i<vec.size(); i++)
+    vec[i] = num;
+}
 
 
 int GMRES(ThermoEqns* thermo, int balFlag,

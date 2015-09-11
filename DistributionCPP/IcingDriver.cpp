@@ -102,8 +102,9 @@ int main(int argc, const char *argv[]) {
   const char *filenameBETA = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/BetaXY.dat";
   ThermoEqns thermo = ThermoEqns(filenameCHCF,filenameBETA,airfoil);
   std::vector<double> u0(1000);
+  double du = (10.0e-3)/999;
   for (int i=0; i<u0.size(); i++) {
-    u0[i] = 1.0;
+    u0[i] = i*du;
   }
   thermo.NewtonKrylovIteration("MASS",u0);
   // *************************************************
