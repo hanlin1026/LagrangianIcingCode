@@ -135,8 +135,11 @@ int GMRES(ThermoEqns* thermo, int balFlag,
   std::vector<double> w(inner+1);
   std::vector<double> u(stateSize);
   std::vector<double> v(stateSize);
+  double tmpv;
   double Uv = 0.0;
   double alpha;
+  double rho;
+  double normr_act;
   // Begin main GMRES routine
   for (int outiter=0; outiter<outer; outiter++) {
     // Construct u for Householder reflector
@@ -166,7 +169,7 @@ int GMRES(ThermoEqns* thermo, int balFlag,
       }
       // Explicitly normalize v to reduce the effects of round-off
       v = v/NORM(v);
-      // Apply J to v
+      // Apply Jacobian to v
       jx.clear();
       jx = thermo->JX(balFlag,v,u0);
       // Form Pj*Pj-1*...P1*Av.
@@ -187,6 +190,8 @@ int GMRES(ThermoEqns* thermo, int balFlag,
 	alpha = NORM(u);
 	if (alpha != 0) {
 	  alpha = scalarsign(v[initer])*alpha;
+	  // u = v(initer+1:end) +
+          //     sign(v(initer+1))*||v(initer+1:end)||*e_{initer+1)
 	  u[initer] += alpha;
 	  u = u/NORM(u);
 	  for (int i=0; i<stateSize; i++)
@@ -197,7 +202,27 @@ int GMRES(ThermoEqns* thermo, int balFlag,
 	  v[initer] = -alpha;
 	}
       }
-
+      // Apply Given's rotations to the newly formed v
+      for (int colJ=0; colJ<initer-1; colJ++) {
+	tmpv = v[colJ];
+        v[colJ]   = J(1,colJ)*v[colJ] + J(2,colJ)*v[colJ+1];
+        v[colJ+1] = -J(2,colJ)*tmpv + J(1,colJ)*v[colJ+1];
+      }
+      // Compute Given's rotation Jm.
+      if (initer != v.size()-1) {
+	rho = sqrt(pow(v[initer-1],2) + pow(v[initer],2));
+	J(0,initer-1) = v[initer-1]/rho;
+	J(1,initer-1) = v[initer]/rho;
+	w[initer] = -2*J(1,initer-1)*w[initer-1];
+	w[initer-1] = J(0,initer-1)*w[initer-1];
+	v[initer-1] = rho;
+	v[initer] = 0;
+      }
+      for (int i=0; i<inner; i++)
+	R(i,initer-1) = v[i];
+      normR = ABS(w[initer]);
+      resvec[(outiter-1)*inner+initer] = normR;
+      normr_act = normR;
 
 
 
