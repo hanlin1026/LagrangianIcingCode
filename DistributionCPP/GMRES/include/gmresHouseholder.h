@@ -74,9 +74,27 @@ std::vector<double> operator-(std::vector<double> a, std::vector<double> b) {
   return c;
 }
 
+std::vector<double> operator+(std::vector<double> a, Eigen::VectorXd b) {
+  std::vector<double> c(a.size());
+  for (int i=0; i<a.size(); i++)
+    c[i] = a[i] + b(i);
+  return c;
+
+}
+
 void SETEQ(std::vector<double> vec, double num) {
   for (int i; i<vec.size(); i++)
     vec[i] = num;
+}
+
+std::vector<double> CAT(std::vector<double> a, std::double<vector> b) {
+  std::vector<double> c(a.size()+b.size());
+  for (int i=0; i<a.size(); i++)
+    c[i] = a[i];
+  for (int i=a.size(); i<c.size(); i++)
+    c[i] = b[i-a.size()];
+  
+  return c;
 }
 
 template <typename T> int sgn(T val) {
@@ -135,6 +153,12 @@ int GMRES(ThermoEqns* thermo, int balFlag,
   std::vector<double> w(inner+1);
   std::vector<double> u(stateSize);
   std::vector<double> v(stateSize);
+  std::vector<double> additive(stateSize);
+  std::vector<double> addvc;
+  Eigen::MatrixXd ytmp;
+  Eigen::VectorXd wtmp;
+  Eigen::VectorXd addvc1;
+  ColPivHouseholderQR<MatrixXd> linearSolver;
   double tmpv;
   double Uv = 0.0;
   double alpha;
@@ -160,7 +184,7 @@ int GMRES(ThermoEqns* thermo, int balFlag,
       v = u*(-2*u[initer]);
       v[initer] += 1;
       // v = P1*P2*...Pjm1*(Pj*ej)
-      for (int k=initer-1; k>0; k--) {
+      for (int k=initer-1; k>-1; k--) {
 	Uv = 0.0;
 	for (int kk = 0; kk<stateSize; kk++)
 	  Uv += U(kk,k)*v[kk];
@@ -189,17 +213,17 @@ int GMRES(ThermoEqns* thermo, int balFlag,
 	  u[i] = v[i];
 	alpha = NORM(u);
 	if (alpha != 0) {
-	  alpha = scalarsign(v[initer])*alpha;
+	  alpha = scalarsign(v[initer+1])*alpha;
 	  // u = v(initer+1:end) +
           //     sign(v(initer+1))*||v(initer+1:end)||*e_{initer+1)
-	  u[initer] += alpha;
+	  u[initer+1] += alpha;
 	  u = u/NORM(u);
 	  for (int i=0; i<stateSize; i++)
-	    U(i,initer) = u[i];
+	    U(i,initer+1) = u[i];
 	  // Apply Pj+1 to v
-	  for (int i=initer+1; i<stateSize; i++)
+	  for (int i=initer+2; i<stateSize; i++)
 	    v[i] = 0.0;
-	  v[initer] = -alpha;
+	  v[initer+1] = -alpha;
 	}
       }
       // Apply Given's rotations to the newly formed v
@@ -210,26 +234,161 @@ int GMRES(ThermoEqns* thermo, int balFlag,
       }
       // Compute Given's rotation Jm.
       if (initer != v.size()-1) {
-	rho = sqrt(pow(v[initer-1],2) + pow(v[initer],2));
-	J(0,initer-1) = v[initer-1]/rho;
-	J(1,initer-1) = v[initer]/rho;
-	w[initer] = -2*J(1,initer-1)*w[initer-1];
-	w[initer-1] = J(0,initer-1)*w[initer-1];
-	v[initer-1] = rho;
-	v[initer] = 0;
+	rho = sqrt(pow(v[initer],2) + pow(v[initer+1],2));
+	J(0,initer) = v[initer]/rho;
+	J(1,initer) = v[initer+1]/rho;
+	w[initer+1] = -2*J(1,initer)*w[initer];
+	w[initer] = J(0,initer)*w[initer];
+	v[initer] = rho;
+	v[initer+1] = 0;
       }
       for (int i=0; i<inner; i++)
-	R(i,initer-1) = v[i];
-      normR = ABS(w[initer]);
-      resvec[(outiter-1)*inner+initer] = normR;
+	R(i,initer) = v[i];
+      normR = ABS(w[initer+1]);
+      resvec[(outiter-1)*inner+initer+1] = normR;
       normr_act = normR;
+      
+      if ((normR <= tol) || (stag>= maxstagsteps) || moresteps) {
+	if (evalxm == 0) {
+	  ytmp.resize(initer);
+	  wtmp.resize(initer);
+	  ytmp = R.block(1,1,initer,initer);
+	  for (int i=0; i<initer; i++)
+	    wtmp(i) = w[i];
+	  linearSolver.compute(R.block(0,0,initer,initer));
+	  ytmp = linearSolver.solve(wtmp);
+	  for (int i=0; i<stateSize; i++)
+	    additive[i] = U(i,initer)*(-2*ytmp(initer))*U(initer,Uiniter);
+	  additive[initer] += ytmp(initer);
+	  for (int k=initer-1; k>-1; k--) {
+	    additive[k] += ytmp(k);
+	    Uv = 0.0;
+	    for (int kk=0; kk<stateSize; kk++)
+	      Uv += U(kk,k)*additive[kk];
+	    for (int kk=0; kk<stateSize; kk++)
+	      additive[kk] += -U(kk,k)*(2*Uv);
+	  }
+	  if (NORM(additive) < eps*NORM(x))
+	    stag += 1;
+	  else
+	    stag = 0;
+	  xm += additive;
+	  evalxm = 1;
+	}
+	else if (evalxm == 1) {
+	  linearSolver.compute(R.block(0,0,initer-1,initer-1));
+	  addvc1.resize(initer-1);
+	  addvc.resize(initer);
+	  addvc1 = -1*linearSolver.solve(R.block(0,initer,initer-1,initer));
+	  addvc1 *= w[initer]/R(initer,initer);
+	  for (int i=0; i<initer-1; i++)
+	    addvc[i] = addvc1(i);
+	  addvc[initer] = w[initer]/R(initer,initer);
+	  if (NORM(addvc) < eps*NORM(xm))
+	    stag += 1;
+	  else
+	    stag = 0;
+	  for (int i=0; i<stateSize; i++)
+	    additive[i] = U(i,initer)*(-2*addvc(initer)*U(initer,initer));
+	  additive[initer] += addvc[initer];
+	  for (int k=initer-1; k>-1; k--) {
+	    additive[k] += addvc[k];
+	    Uv = 0.0;
+	    for (int kk=0; kk<stateSize; kk++)
+	      Uv += U(kk,k)*additive[kk];
+	    for (int kk=0; kk<stateSize; kk++)
+	      additive[kk] += -U(kk,k)*(2*Uv);
+	  }
+	  xm += additive;
+	}
+	jx.clear();
+	jx = thermo->JX(balflag,xm,u0);
+	r = b - jx;
+	if (NORM(r) <= tol) {
+	  x = xm;
+	  flag = 0;
+	  break;
+	}
+	normr_act = NORM(r);
+	resvec[(outiter-1)*inner+initer+1] = normr_act;
 
-
-
-
+	if (normr_act <= normrmin) {
+	  normrmin = normr_act;
+	  imin = outiter;
+	  jmin = initer;
+	  xmin = xm;
+	  minupdated = 1;
+	}
+	if (normr_acr <= tol) {
+	  x = xm;
+	  flag = 0;
+	  break;
+	}
+	else {
+	  if ((stag >= maxstagsteps) && (moresteps == 0))
+	    stag = 0;
+	  moresteps += 1;
+	  if (moresteps >= maxmsteps) {
+	    flag = 3;
+	    break;
+	  }
+	}
+      }
+      if (normr_act <= normrmin) {
+	normrmin = normr_act;
+	imin = outiter;
+	jmin = initer;
+	minupdated = 1;
+      }
+      if (stag >= maxstagsteps) {
+	flag = 3;
+	break;
+      }
+    } // End inner loop
+    evalxm = 0;
+    if (flag != 0) {
+      if (minupdated == 1)
+	idx = jmin;
+      else
+	idx = initer;
+      wtmp.resize(idx);
+      for (int i=0; i<idx; i++)
+	wtmp(i) = w[i];
+      linearSolver.compute(R.block(1,1,idx,idx));
+      ytmp.resize(idx);
+      ytmp = linearSolver.solve(wtmp);
+      for (int i=0; i<stateSize; i++)
+	additive[i] = U(i,idx)*(-2*ytmp(idx)*U(idx,idx));
+      additive[idx] += ytmp(idx);
+      for (int k=idx-1; k>-1; k--) {
+	additive[k] += ytmp(k);
+	Uv = 0.0;
+	for (int kk=0; kk<stateSize; kk++)
+	  Uv += U(kk,k)*additive[kk];
+	for (int kk=0; kk<stateSize; kk++)
+	  additive[kk] += -U(kk,k)*(-2*Uv);
+      }
+      x += additive;
+      xmin = x;
+      jx.clear();
+      jx = thermo->JX(balflag,x,u0);
+      r = b - jx;
+      normr_act = NORM(r);      
     }
-
-  }
+    if (normr_act <= normrmin) {
+      xmin = x;
+      normrmin = normr_act;
+      imin = outiter;
+      jmin = initer;
+    }
+    if (flag == 3)
+      break;
+    if (normr_act <= tol) {
+      flag = 0;
+      break;
+    }
+    minupdated = 0;
+  } // Ends outer loop
 
 
 
