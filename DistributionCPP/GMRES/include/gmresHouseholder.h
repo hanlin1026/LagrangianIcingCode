@@ -87,21 +87,11 @@ void SETEQ(std::vector<double> vec, double num) {
     vec[i] = num;
 }
 
-std::vector<double> CAT(std::vector<double> a, std::double<vector> b) {
-  std::vector<double> c(a.size()+b.size());
-  for (int i=0; i<a.size(); i++)
-    c[i] = a[i];
-  for (int i=a.size(); i<c.size(); i++)
-    c[i] = b[i-a.size()];
-  
-  return c;
-}
-
 template <typename T> int sgn(T val) {
     return (T(0) < val) - (val < T(0));
 }
 
-int scalarsign(d) {
+int scalarsign(double d) {
   int sign = sgn(d);
   if (sign == 0)
     sign = 1;
@@ -116,28 +106,36 @@ int GMRES(ThermoEqns* thermo, int balFlag,
   int stateSize = x.size();
   //Set up for the method
   int flag = 1;
-  Eigen::VectorXd xmin = x;            // Iterate which has minimal residual so far
+  std::vector<double> xmin = x;        // Iterate which has minimal residual so far
   int imin = 0;                        // "Outer" iteration at which xmin was computed
   int jmin = 0;                        // "Inner" iteration at which xmin was computed
   int evalxm = 0;
   int stag = 0;
   int moresteps = 0;
-  int maxmsteps = std::min([std::floor(stateSize/50),5,stateSize-maxit]);
+  int stateSizeFloor = std::floor(stateSize/50);
+  int min1 = std::min(stateSizeFloor,5);
+  int maxmsteps = std::min(min1,stateSize-max_iter);
   int maxstagsteps = 3;
   int minupdated = 0;
   int inner = restart;
   int outer = max_iter;
   double beta;
+  int initerFINAL;
+  int outiterFINAL;
   std::vector<double> jx;
+  double eps = 1.0e-6;
+  if (tol < eps)
+    tol = eps;
   // Compute initial residual
   jx = thermo->JX(balFlag,x,u0);
-  r = b - jx;
+  std::vector<double> r = b - jx;
   double normR = NORM(r);
   double normB = NORM(b);
   if (normR == 0.0)
     normR = 1;
   // If initial guess is already good enough, we are done
-  if ((resid = normR / normB) <= tol) {
+  double resid = normR/normB;
+  if (resid <= tol) {
     tol = resid;
     max_iter = 0;
     return 0;
@@ -153,17 +151,19 @@ int GMRES(ThermoEqns* thermo, int balFlag,
   std::vector<double> w(inner+1);
   std::vector<double> u(stateSize);
   std::vector<double> v(stateSize);
+  std::vector<double> xm(stateSize);
   std::vector<double> additive(stateSize);
   std::vector<double> addvc;
   Eigen::MatrixXd ytmp;
   Eigen::VectorXd wtmp;
   Eigen::VectorXd addvc1;
-  ColPivHouseholderQR<MatrixXd> linearSolver;
+  Eigen::ColPivHouseholderQR<Eigen::MatrixXd> linearSolver;
   double tmpv;
   double Uv = 0.0;
   double alpha;
   double rho;
   double normr_act;
+  int idx;
   // Begin main GMRES routine
   for (int outiter=0; outiter<outer; outiter++) {
     // Construct u for Householder reflector
@@ -172,7 +172,7 @@ int GMRES(ThermoEqns* thermo, int balFlag,
     normR = NORM(r);
     beta = scalarsign(r[0])*normR;
     u[0] += beta;
-    u = u / norm(u);
+    u = u / NORM(u);
     for (int i=0; i<stateSize; i++)
       U(i,0) = u[i];
     // Apply Householder projection to r.
@@ -250,7 +250,6 @@ int GMRES(ThermoEqns* thermo, int balFlag,
       
       if ((normR <= tol) || (stag>= maxstagsteps) || moresteps) {
 	if (evalxm == 0) {
-	  ytmp.resize(initer);
 	  wtmp.resize(initer);
 	  ytmp = R.block(1,1,initer,initer);
 	  for (int i=0; i<initer; i++)
@@ -258,7 +257,7 @@ int GMRES(ThermoEqns* thermo, int balFlag,
 	  linearSolver.compute(R.block(0,0,initer,initer));
 	  ytmp = linearSolver.solve(wtmp);
 	  for (int i=0; i<stateSize; i++)
-	    additive[i] = U(i,initer)*(-2*ytmp(initer))*U(initer,Uiniter);
+	    additive[i] = U(i,initer)*(-2*ytmp(initer))*U(initer,initer);
 	  additive[initer] += ytmp(initer);
 	  for (int k=initer-1; k>-1; k--) {
 	    additive[k] += ytmp(k);
@@ -272,7 +271,7 @@ int GMRES(ThermoEqns* thermo, int balFlag,
 	    stag += 1;
 	  else
 	    stag = 0;
-	  xm += additive;
+	  xm = x + additive;
 	  evalxm = 1;
 	}
 	else if (evalxm == 1) {
@@ -289,7 +288,7 @@ int GMRES(ThermoEqns* thermo, int balFlag,
 	  else
 	    stag = 0;
 	  for (int i=0; i<stateSize; i++)
-	    additive[i] = U(i,initer)*(-2*addvc(initer)*U(initer,initer));
+	    additive[i] = U(i,initer)*(-2*addvc[initer]*U(initer,initer));
 	  additive[initer] += addvc[initer];
 	  for (int k=initer-1; k>-1; k--) {
 	    additive[k] += addvc[k];
@@ -299,10 +298,10 @@ int GMRES(ThermoEqns* thermo, int balFlag,
 	    for (int kk=0; kk<stateSize; kk++)
 	      additive[kk] += -U(kk,k)*(2*Uv);
 	  }
-	  xm += additive;
+	  xm = xm + additive;
 	}
 	jx.clear();
-	jx = thermo->JX(balflag,xm,u0);
+	jx = thermo->JX(balFlag,xm,u0);
 	r = b - jx;
 	if (NORM(r) <= tol) {
 	  x = xm;
@@ -319,7 +318,7 @@ int GMRES(ThermoEqns* thermo, int balFlag,
 	  xmin = xm;
 	  minupdated = 1;
 	}
-	if (normr_acr <= tol) {
+	if (normr_act <= tol) {
 	  x = xm;
 	  flag = 0;
 	  break;
@@ -344,18 +343,18 @@ int GMRES(ThermoEqns* thermo, int balFlag,
 	flag = 3;
 	break;
       }
+      initerFINAL = initer;
     } // End inner loop
     evalxm = 0;
     if (flag != 0) {
       if (minupdated == 1)
 	idx = jmin;
       else
-	idx = initer;
+	idx = initerFINAL;
       wtmp.resize(idx);
       for (int i=0; i<idx; i++)
 	wtmp(i) = w[i];
       linearSolver.compute(R.block(1,1,idx,idx));
-      ytmp.resize(idx);
       ytmp = linearSolver.solve(wtmp);
       for (int i=0; i<stateSize; i++)
 	additive[i] = U(i,idx)*(-2*ytmp(idx)*U(idx,idx));
@@ -368,10 +367,10 @@ int GMRES(ThermoEqns* thermo, int balFlag,
 	for (int kk=0; kk<stateSize; kk++)
 	  additive[kk] += -U(kk,k)*(-2*Uv);
       }
-      x += additive;
+      x = x + additive;
       xmin = x;
       jx.clear();
-      jx = thermo->JX(balflag,x,u0);
+      jx = thermo->JX(balFlag,x,u0);
       r = b - jx;
       normr_act = NORM(r);      
     }
@@ -379,7 +378,7 @@ int GMRES(ThermoEqns* thermo, int balFlag,
       xmin = x;
       normrmin = normr_act;
       imin = outiter;
-      jmin = initer;
+      jmin = initerFINAL;
     }
     if (flag == 3)
       break;
@@ -388,8 +387,34 @@ int GMRES(ThermoEqns* thermo, int balFlag,
       break;
     }
     minupdated = 0;
+    outiterFINAL = outiter;
   } // Ends outer loop
 
-
+  // Returned solution is that with minimum residual
+  if (flag != 0)
+    x = xmin;
+  // Truncate the zeros from resvec
+  std::vector<double> resvecTMP;
+  if ((flag <= 1) || (flag == 3)) {
+    resvecTMP.resize((outiterFINAL-1)*inner+initerFINAL+1);
+    for (int i=0; i<resvecTMP.size(); i++) {
+      if (resvec[i] != 0)
+	resvecTMP.push_back(resvec[i]);
+    }
+  }
+  else {
+    if (initerFINAL == 0) {
+      resvecTMP.resize((outiterFINAL-1)*inner+initerFINAL+1);
+      for (int i=0; i<resvecTMP.size(); i++)
+	resvecTMP[i] = resvec[i];
+    }
+    else {
+      resvecTMP.resize((outiterFINAL-1)*inner+initerFINAL+initerFINAL);
+      for (int i=0; i<resvecTMP.size(); i++)
+	resvecTMP[i] = resvec[i];
+    }
+  }
+  resvec.clear();
+  resvec = resvecTMP;
 
 }
