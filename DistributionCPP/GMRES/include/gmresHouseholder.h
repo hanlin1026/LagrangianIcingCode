@@ -148,16 +148,21 @@ int GMRES(ThermoEqns* thermo, int balFlag,
   Eigen::MatrixXd J(2,inner);
   Eigen::MatrixXd U(stateSize,inner);
   Eigen::MatrixXd R(inner,inner);
+  for (int i=0; i<inner; i++) {
+    for (int j=0; j<inner; j++)
+      R(j,i) = 0.0;
+  }
   std::vector<double> w(inner+1);
   std::vector<double> u(stateSize);
   std::vector<double> v(stateSize);
   std::vector<double> xm(stateSize);
   std::vector<double> additive(stateSize);
   std::vector<double> addvc;
-  Eigen::MatrixXd ytmp;
+  Eigen::VectorXd ytmp;
   Eigen::VectorXd wtmp;
   Eigen::VectorXd addvc1;
   Eigen::ColPivHouseholderQR<Eigen::MatrixXd> linearSolver;
+  Eigen::MatrixXd RTMP;
   double tmpv;
   double Uv = 0.0;
   double alpha;
@@ -245,16 +250,14 @@ int GMRES(ThermoEqns* thermo, int balFlag,
       for (int i=0; i<inner; i++)
 	R(i,initer) = v[i];
       normR = ABS(w[initer+1]);
-      resvec[(outiter-1)*inner+initer+1] = normR;
+      resvec[(outiter)*inner+initer+1] = normR;
       normr_act = normR;
-      
       if ((normR <= tol) || (stag>= maxstagsteps) || moresteps) {
 	if (evalxm == 0) {
-	  wtmp.resize(initer);
-	  ytmp = R.block(1,1,initer,initer);
-	  for (int i=0; i<initer; i++)
+	  wtmp.resize(initer+1);
+	  for (int i=0; i<initer+1; i++)
 	    wtmp(i) = w[i];
-	  linearSolver.compute(R.block(0,0,initer,initer));
+	  linearSolver.compute(R.block(0,0,initer+1,initer+1));
 	  ytmp = linearSolver.solve(wtmp);
 	  for (int i=0; i<stateSize; i++)
 	    additive[i] = U(i,initer)*(-2*ytmp(initer))*U(initer,initer);
@@ -275,10 +278,10 @@ int GMRES(ThermoEqns* thermo, int balFlag,
 	  evalxm = 1;
 	}
 	else if (evalxm == 1) {
-	  linearSolver.compute(R.block(0,0,initer-1,initer-1));
+	  linearSolver.compute(R.block(0,0,initer,initer));
 	  addvc1.resize(initer-1);
 	  addvc.resize(initer);
-	  addvc1 = -1*linearSolver.solve(R.block(0,initer,initer-1,initer));
+	  addvc1 = -1*linearSolver.solve(R.block(0,initer,initer,initer+1));
 	  addvc1 *= w[initer]/R(initer,initer);
 	  for (int i=0; i<initer-1; i++)
 	    addvc[i] = addvc1(i);
@@ -309,13 +312,14 @@ int GMRES(ThermoEqns* thermo, int balFlag,
 	  break;
 	}
 	normr_act = NORM(r);
-	resvec[(outiter-1)*inner+initer+1] = normr_act;
+	resvec[(outiter)*inner+initer+1] = normr_act;
 
 	if (normr_act <= normrmin) {
 	  normrmin = normr_act;
 	  imin = outiter;
 	  jmin = initer;
 	  xmin = xm;
+	  printf("NORMxmin = %lf\n",NORM(xmin));
 	  minupdated = 1;
 	}
 	if (normr_act <= tol) {
@@ -351,10 +355,10 @@ int GMRES(ThermoEqns* thermo, int balFlag,
 	idx = jmin;
       else
 	idx = initerFINAL;
-      wtmp.resize(idx);
-      for (int i=0; i<idx; i++)
+      wtmp.resize(idx+1);
+      for (int i=0; i<idx+1; i++)
 	wtmp(i) = w[i];
-      linearSolver.compute(R.block(1,1,idx,idx));
+      linearSolver.compute(R.block(1,1,idx+1,idx+1));
       ytmp = linearSolver.solve(wtmp);
       for (int i=0; i<stateSize; i++)
 	additive[i] = U(i,idx)*(-2*ytmp(idx)*U(idx,idx));
@@ -368,6 +372,7 @@ int GMRES(ThermoEqns* thermo, int balFlag,
 	  additive[kk] += -U(kk,k)*(-2*Uv);
       }
       x = x + additive;
+      printf("NORMadd = %lf\n",NORM(additive));
       xmin = x;
       jx.clear();
       jx = thermo->JX(balFlag,x,u0);
@@ -391,12 +396,13 @@ int GMRES(ThermoEqns* thermo, int balFlag,
   } // Ends outer loop
 
   // Returned solution is that with minimum residual
-  if (flag != 0)
+  if (flag != 0) {
     x = xmin;
+  }
   // Truncate the zeros from resvec
   std::vector<double> resvecTMP;
   if ((flag <= 1) || (flag == 3)) {
-    resvecTMP.resize((outiterFINAL-1)*inner+initerFINAL+1);
+    resvecTMP.resize((outiterFINAL)*inner+initerFINAL+1);
     for (int i=0; i<resvecTMP.size(); i++) {
       if (resvec[i] != 0)
 	resvecTMP.push_back(resvec[i]);
@@ -404,12 +410,12 @@ int GMRES(ThermoEqns* thermo, int balFlag,
   }
   else {
     if (initerFINAL == 0) {
-      resvecTMP.resize((outiterFINAL-1)*inner+initerFINAL+1);
+      resvecTMP.resize((outiterFINAL)*inner+initerFINAL+1);
       for (int i=0; i<resvecTMP.size(); i++)
 	resvecTMP[i] = resvec[i];
     }
     else {
-      resvecTMP.resize((outiterFINAL-1)*inner+initerFINAL+initerFINAL);
+      resvecTMP.resize((outiterFINAL)*inner+initerFINAL+initerFINAL);
       for (int i=0; i<resvecTMP.size(); i++)
 	resvecTMP[i] = resvec[i];
     }

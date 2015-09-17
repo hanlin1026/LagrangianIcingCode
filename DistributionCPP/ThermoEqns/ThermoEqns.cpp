@@ -2,12 +2,7 @@
 #include <Eigen/Dense>
 #include <gsl_errno.h>
 #include <gsl_spline.h>
-#include "compcol_double.h"                 // Compressed column matrix header
-#include "iohb_double.h"                    // Harwell-Boeing matrix I/O header
-#include "mvblasd.h"                        // MV_Vector level 1 BLAS
-#include "diagpre_double.h"                 // Diagonal preconditioner
-#include MATRIX_H                           // dense matrix header
-#include <GMRES/include/gmres.h>            // IML++ GMRES template
+#include <GMRES/include/gmresHouseholder.h>            // IML++ GMRES template
 
 using namespace std;
 using namespace Eigen;
