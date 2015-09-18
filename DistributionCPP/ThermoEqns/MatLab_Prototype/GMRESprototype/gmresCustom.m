@@ -1,34 +1,25 @@
-function [x,flag,relres,iter,resvec] = gmresCustom(A,b,restart,tol,maxit,x,varargin)
+function x = gmresCustom(jx_func,b,restart,tol,maxit,x,u0)
 
-[m,n] = size(A);
-maxit = min(ceil(n/restart),10);
+m = length(b);
+n = length(b);
+%maxit = min(ceil(n/restart),10);
 
 % Set up for the method
 flag = 1;
 xmin = x;                        % Iterate which has minimal residual so far
 imin = 0;                        % "Outer" iteration at which xmin was computed
 jmin = 0;                        % "Inner" iteration at which xmin was computed
-tolb = tol * n2b;                % Relative tolerance
 evalxm = 0;
 stag = 0;
 moresteps = 0;
 maxmsteps = min([floor(n/50),5,n-maxit]);
 maxstagsteps = 3;
 minupdated = 0;
-x0iszero = (norm(x) == 0);
+inner = min(restart,n);
+outer = maxit;
 % Compute initial residual
-r = b-A*x;
+r = b-jx_func(x,u0);
 normr = norm(r);                 % Norm of initial residual
-if (normr <= tolb)               % Initial guess is a good enough solution
-    flag = 0;
-    relres = normr / n2b;
-    iter = [0 0];
-    resvec = normr;
-    if (nargout < 2)
-        itermsg('gmres',tol,maxit,[0 0],flag,iter,relres);
-    end
-    return
-end
 % Preallocations for the method
 resvec = zeros(inner*outer+1,1);  % Preallocate vector for norm of residuals
 resvec(1) = normr;                % resvec(1) = norm(b-A*x0)
@@ -39,6 +30,8 @@ U = zeros(n,inner);
 R = zeros(inner,inner);
 w = zeros(inner+1,1);
 
+n2b = norm(r);
+tolb = tol * n2b;
 
 for outiter = 1 : outer
     %  Construct u for Householder reflector.
@@ -66,30 +59,12 @@ for outiter = 1 : outer
         end
         %  Explicitly normalize v to reduce the effects of round-off.
         v = v/norm(v);
-        
         %  Apply A to v.
-        v = iterapp('mtimes',afun,atype,afcnstr,v,varargin{:});
-        %  Apply Preconditioner.
-        if existM1
-            v = iterapp('mldivide',m1fun,m1type,m1fcnstr,v,varargin{:});
-            if ~all(isfinite(v))
-                flag = 2;
-                break
-            end
-        end
-        
-        if existM2
-            v = iterapp('mldivide',m2fun,m2type,m2fcnstr,v,varargin{:});
-            if ~all(isfinite(v))
-                flag = 2;
-                break
-            end
-        end
+        v = jx_func(v,u0);
         %  Form Pj*Pj-1*...P1*Av.
         for k = 1:initer
             v = v - U(:,k)*(2*(U(:,k)'*v));
         end
-        
         %  Determine Pj+1.
         if (initer ~= length(v))
             %  Construct u for Householder reflector Pj+1.
@@ -102,21 +77,18 @@ for outiter = 1 : outer
                 u(initer+1) = u(initer+1) + alpha;
                 u = u / norm(u);
                 U(:,initer+1) = u;
-                
                 %  Apply Pj+1 to v.
                 %  v = v - 2*u*(u'*v);
                 v(initer+2:end) = 0;
                 v(initer+1) = -alpha;
             end
         end
-        
         %  Apply Given's rotations to the newly formed v.
         for colJ = 1:initer-1
             tmpv = v(colJ);
             v(colJ)   = conj(J(1,colJ))*v(colJ) + conj(J(2,colJ))*v(colJ+1);
             v(colJ+1) = -J(2,colJ)*tmpv + J(1,colJ)*v(colJ+1);
         end
-        
         %  Compute Given's rotation Jm.
         if ~(initer==length(v))
             rho = norm(v(initer:initer+1));
@@ -127,13 +99,13 @@ for outiter = 1 : outer
             v(initer+1) = 0;
         end
         
-        R(:,initer) = v(1:inner);
+        R(:,initer) = v(1:inner)
         
-        normr = abs(w(initer+1));
+        normr = abs(w(initer+1))
         resvec((outiter-1)*inner+initer+1) = normr;
         normr_act = normr;
         
-        if (normr <= tolb || stag >= maxstagsteps || moresteps)
+        if (normr <= tol || stag >= maxstagsteps || moresteps)
             if evalxm == 0
                 ytmp = R(1:initer,1:initer) \ w(1:initer);
                 additive = U(:,initer)*(-2*ytmp(initer)*conj(U(initer,initer)));
@@ -165,28 +137,14 @@ for outiter = 1 : outer
                 end
                 xm = xm + additive;
             end
-            r = b - iterapp('mtimes',afun,atype,afcnstr,xm,varargin{:});
-            if norm(r) <= tol*n2b
+            r = b-jx_func(xm,u0);
+            if norm(r) <= tol
                 x = xm;
                 flag = 0;
                 iter = [outiter, initer];
                 break
             end
             minv_r = r;
-            if existM1
-                minv_r = iterapp('mldivide',m1fun,m1type,m1fcnstr,r,varargin{:});
-                if ~all(isfinite(minv_r))
-                    flag = 2;
-                    break
-                end
-            end
-            if existM2
-                minv_r = iterapp('mldivide',m2fun,m2type,m2fcnstr,minv_r,varargin{:});
-                if ~all(isfinite(minv_r))
-                    flag = 2;
-                    break
-                end
-            end
             
             normr_act = norm(minv_r);
             resvec((outiter-1)*inner+initer+1) = normr_act;
@@ -199,7 +157,7 @@ for outiter = 1 : outer
                 minupdated = 1;
             end
             
-            if normr_act <= tolb
+            if normr_act <= tol
                 x = xm;
                 flag = 0;
                 iter = [outiter, initer];
@@ -250,22 +208,8 @@ for outiter = 1 : outer
         end
         x = x + additive;
         xmin = x;
-        r = b - iterapp('mtimes',afun,atype,afcnstr,x,varargin{:});
+        r = b-jx_func(x,u0);
         minv_r = r;
-        if existM1
-            minv_r = iterapp('mldivide',m1fun,m1type,m1fcnstr,r,varargin{:});
-            if ~all(isfinite(minv_r))
-                flag = 2;
-                break
-            end
-        end
-        if existM2
-            minv_r = iterapp('mldivide',m2fun,m2type,m2fcnstr,minv_r,varargin{:});
-            if ~all(isfinite(minv_r))
-                flag = 2;
-                break
-            end
-        end
         normr_act = norm(minv_r);
         r = minv_r;
     end
@@ -289,12 +233,9 @@ for outiter = 1 : outer
 end         % ends outer loop
 
 % returned solution is that with minimum residual
-if flag == 0
-    relres = normr_act / n2minv_b;
-else
+if flag ~= 0
     x = xmin;
     iter = [imin jmin];
-    relres = normr_act / n2minv_b;
 end
 
 % truncate the zeros from resvec
@@ -310,14 +251,6 @@ else
     end
 end
 
-% only display a message if the output flag is not used
-if nargout < 2
-    if restarted
-        itermsg(sprintf('gmres(%d)',restart),tol,maxit,[outiter initer],flag,iter,relres);
-    else
-        itermsg(sprintf('gmres'),tol,maxit,initer,flag,iter(2),relres);
-    end
-end
 
 function sgn = scalarsign(d)
 sgn = sign(d);

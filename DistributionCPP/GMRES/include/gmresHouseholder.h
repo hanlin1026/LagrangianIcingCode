@@ -117,13 +117,19 @@ int GMRES(ThermoEqns* thermo, int balFlag,
   int maxmsteps = std::min(min1,stateSize-max_iter);
   int maxstagsteps = 3;
   int minupdated = 0;
-  int inner = restart;
+  int inner;
+  if (restart < stateSize)
+    inner = restart;
+  else
+    inner = stateSize;
   int outer = max_iter;
   double beta;
-  int initerFINAL;
-  int outiterFINAL;
+  int initerFINAL = 0;
+  int outiterFINAL = 0;
   std::vector<double> jx;
   double eps = 1.0e-6;
+  double n2b = NORM(b);
+  double tolb = tol*n2b;
   if (tol < eps)
     tol = eps;
   // Compute initial residual
@@ -141,12 +147,20 @@ int GMRES(ThermoEqns* thermo, int balFlag,
     return 0;
   }
   // Preallocations for the method
-  std::vector<double> resvec(inner*outer+1,1);          // Norm of residuals
+  std::vector<double> resvec(inner*outer+1);            // Norm of residuals
   resvec[0] = normR;                                    // resvec[0] = norm(b-A*x0)
   double normrmin = normR;                              // Norm of residual from xmin
   // Preallocate J to hold the Given's rotation constants.
   Eigen::MatrixXd J(2,inner);
+  for (int i=0; i<2; i++) {
+    for (int j=0; j<inner; j++)
+      J(i,j) = 0.0;
+  }
   Eigen::MatrixXd U(stateSize,inner);
+  for (int i=0; i<stateSize; i++) {
+    for (int j=0; j<inner; j++)
+      U(i,j) = 0.0;
+  }
   Eigen::MatrixXd R(inner,inner);
   for (int i=0; i<inner; i++) {
     for (int j=0; j<inner; j++)
@@ -178,8 +192,9 @@ int GMRES(ThermoEqns* thermo, int balFlag,
     beta = scalarsign(r[0])*normR;
     u[0] += beta;
     u = u / NORM(u);
-    for (int i=0; i<stateSize; i++)
+    for (int i=0; i<stateSize; i++) {
       U(i,0) = u[i];
+    }
     // Apply Householder projection to r.
     // w = r - 2*u*u'*r;
     w[0] = -beta;
@@ -201,8 +216,9 @@ int GMRES(ThermoEqns* thermo, int balFlag,
       // Apply Jacobian to v
       jx.clear();
       jx = thermo->JX(balFlag,v,u0);
+      v = jx;
       // Form Pj*Pj-1*...P1*Av.
-      for (int k=0; k<initer; k++) {
+      for (int k=0; k<initer+1; k++) {
 	Uv = 0.0;
 	for (int kk=0; kk<stateSize; kk++)
 	  Uv += U(kk,k)*v[kk];
@@ -212,9 +228,9 @@ int GMRES(ThermoEqns* thermo, int balFlag,
       // Determine Pj+1
       if (initer != v.size()-1) {
 	// Construct u for Householder reflector Pj+1
-	for (int i=0; i<initer; i++)
+	for (int i=0; i<initer+1; i++)
 	  u[i] = 0;
-	for (int i=initer; i<stateSize; i++)
+	for (int i=initer+1; i<stateSize; i++)
 	  u[i] = v[i];
 	alpha = NORM(u);
 	if (alpha != 0) {
@@ -234,15 +250,15 @@ int GMRES(ThermoEqns* thermo, int balFlag,
       // Apply Given's rotations to the newly formed v
       for (int colJ=0; colJ<initer-1; colJ++) {
 	tmpv = v[colJ];
-        v[colJ]   = J(1,colJ)*v[colJ] + J(2,colJ)*v[colJ+1];
-        v[colJ+1] = -J(2,colJ)*tmpv + J(1,colJ)*v[colJ+1];
+        v[colJ]   = J(0,colJ)*v[colJ] + J(1,colJ)*v[colJ+1];
+        v[colJ+1] = -J(1,colJ)*tmpv + J(0,colJ)*v[colJ+1];
       }
       // Compute Given's rotation Jm.
       if (initer != v.size()-1) {
 	rho = sqrt(pow(v[initer],2) + pow(v[initer+1],2));
 	J(0,initer) = v[initer]/rho;
 	J(1,initer) = v[initer+1]/rho;
-	w[initer+1] = -2*J(1,initer)*w[initer];
+	w[initer+1] = -J(1,initer)*w[initer];
 	w[initer] = J(0,initer)*w[initer];
 	v[initer] = rho;
 	v[initer+1] = 0;
@@ -252,15 +268,17 @@ int GMRES(ThermoEqns* thermo, int balFlag,
       normR = ABS(w[initer+1]);
       resvec[(outiter)*inner+initer+1] = normR;
       normr_act = normR;
-      if ((normR <= tol) || (stag>= maxstagsteps) || moresteps) {
+      // MORE DEBUGGING STARTING HERE
+      if ((normR <= tolb) || (stag>= maxstagsteps) || moresteps) {
 	if (evalxm == 0) {
 	  wtmp.resize(initer+1);
 	  for (int i=0; i<initer+1; i++)
 	    wtmp(i) = w[i];
 	  linearSolver.compute(R.block(0,0,initer+1,initer+1));
 	  ytmp = linearSolver.solve(wtmp);
-	  for (int i=0; i<stateSize; i++)
+	  for (int i=0; i<stateSize; i++) {
 	    additive[i] = U(i,initer)*(-2*ytmp(initer))*U(initer,initer);
+	  }
 	  additive[initer] += ytmp(initer);
 	  for (int k=initer-1; k>-1; k--) {
 	    additive[k] += ytmp(k);
@@ -306,7 +324,7 @@ int GMRES(ThermoEqns* thermo, int balFlag,
 	jx.clear();
 	jx = thermo->JX(balFlag,xm,u0);
 	r = b - jx;
-	if (NORM(r) <= tol) {
+	if (NORM(r) <= tol*n2b) {
 	  x = xm;
 	  flag = 0;
 	  break;
@@ -319,10 +337,9 @@ int GMRES(ThermoEqns* thermo, int balFlag,
 	  imin = outiter;
 	  jmin = initer;
 	  xmin = xm;
-	  printf("NORMxmin = %lf\n",NORM(xmin));
 	  minupdated = 1;
 	}
-	if (normr_act <= tol) {
+	if (normr_act <= tolb) {
 	  x = xm;
 	  flag = 0;
 	  break;
@@ -358,7 +375,7 @@ int GMRES(ThermoEqns* thermo, int balFlag,
       wtmp.resize(idx+1);
       for (int i=0; i<idx+1; i++)
 	wtmp(i) = w[i];
-      linearSolver.compute(R.block(1,1,idx+1,idx+1));
+      linearSolver.compute(R.block(0,0,idx+1,idx+1));
       ytmp = linearSolver.solve(wtmp);
       for (int i=0; i<stateSize; i++)
 	additive[i] = U(i,idx)*(-2*ytmp(idx)*U(idx,idx));
@@ -372,7 +389,6 @@ int GMRES(ThermoEqns* thermo, int balFlag,
 	  additive[kk] += -U(kk,k)*(-2*Uv);
       }
       x = x + additive;
-      printf("NORMadd = %lf\n",NORM(additive));
       xmin = x;
       jx.clear();
       jx = thermo->JX(balFlag,x,u0);
@@ -387,7 +403,7 @@ int GMRES(ThermoEqns* thermo, int balFlag,
     }
     if (flag == 3)
       break;
-    if (normr_act <= tol) {
+    if (normr_act <= tolb) {
       flag = 0;
       break;
     }
