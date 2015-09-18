@@ -248,7 +248,7 @@ int GMRES(ThermoEqns* thermo, int balFlag,
 	}
       }
       // Apply Given's rotations to the newly formed v
-      for (int colJ=0; colJ<initer-1; colJ++) {
+      for (int colJ=0; colJ<initer; colJ++) {
 	tmpv = v[colJ];
         v[colJ]   = J(0,colJ)*v[colJ] + J(1,colJ)*v[colJ+1];
         v[colJ+1] = -J(1,colJ)*tmpv + J(0,colJ)*v[colJ+1];
@@ -355,7 +355,7 @@ int GMRES(ThermoEqns* thermo, int balFlag,
 	}
       }
       if (normr_act <= normrmin) {
-	normrmin = normr_act;
+        normrmin = normr_act;
 	imin = outiter;
 	jmin = initer;
 	minupdated = 1;

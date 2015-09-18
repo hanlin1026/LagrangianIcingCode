@@ -89,6 +89,7 @@ for outiter = 1 : outer
             v(colJ)   = conj(J(1,colJ))*v(colJ) + conj(J(2,colJ))*v(colJ+1);
             v(colJ+1) = -J(2,colJ)*tmpv + J(1,colJ)*v(colJ+1);
         end
+        v
         %  Compute Given's rotation Jm.
         if ~(initer==length(v))
             rho = norm(v(initer:initer+1));
@@ -98,10 +99,9 @@ for outiter = 1 : outer
             v(initer) = rho;
             v(initer+1) = 0;
         end
+        R(:,initer) = v(1:inner);
         
-        R(:,initer) = v(1:inner)
-        
-        normr = abs(w(initer+1))
+        normr = abs(w(initer+1));
         resvec((outiter-1)*inner+initer+1) = normr;
         normr_act = normr;
         
