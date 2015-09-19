@@ -2,7 +2,7 @@
 #include <Eigen/Dense>
 #include <gsl_errno.h>
 #include <gsl_spline.h>
-#include <GMRES/include/gmresHouseholder.h>            // IML++ GMRES template
+#include <GMRES/include/gmres.h>            // IML++ GMRES template
 
 using namespace std;
 using namespace Eigen;
@@ -18,6 +18,12 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
   // Set LWC_,Uinf_
   LWC_ = 1.0;
   Uinf_ = 100;
+  // TEST: set values of other parameters
+  Td_ = -20.0;
+  cW_ = 4217.6;     // J/(kg C) at T = 0 C and P = 100 kPa
+  ud_ = 80.0;
+  cICE_ = 2093.0;   // J/(kg C) at T = 0
+  Lfus_ = 334774.0; // J/kg
   // Initial guess for ice accretion
   mice_upper_.resize(NPts_);
   for (int i=0; i<NPts_; i++)
@@ -183,6 +189,10 @@ vector<double> ThermoEqns::JX(int func, vector<double>& X, vector<double>& u0) {
     f2 = massBalanceUpper(X2);
     f1 = massBalanceUpper(u0);
   }
+  else if (func==1) {
+    f2 = energyBalanceUpper(X2);
+    f1 = energyBalanceUpper(u0);
+  }
   else if (func==2) {
     f2 = testBalance(X2);
     f1 = testBalance(u0);
@@ -231,6 +241,58 @@ vector<double> ThermoEqns::massBalanceUpper(vector<double>& x) {
   return err;
 }
 
+vector<double> ThermoEqns::energyBalanceUpper(vector<double>& Y) {
+  // Function to compute energy balance
+
+  vector<double> x = hf_upper_;
+  vector<double> z = mice_upper_;
+
+  vector<double> err(x.size());
+  vector<double> F(x.size());
+  vector<double> f(x.size()-1);
+  vector<double> xFACE(x.size()-1);
+  vector<double> cfFACE(x.size()-1);
+  vector<double> DF(x.size()-1);
+  vector<double> D_flux(x.size()-2);
+  vector<double> I_sources(x.size()-2);
+  // Calculate body centered fluxes
+  for (int i=0; i<NPts_; i++)
+    F[i] = (0.5*cW_/muL_)*pow(x[i],2)*Y[i]*cF_upper_[i];
+  // Calculate fluxes at cell faces (Roe scheme upwinding)
+  for (int i=0; i<NPts_-1; i++) {
+    xFACE[i] = 0.5*(x[i]+x[i+1]);
+    cfFACE[i] = 0.5*(cF_upper_[i]+cF_upper_[i+1]);
+    DF[i] = (cW_/2.0/muL_)*cF_upper_[i]*pow(xFACE[i],2);
+    f[i] = 0.5*(F[i]+F[i+1]) - 0.5*std::abs(DF[i])*(Y[i+1]-Y[i]);
+  }
+  // Calculate error for internal cells
+  double ds,mimp,RHS;
+  for (int i=1; i<NPts_-1; i++) {
+    ds = s_upper_[i+1]-s_upper_[i];
+    mimp = beta_upper_[i]*LWC_*Uinf_;
+    D_flux[i-1] = f[i]-f[i-1];
+    RHS = (1./rhoL_)*(mimp*(cW_*Td_ + 0.5*pow(ud_,2)) + z[i]*(Lfus_ - cICE_*Y[i]) + cH_upper_[i]*(Td_ - Y[i]));
+    I_sources[i-1] = ds*RHS;
+    err[i] = D_flux[i-1] - I_sources[i-1];
+  }
+  // Boundary conditions
+  double maxZ = 0.0;
+  for (int i=0; i<NPts_; i++) {
+    if (z[i]>maxZ)
+      maxZ = z[i];
+  }
+  if (z[0] < 0.01*maxZ)
+    err[0] = Y[0] - Td_;
+  else
+    err[0] = Y[0] - 0.0;
+  err[NPts_-1] = err[NPts_-2];
+
+  return err;
+
+}
+
+
+
 vector<double> ThermoEqns::testBalance(vector<double>& x) {
   // Test function RHS
 
@@ -249,18 +311,20 @@ vector<double> ThermoEqns::testBalance(vector<double>& x) {
 
 
 
-void ThermoEqns::NewtonKrylovIteration(const char* balance, vector<double>& u0) {
+std::vector<double> ThermoEqns::NewtonKrylovIteration(const char* balance, vector<double>& u0, double globaltol) {
   // Function to take a balance of form f(X) = 0 and do Newton-Krylov iteration
 
   // Set balance flag
   int balFlag;
   if (strcmp(balance,"MASS")==0)
     balFlag = 0;
+  else if (strcmp(balance,"ENERGY")==0)
+    balFlag = 1;
   else if (strcmp(balance,"TEST")==0)
     balFlag = 2;
 
   double tol = 1.e-3;                       // Convergence tolerance
-  int result, maxit = 1000, restart = 10;    // GMRES Maximum, restart iterations
+  int result, maxit = 2000, restart = 50;    // GMRES Maximum, restart iterations
 
   // Initialize Jacobian and RHS, solution vectors
   int stateSize = u0.size();
@@ -273,7 +337,7 @@ void ThermoEqns::NewtonKrylovIteration(const char* balance, vector<double>& u0) 
   MatrixXd H(restart+1, restart);
   // Begin iteration
   int nitermax = 20;
-  vector<double> globalerr; double globaltol = 2.0e-5;
+  vector<double> globalerr;
   vector<double> r(stateSize);
   double normR,normGlob;
   // Initialize linearization point
@@ -286,6 +350,8 @@ void ThermoEqns::NewtonKrylovIteration(const char* balance, vector<double>& u0) 
     // Compute RHS
     if (balFlag==0)
       b = massBalanceUpper(u0);
+    else if (balFlag == 1)
+      b = energyBalanceUpper(u0);
     else if (balFlag==2)
       b = testBalance(u0);
     b = b*-1.0;
@@ -295,6 +361,8 @@ void ThermoEqns::NewtonKrylovIteration(const char* balance, vector<double>& u0) 
     // Compute global error
     if (balFlag==0)
       globalerr = massBalanceUpper(un);
+    else if (balFlag == 1)
+      globalerr = energyBalanceUpper(un);
     else if (balFlag==2)
       globalerr = testBalance(un);
     jx = JX(balFlag,x,u0);
@@ -309,4 +377,31 @@ void ThermoEqns::NewtonKrylovIteration(const char* balance, vector<double>& u0) 
   }
   for (int ii=0; ii<stateSize; ii++)
     printf("%e\t%e\n",s_upper_[ii],un[ii]);
+
+  return un;
+}
+
+void ThermoEqns::setHF_upper(vector<double>& hf) {
+  hf_upper_ = hf;
+}
+
+void ThermoEqns::setTS_upper(vector<double>* ts) {
+  ts_upper_ = ts;
+}
+
+
+void ThermoEqns::correctFilmHeight() {
+  // Function to correct film height if it is non-physical
+
+  std::vector<double> x = hf_upper_;
+  std::vector<double> y = ts_upper_;
+  std::vector<double> mimp(NPts_);
+  std::vector<double> indX;
+  for (int i=0; i<NPts_; i++) {
+    mimp[i] = beta_upper_[i]*LWC_*Uinf_;
+    if (
+  }
+  double tolImag = 1.0e-6;
+  
+  
 }

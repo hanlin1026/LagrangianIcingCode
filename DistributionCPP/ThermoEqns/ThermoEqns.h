@@ -11,11 +11,15 @@ class ThermoEqns {
  public:
   ThermoEqns(const char* filenameCF,const char* filenameBETA,Airfoil& airfoil);
   ~ThermoEqns();
-  void NewtonKrylovIteration(const char* balance,std::vector<double>& u0);
+  std::vector<double> NewtonKrylovIteration(const char* balance,std::vector<double>& u0,double globaltol);
   // Mass/Energy balance equations
   std::vector<double> JX(int func, std::vector<double>& X, std::vector<double>& u0);
   std::vector<double> massBalanceUpper(std::vector<double>& X);
+  std::vector<double> energyBalanceUpper(std::vector<double>& Y);
   std::vector<double> testBalance(std::vector<double>& X);
+  // Set/get routines
+  void setHF_upper(std::vector<double>& hf);
+  void setTS_upper(std::vector<double>& ts);
 
  private:
   // Functions to read in data files
@@ -34,6 +38,7 @@ class ThermoEqns {
   std::vector<double> cH_upper_;
   std::vector<double> beta_upper_;
   double rhoL_, muL_, LWC_, Uinf_;
+  double Td_, cW_, ud_, cICE_, Lfus_;
 
 };
 
