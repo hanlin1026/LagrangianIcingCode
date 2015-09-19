@@ -260,7 +260,7 @@ void ThermoEqns::NewtonKrylovIteration(const char* balance, vector<double>& u0) 
     balFlag = 2;
 
   double tol = 1.e-3;                       // Convergence tolerance
-  int result, maxit = 100, restart = 10;    // GMRES Maximum, restart iterations
+  int result, maxit = 1000, restart = 10;    // GMRES Maximum, restart iterations
 
   // Initialize Jacobian and RHS, solution vectors
   int stateSize = u0.size();
@@ -272,7 +272,7 @@ void ThermoEqns::NewtonKrylovIteration(const char* balance, vector<double>& u0) 
   // Storage for upper Hessenberg H
   MatrixXd H(restart+1, restart);
   // Begin iteration
-  int nitermax = 10;
+  int nitermax = 20;
   vector<double> globalerr; double globaltol = 2.0e-5;
   vector<double> r(stateSize);
   double normR,normGlob;

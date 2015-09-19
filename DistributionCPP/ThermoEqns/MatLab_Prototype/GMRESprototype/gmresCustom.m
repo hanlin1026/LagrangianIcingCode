@@ -1,4 +1,4 @@
-function x = gmresCustom(jx_func,b,restart,tol,maxit,x,u0)
+function x = gmresCustom(jx_func,b,restart,tol,maxit,x,u0,scalars)
 
 m = length(b);
 n = length(b);
@@ -18,7 +18,7 @@ minupdated = 0;
 inner = min(restart,n);
 outer = maxit;
 % Compute initial residual
-r = b-jx_func(x,u0);
+r = b-jx_func(x,u0,scalars);
 normr = norm(r);                 % Norm of initial residual
 % Preallocations for the method
 resvec = zeros(inner*outer+1,1);  % Preallocate vector for norm of residuals
@@ -60,7 +60,7 @@ for outiter = 1 : outer
         %  Explicitly normalize v to reduce the effects of round-off.
         v = v/norm(v);
         %  Apply A to v.
-        v = jx_func(v,u0);
+        v = jx_func(v,u0,scalars);
         %  Form Pj*Pj-1*...P1*Av.
         for k = 1:initer
             v = v - U(:,k)*(2*(U(:,k)'*v));
@@ -89,7 +89,6 @@ for outiter = 1 : outer
             v(colJ)   = conj(J(1,colJ))*v(colJ) + conj(J(2,colJ))*v(colJ+1);
             v(colJ+1) = -J(2,colJ)*tmpv + J(1,colJ)*v(colJ+1);
         end
-        v
         %  Compute Given's rotation Jm.
         if ~(initer==length(v))
             rho = norm(v(initer:initer+1));
@@ -137,7 +136,7 @@ for outiter = 1 : outer
                 end
                 xm = xm + additive;
             end
-            r = b-jx_func(xm,u0);
+            r = b-jx_func(xm,u0,scalars);
             if norm(r) <= tol
                 x = xm;
                 flag = 0;
@@ -168,9 +167,7 @@ for outiter = 1 : outer
                 end
                 moresteps = moresteps + 1;
                 if moresteps >= maxmsteps
-                    if ~warned
-                        warning(message('MATLAB:gmres:tooSmallTolerance'));
-                    end
+                    
                     flag = 3;
                     iter = [outiter, initer];
                     break;
@@ -208,7 +205,7 @@ for outiter = 1 : outer
         end
         x = x + additive;
         xmin = x;
-        r = b-jx_func(x,u0);
+        r = b-jx_func(x,u0,scalars);
         minv_r = r;
         normr_act = norm(minv_r);
         r = minv_r;

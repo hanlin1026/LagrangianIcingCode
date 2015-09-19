@@ -237,10 +237,12 @@ int GMRES(ThermoEqns* thermo, int balFlag,
 	  alpha = scalarsign(v[initer+1])*alpha;
 	  // u = v(initer+1:end) +
           //     sign(v(initer+1))*||v(initer+1:end)||*e_{initer+1)
-	  u[initer+1] += alpha;
-	  u = u/NORM(u);
-	  for (int i=0; i<stateSize; i++)
-	    U(i,initer+1) = u[i];
+	  if (initer < inner-1) {
+	    u[initer+1] += alpha;
+	    u = u/NORM(u);
+	    for (int i=0; i<stateSize; i++)
+	      U(i,initer+1) = u[i];
+	  }
 	  // Apply Pj+1 to v
 	  for (int i=initer+2; i<stateSize; i++)
 	    v[i] = 0.0;
@@ -272,7 +274,7 @@ int GMRES(ThermoEqns* thermo, int balFlag,
       if ((normR <= tolb) || (stag>= maxstagsteps) || moresteps) {
 	if (evalxm == 0) {
 	  wtmp.resize(initer+1);
-	  for (int i=0; i<initer+1; i++)
+	  for (int i=0; i<wtmp.size(); i++)
 	    wtmp(i) = w[i];
 	  linearSolver.compute(R.block(0,0,initer+1,initer+1));
 	  ytmp = linearSolver.solve(wtmp);
@@ -297,11 +299,11 @@ int GMRES(ThermoEqns* thermo, int balFlag,
 	}
 	else if (evalxm == 1) {
 	  linearSolver.compute(R.block(0,0,initer,initer));
-	  addvc1.resize(initer-1);
-	  addvc.resize(initer);
-	  addvc1 = -1*linearSolver.solve(R.block(0,initer,initer,initer+1));
+	  addvc1.resize(initer);
+	  addvc.resize(initer+1);
+	  addvc1 = -1*linearSolver.solve(R.block(0,initer,initer,1));
 	  addvc1 *= w[initer]/R(initer,initer);
-	  for (int i=0; i<initer-1; i++)
+	  for (int i=0; i<initer; i++)
 	    addvc[i] = addvc1(i);
 	  addvc[initer] = w[initer]/R(initer,initer);
 	  if (NORM(addvc) < eps*NORM(xm))
@@ -373,7 +375,7 @@ int GMRES(ThermoEqns* thermo, int balFlag,
       else
 	idx = initerFINAL;
       wtmp.resize(idx+1);
-      for (int i=0; i<idx+1; i++)
+      for (int i=0; i<wtmp.size(); i++)
 	wtmp(i) = w[i];
       linearSolver.compute(R.block(0,0,idx+1,idx+1));
       ytmp = linearSolver.solve(wtmp);
