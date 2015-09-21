@@ -7,13 +7,12 @@
 using namespace std;
 using namespace Eigen;
 
-ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfoil& airfoil) {
+ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfoil& airfoil, FluidScalars& fluid) {
   // Constructor to read in input files and initialize thermo eqns
 
   this->interpUpperSurface(filenameCHCF,airfoil,"CHCF");
   this->interpUpperSurface(filenameBETA,airfoil,"BETA");
   // Set rhoL_,muL_
-  rhoL_ = 1000.0;
   muL_ = 1.787e-3;
   // Set LWC_,Uinf_
   LWC_ = 1.0;
@@ -24,6 +23,11 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
   ud_ = 80.0;
   cICE_ = 2093.0;   // J/(kg C) at T = 0
   Lfus_ = 334774.0; // J/kg
+  // Read in values of fluid parameters
+  rhoL_ = fluid.rhol_;
+  rhoINF_ = fluid.rhoinf_;
+  pINF_ = fluid.pinf_;
+  TINF_ = 250.0;
   // Initial guess for ice accretion
   mice_upper_.resize(NPts_);
   for (int i=0; i<NPts_; i++)
@@ -49,6 +53,9 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     s = data.col(0);
     ch = data.col(1);
     cf = data.col(2);
+    // Scale CH
+    for (int i=0; i<ch.size(); i++)
+      ch(i) = rhoINF_*pow(pINF_/rhoINF_,1.5)/(273.15-TINF_)*ch(i);
     // Set stagPt at s=0
     double stagPt = airfoil.getStagPt();
     for (int i=0; i<s.size(); i++) {
@@ -375,8 +382,8 @@ std::vector<double> ThermoEqns::NewtonKrylovIteration(const char* balance, vecto
       break;
     }
   }
-  for (int ii=0; ii<stateSize; ii++)
-    printf("%e\t%e\n",s_upper_[ii],un[ii]);
+  //for (int ii=0; ii<stateSize; ii++)
+  //  printf("%e\t%e\n",s_upper_[ii],un[ii]);
 
   return un;
 }
@@ -385,23 +392,162 @@ void ThermoEqns::setHF_upper(vector<double>& hf) {
   hf_upper_ = hf;
 }
 
-void ThermoEqns::setTS_upper(vector<double>* ts) {
+void ThermoEqns::setTS_upper(vector<double>& ts) {
   ts_upper_ = ts;
 }
 
+void ThermoEqns::setMICE_upper(vector<double>& mice) {
+  mice_upper_ = mice;
+}
 
-void ThermoEqns::correctFilmHeight() {
-  // Function to correct film height if it is non-physical
+vector<double> ThermoEqns::getS_upper() {
+  return s_upper_;
+}
 
-  std::vector<double> x = hf_upper_;
-  std::vector<double> y = ts_upper_;
-  std::vector<double> mimp(NPts_);
-  std::vector<double> indX;
-  for (int i=0; i<NPts_; i++) {
-    mimp[i] = beta_upper_[i]*LWC_*Uinf_;
-    if (
+vector<double> ThermoEqns::SolveThermoForIceRate(vector<double>& X, vector<double>& Y, const char* surface) {
+  // Function to solve thermo eqn for ice accretion rate
+
+  vector<double> XY(NPts_);
+  vector<double> DXY(NPts_);
+  vector<double> s(NPts_);
+  vector<double> LHS(NPts_);
+  vector<double> RHS(NPts_);
+  vector<double> beta(NPts_);
+  vector<double> cH(NPts_);
+  vector<double> Z(NPts_);
+  double mimp;
+  // Switch for upper/lower surface
+  if (strcmp(surface,"UPPER") == 0) {
+    s = s_upper_;
+    beta = beta_upper_;
+    cH = cH_upper_;
   }
-  double tolImag = 1.0e-6;
-  
-  
+  // Calculate XY and DXY
+  for (int i=0; i<NPts_; i++)
+    XY[i] = X[i]*Y[i];
+  for (int i=1; i<NPts_-1; i++)
+    DXY[i] = (XY[i+1]-XY[i-1])/(s[i+1]-s[i]);
+  DXY[0] = (XY[1]-XY[0])/(s[1]-s[0]);
+  DXY[NPts_] = (XY[NPts_]-XY[NPts_-1])/(s[NPts_]-s[NPts_-1]);
+  // Invert thermo eqn for ice accretion rate
+  for (int i=0; i<NPts_; i++) {
+    LHS[i] = (rhoL_*cW_/2.0/muL_)*DXY[i];
+    mimp = beta[i]*LWC_*Uinf_;
+    RHS[i] = mimp*(cW_*Td_ + 0.5*pow(ud_,2)) + cH[i]*(Td_ - Y[i]);
+    Z[i] = (LHS[i]-RHS[i])/(Lfus_ - cICE_*Y[i]);
+  }
+
+  return Z;
+}
+
+
+void ThermoEqns::SolveIcingEqns() {
+  // Main subroutine to iteratively solve mass/energy equations
+
+  vector<double> Xthermo(1000);
+  vector<double> Ythermo(1000);
+  vector<double> Zthermo(1000);
+  vector<double> XY(1000);
+  vector<double> YZ(1000);
+  vector<int> indWater;
+  vector<int> indIce;
+  int indWaterSize, indIceSize;
+  vector<double> Xnew(1000);
+  vector<double> Ynew(1000);
+  double epsWater = -1.0e-4;
+  double epsIce = 1.0e-4;
+  bool C_waterWarm, C_iceCold;
+  // Initial guess for X and Y (hf and Ts)
+  double dXthermo = (10.0e-3)/999;
+  for (int i=0; i<Xthermo.size(); i++) {
+    //Xthermo[i] = i*dXthermo;
+    Xthermo[i] = 1.e-3;
+    Ythermo[i] = -20.0;
+  }
+  // Begin main iterative solver
+  for (int iterThermo = 0; iterThermo<5; iterThermo++) {
+    // Mass
+    printf("ITER = %d\n\n",iterThermo);
+    printf("Solving mass equation...\n");
+    Xnew = NewtonKrylovIteration("MASS",Xthermo,1.0e-5);
+    Xthermo = Xnew;
+    // Constraint: check that conservation of mass is not violated
+    for (int i=0; i<Xthermo.size(); i++) {
+      if (Xthermo[i]<0)
+	Xthermo[i] = 0.0;
+    }
+    setHF_upper(Xthermo);
+    // Energy
+    printf("Solving energy equation...\n");
+    Ynew = NewtonKrylovIteration("ENERGY",Ythermo,0.06);
+    Ythermo = Ynew;
+    setTS_upper(Ythermo);
+    // Check constraints
+    indWaterSize = 0;
+    for (int i=0; i<XY.size(); i++) {
+      XY[i] = Xthermo[i]*Ythermo[i];
+      if (XY[i] < epsWater) {
+	indWater.push_back(i);
+	indWaterSize++;
+      }
+    }
+    // Water cannot be cold
+    if (indWaterSize == 0)
+      C_waterWarm = true;
+    else {
+      printf("Water below freezing detected.\n");
+      // If we have freezing water, warm it up using epsWater
+      C_waterWarm = false;
+      for (int i=0; i<indWaterSize; i++) 
+	Ythermo[indWater[i]] = epsWater/Xthermo[indWater[i]];
+      setTS_upper(Ythermo);
+      // Re-solve for ice profile
+      Zthermo = SolveThermoForIceRate(Xthermo,Ythermo,"UPPER");
+      // Correct for ice rate < 0
+      for (int i=0; i<Zthermo.size(); i++) {
+	if (Zthermo[i]<0)
+	  Zthermo[i] = 0.0;
+      }
+      setMICE_upper(Zthermo);
+    }
+    // Ice cannot be warm
+    indIceSize = 0;
+    for (int i=0; i<Ythermo.size(); i++) {
+      YZ[i] = Ythermo[i]*Zthermo[i];
+      if (YZ[i] > epsIce) {
+	indIce.push_back(i);
+	indIceSize++;
+      }
+    }
+    if (indIceSize == 0)
+      C_iceCold = true;
+    else {
+      printf("Ice above freezing detected.\n");
+      // If we have warm ice, cool it down using epsIce
+      C_iceCold = false;
+      for (int i=0; i<indIce.size(); i++)
+	Ythermo[indIce[i]] = epsIce/Zthermo[indIce[i]];
+      setTS_upper(Ythermo);
+      // Re-solve for ice profile
+      Zthermo = SolveThermoForIceRate(Xthermo,Ythermo,"UPPER");
+      // Correct for ice rate < 0
+      for (int i=0; i<Zthermo.size(); i++) {
+	if (Zthermo[i]<0)
+	  Zthermo[i] = 0.0;
+      }
+      setMICE_upper(Zthermo); 
+    }
+    // Check constraints
+    if ((C_waterWarm == true) && (C_iceCold == true)) {
+      printf("All compatibility relations satisfied.\n");
+      break;
+    }
+  }
+  // Output everything to screen
+  vector<double> sThermo = getS_upper();
+  printf("S\tHF\tTS\tMICE\n");
+  for (int i=0; i<1000; i++) {
+    printf("%lf\t%lf\t%lf\t%lf\n",sThermo[i],Xthermo[i],Ythermo[i],Zthermo[i]);
+  }
+
 }

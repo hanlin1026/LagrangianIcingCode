@@ -63,12 +63,12 @@ C_filmPos = true; C_icePos = true; C_waterWarm = false; C_iceCold = false;
 iter = 1;
 %%
 %while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter < 11) )
-while (iter<5)
+while (iter<6)
     iter
     % MASS (solve for X)
-    %x0 = linspace(0,10e-3,length(s))'; % Initial guess
-    %eps = 1e-4;
-    %X = NewtonKrylovIteration(@MassBalance,scalars,x0,eps);
+    x0 = linspace(0,10e-3,length(s))'; % Initial guess
+    eps = 1e-4;
+    X = NewtonKrylovIteration(@MassBalance,scalars,x0,eps);
     %{
     x0 = zeros(length(s),1);
     X = x0; epsT = 1e-8; iterMASS = 1; ERR = 1;
@@ -85,7 +85,7 @@ while (iter<5)
     end
     iterMASS
     %}
-    X = sqrt((2*uw/pw./tau_wall).*cumtrapz(s,mimp-Z));
+    %X = sqrt((2*uw/pw./tau_wall).*cumtrapz(s,mimp-Z));
     scalars.X_ = X;
     % Constraint: check that conservation of mass is not violated
     scalars = correctFilmHeight(scalars); 
@@ -124,7 +124,7 @@ while (iter<5)
         disp('Ice above freezing detected');
         % If we have warm ice, cool it down using epsICE
         C_iceCold = false;
-        Y(indWATER) = epsICE./Z(indWATER);
+        Y(indICE) = epsICE./Z(indICE);
         scalars.Y_ = Y;
         % Resolve for ice profile
         Z = SolveThermoForIceRate(X,Y,scalars);

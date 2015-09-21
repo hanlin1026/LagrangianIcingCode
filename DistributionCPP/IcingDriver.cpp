@@ -97,62 +97,7 @@ int main(int argc, const char *argv[]) {
   int particles = scalarsParcel.particles_;
   printf("maxiter = %d\n",maxiter);
 
-  // TEMPORARY CODE TO CONVERT (I,0) TO S-COORDS *****
-  const char *filenameCHCF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/heatfluxTEST";
-  const char *filenameBETA = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/BetaXY.dat";
-  ThermoEqns thermo = ThermoEqns(filenameCHCF,filenameBETA,airfoil);
-  std::vector<double> Xthermo(1000);
-  std::vector<double> Ythermo(1000);
-  std::vector<double> XY(1000);
-  std::vector<int> indWater;
-  int indWaterSize;
-  double dXthermo = (10.0e-3)/999;
-  for (int i=0; i<Xthermo.size(); i++) {
-    //Xthermo[i] = i*dXthermo;
-    Xthermo[i] = 1.e-3;
-    Ythermo[i] = -20.0;
-  }
-  std::vector<double> Xnew(1000);
-  std::vector<double> Ynew(1000);
-  double epsWater = -1.0e-4;
-  double epsIce = 1.0e-4;
-  for (int iterThermo = 0; iterThermo<5; iterThermo++) {
-    // Mass
-    Xnew = thermo.NewtonKrylovIteration("MASS",Xthermo,1.0e-5);
-    Xthermo = Xnew;
-    // Constraint: check that conservation of mass is not violated
-
-    thermo.setHF_upper(Xthermo);
-    // Energy
-    Ynew = thermo.NewtonKrylovIteration("ENERGY",Ythermo,0.06);
-    Ythermo = Ynew;
-    thermo.setTS_upper(Ythermo);
-    // Check constraints
-    indWaterSize = 0;
-    for (int i=0; i<XY.size(); i++) {
-      XY[i] = Xthermo[i]*Ythermo[i];
-      if (XY[i] < epsWater) {
-	indWater.push_back(i);
-	indWaterSize++;
-      }
-    }
-    // Water cannot be cold
-    if (indWaterSize == 0)
-      C_waterWarm = true;
-    else {
-      printf("Water below freezing detected.\n");
-      // If we have freezing water, warm it up using epsWater
-      C_waterWarm = false;
-      for (int i=0; i<indWaterSize; i++) 
-	Ythermo[indWater[i]] = epsWater/X[indWater[i]];
-      thermo.setTS_upper(Ythermo);
-      // Re-solve for ice profile
-      
-    }
-    
-  }
-  // *************************************************
-
+  // DROPLET ADVECTION MODULE ******************************
   while ((totalImpinge < particles) && (iter < maxiter)) {
     cloud.calcDtandImpinge(airfoil,p3d);
     cloud.transportSLD(p3d);
@@ -204,6 +149,18 @@ int main(int argc, const char *argv[]) {
   copy ( BetaBins.begin(), BetaBins.end(), out_itBINS );
   ostream_iterator<double> out_itMASS(foutMASS,"\n");
   copy ( Beta.begin(), Beta.end(), out_itMASS );
+  // **************************************************************
+
+  // THERMO EQUATIONS ********************************
+  // Initialize thermo eqns solver
+  const char *filenameCHCF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/heatfluxTEST";
+  const char *filenameBETA = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/BetaXY.dat";
+  ThermoEqns thermo = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid);
+  printf("rhoL = %lf\nrhoINF = %lf\npINF = %lf\nTINF = %lf\n",scalarsFluid.rhol_,scalarsFluid.rhoinf_,scalarsFluid.pinf_,scalarsFluid.Tinf_);
+  // Solve thermo equations
+  //thermo.SolveIcingEqns();
+  // *************************************************
+
   // Clear any allocated memory, close files/streams
   
 }
