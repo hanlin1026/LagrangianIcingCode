@@ -156,9 +156,8 @@ int main(int argc, const char *argv[]) {
   const char *filenameCHCF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/heatfluxTEST";
   const char *filenameBETA = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/BetaXY.dat";
   ThermoEqns thermo = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid);
-  printf("rhoL = %lf\nrhoINF = %lf\npINF = %lf\nTINF = %lf\n",scalarsFluid.rhol_,scalarsFluid.rhoinf_,scalarsFluid.pinf_,scalarsFluid.Tinf_);
   // Solve thermo equations
-  //thermo.SolveIcingEqns();
+  thermo.SolveIcingEqns();
   // *************************************************
 
   // Clear any allocated memory, close files/streams

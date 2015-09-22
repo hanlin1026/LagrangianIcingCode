@@ -24,10 +24,10 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
   cICE_ = 2093.0;   // J/(kg C) at T = 0
   Lfus_ = 334774.0; // J/kg
   // Read in values of fluid parameters
-  rhoL_ = fluid.rhol_;
-  rhoINF_ = fluid.rhoinf_;
-  pINF_ = fluid.pinf_;
   TINF_ = 250.0;
+  rhoL_ = fluid.rhol_;
+  rhoINF_ = (3.302857142857084e-05)*pow(TINF_,2) + (-0.022130857142857)*TINF_ + 4.875685714285685; // O(2) fit between T=[175,275]
+  pINF_ = rhoINF_*287.058*TINF_;
   // Initial guess for ice accretion
   mice_upper_.resize(NPts_);
   for (int i=0; i<NPts_; i++)
@@ -55,7 +55,7 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     cf = data.col(2);
     // Scale CH
     for (int i=0; i<ch.size(); i++)
-      ch(i) = rhoINF_*pow(pINF_/rhoINF_,1.5)/(273.15-TINF_)*ch(i);
+      ch(i) = -1.0*rhoINF_*pow(pINF_/rhoINF_,1.5)/(273.15-TINF_)*ch(i);
     // Set stagPt at s=0
     double stagPt = airfoil.getStagPt();
     for (int i=0; i<s.size(); i++) {
