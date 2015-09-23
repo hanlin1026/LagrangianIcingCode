@@ -153,7 +153,7 @@ int main(int argc, const char *argv[]) {
 
   // THERMO EQUATIONS ********************************
   // Initialize thermo eqns solver
-  const char *filenameCHCF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/heatfluxTEST";
+  const char *filenameCHCF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/heatflux";
   const char *filenameBETA = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/BetaXY.dat";
   ThermoEqns thermo = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid);
   // Solve thermo equations

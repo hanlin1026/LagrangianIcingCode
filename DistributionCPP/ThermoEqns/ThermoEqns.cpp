@@ -10,8 +10,7 @@ using namespace Eigen;
 ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfoil& airfoil, FluidScalars& fluid) {
   // Constructor to read in input files and initialize thermo eqns
 
-  this->interpUpperSurface(filenameCHCF,airfoil,"CHCF");
-  this->interpUpperSurface(filenameBETA,airfoil,"BETA");
+  NPts_ = 1000;
   // Set rhoL_,muL_
   muL_ = 1.787e-3;
   // Set LWC_,Uinf_
@@ -24,7 +23,7 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
   cICE_ = 2093.0;   // J/(kg C) at T = 0
   Lfus_ = 334774.0; // J/kg
   // Read in values of fluid parameters
-  TINF_ = 250.0;
+  TINF_ = 250.0; // K
   rhoL_ = fluid.rhol_;
   rhoINF_ = (3.302857142857084e-05)*pow(TINF_,2) + (-0.022130857142857)*TINF_ + 4.875685714285685; // O(2) fit between T=[175,275]
   pINF_ = rhoINF_*287.058*TINF_;
@@ -32,6 +31,8 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
   mice_upper_.resize(NPts_);
   for (int i=0; i<NPts_; i++)
     mice_upper_[i] = 0.0;
+  this->interpUpperSurface(filenameCHCF,airfoil,"CHCF");
+  this->interpUpperSurface(filenameBETA,airfoil,"BETA");
 
 }
 
@@ -79,7 +80,6 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     s_upper_orig[i] = s(zero_ind+i);
   }
   // Refine upper surface grid
-  NPts_ = 1000;
   s_upper_.resize(NPts_);
   //double s_max = s.maxCoeff();
   double s_max = 0.4;
@@ -315,10 +315,46 @@ vector<double> ThermoEqns::testBalance(vector<double>& x) {
   return err;
 }
 
+vector<double> ThermoEqns::trapz(vector<double>& X, vector<double>& Y) {
+  // Trapezoidal integration function
+
+  vector<double> Z(X.size());
+  Z[0] = 0.0;
+  for (int i=1; i<X.size(); i++) {
+    Z[i] = Z[i-1] + 0.5*(X[i]-X[i-1])*(Y[i]+Y[i-1]);
+  }
+  
+  return Z;
+}
+
+vector<double> ThermoEqns::integrateMassEqnUpper() {
+  // Integrate mass eqn with trapz
+
+  vector<double> Z(NPts_);
+  vector<double> X = s_upper_;
+  vector<double> I(NPts_);
+  double mimp;
+  for (int i=0; i<NPts_; i++) {
+    mimp = beta_upper_[i]*LWC_*Uinf_;
+    I[i] = mimp - mice_upper_[i];
+  }
+  vector<double> INT = trapz(X,I);
+  for (int i=0; i<NPts_; i++) {
+    if ((INT[i] >= 0) && (cF_upper_[i] != 0))
+      Z[i] = sqrt((2.0*muL_/rhoL_/cF_upper_[i])*INT[i]);
+    else {
+      // Set film height to zero everywhere prior and up to i
+      for (int j=0; j<i+1; j++)
+	Z[j] = 0.0;
+    }
+  }
+  //for (int i=0; i<NPts_; i++)
+  //  printf("%lf\n",Z[i]);
+  return Z;
+}
 
 
-
-std::vector<double> ThermoEqns::NewtonKrylovIteration(const char* balance, vector<double>& u0, double globaltol) {
+vector<double> ThermoEqns::NewtonKrylovIteration(const char* balance, vector<double>& u0, double globaltol) {
   // Function to take a balance of form f(X) = 0 and do Newton-Krylov iteration
 
   // Set balance flag
@@ -330,7 +366,7 @@ std::vector<double> ThermoEqns::NewtonKrylovIteration(const char* balance, vecto
   else if (strcmp(balance,"TEST")==0)
     balFlag = 2;
 
-  double tol = 1.e-3;                       // Convergence tolerance
+  double tol = 1.e-3;                        // Convergence tolerance
   int result, maxit = 2000, restart = 50;    // GMRES Maximum, restart iterations
 
   // Initialize Jacobian and RHS, solution vectors
@@ -462,14 +498,15 @@ void ThermoEqns::SolveIcingEqns() {
   for (int i=0; i<Xthermo.size(); i++) {
     //Xthermo[i] = i*dXthermo;
     Xthermo[i] = 1.e-3;
-    Ythermo[i] = -20.0;
+    Ythermo[i] = -1.0;
   }
   // Begin main iterative solver
   for (int iterThermo = 0; iterThermo<5; iterThermo++) {
     // Mass
     printf("ITER = %d\n\n",iterThermo);
     printf("Solving mass equation...\n");
-    Xnew = NewtonKrylovIteration("MASS",Xthermo,1.0e-5);
+    Xnew = integrateMassEqnUpper();
+    //Xnew = NewtonKrylovIteration("MASS",Xthermo,1.0e-5);
     Xthermo = Xnew;
     // Constraint: check that conservation of mass is not violated
     for (int i=0; i<Xthermo.size(); i++) {

@@ -13,12 +13,14 @@ class ThermoEqns {
   ThermoEqns(const char* filenameCF,const char* filenameBETA,Airfoil& airfoil,FluidScalars& fluid);
   ~ThermoEqns();
   std::vector<double> NewtonKrylovIteration(const char* balance,std::vector<double>& u0,double globaltol);
+  std::vector<double> trapz(std::vector<double>& X, std::vector<double>& Y);
   // Mass/Energy balance equations
   std::vector<double> JX(int func, std::vector<double>& X, std::vector<double>& u0);
   std::vector<double> massBalanceUpper(std::vector<double>& X);
   std::vector<double> energyBalanceUpper(std::vector<double>& Y);
   std::vector<double> testBalance(std::vector<double>& X);
   std::vector<double> SolveThermoForIceRate(std::vector<double>& X, std::vector<double>& Y, const char* surface);
+  std::vector<double> integrateMassEqnUpper();
   void SolveIcingEqns();
   // Set/get routines
   void setHF_upper(std::vector<double>& hf);
