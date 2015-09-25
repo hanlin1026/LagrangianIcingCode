@@ -51,7 +51,7 @@ scalars.ds_ = ds;
 scalars.pw_ = pw;
 scalars.uw_ = uw;
 scalars.cw_ = 4217.6; % J/(kg C) at T = 0 C and P = 100 kPa
-scalars.Td_ = -20;
+scalars.Td_ = -1;
 scalars.ud_ = 80;
 scalars.cice_ = 2093; % J/(kg C) at T = 0
 scalars.Lfus_ = 334774; % J/kg
@@ -68,11 +68,18 @@ iter = 1;
 %% Solve
 
 %u0 = linspace(0,10e-3,1000)';
-u0 = 1e-3*ones(1000,1);
-X = NewtonKrylovIteration(@massBalance,@JX,u0,scalars);
-
-
-
+%u0 = 1e-3*ones(1000,1);
+%X = NewtonKrylovIteration(@massBalance,@JX,u0,scalars);
+X = sqrt((2*uw/pw./tau_wall).*cumtrapz(s,mimp-Z));
+scalars.X_ = X;
+scalars = correctFilmHeight(scalars); 
+X = scalars.X_;
+% ENERGY (solve for Y)
+eps = 1e-4;
+if (iter == 1)
+    Y = scalars.Td_*ones(length(s),1);
+end
+Ynew = NewtonKrylovIteration(@EnergyBalance,@JX,Y,scalars);
 
 
 

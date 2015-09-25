@@ -3,33 +3,48 @@
 % INPUT ****************************
 % Import skin friction coefficient data
 CF = importdata('heatflux');
-% Piecewise interpolation *************
-indDisc = find(abs(diff(CF(:,3)))/mean(abs(diff(CF(:,3)))) > .5e2);
 stagPt = 1.008358;
 s_min = stagPt; s_max = stagPt + 0.4;
 [val,indFirst] = min(abs(CF(:,1)-s_min));
 [val,indLast] = min(abs(CF(:,1)-s_max));
-indDisc = [indFirst-1;indDisc;indLast];
 NPts = 1000;
-s = []; tau_wall = []; ch = [];
-
-for i=1:(length(indDisc)-1)
-    startpt = indDisc(i)+1;
-    breakpt = indDisc(i+1);
-    if startpt == breakpt
-        s = [s; CF(startpt,1)];
-        ch = [ch; CF(startpt,2)];
-        tau_wall = [tau_wall; CF(startpt,3)];
-    else
-        npts = NPts*(breakpt-startpt)/(indLast-indFirst);
-        snew = linspace(CF(startpt,1),CF(breakpt,1),npts)';
-        s = [s; snew];
-        ch = [ch; interp1(CF(startpt:breakpt,1),CF(startpt:breakpt,2),snew)];
-        tau_wall = [tau_wall; interp1(CF(startpt:breakpt,1),CF(startpt:breakpt,3),snew)];
-    end
-end
+% Find stagPt w.r.t. skin friction
+[val,ind] = min(CF(indFirst-5:indFirst+5,3));
+indFirst = indFirst-5+(ind-1);
+stagPt = CF(indFirst,1);
+% Interpolation
+s = linspace(CF(indFirst,1),CF(indLast,1),NPts)';
+ch = interp1(CF(indFirst:indLast,1),CF(indFirst:indLast,2),s);
+tau_wall = interp1(CF(indFirst:indLast,1),CF(indFirst:indLast,3),s);
 s = s - stagPt;
+% Piecewise interpolation *************
+% indDisc = find(abs(diff(CF(:,3)))/mean(abs(diff(CF(:,3)))) > .5e2);
+% stagPt = 1.008358;
+% s_min = stagPt; s_max = stagPt + 0.4;
+% [val,indFirst] = min(abs(CF(:,1)-s_min));
+% [val,indLast] = min(abs(CF(:,1)-s_max));
+% indDisc = [indFirst-1;indDisc;indLast];
+% NPts = 1000;
+% s = []; tau_wall = []; ch = [];
+% 
+% for i=1:(length(indDisc)-1)
+%     startpt = indDisc(i)+1;
+%     breakpt = indDisc(i+1);
+%     if startpt == breakpt
+%         s = [s; CF(startpt,1)];
+%         ch = [ch; CF(startpt,2)];
+%         tau_wall = [tau_wall; CF(startpt,3)];
+%     else
+%         npts = NPts*(breakpt-startpt)/(indLast-indFirst);
+%         snew = linspace(CF(startpt,1),CF(breakpt,1),npts)';
+%         s = [s; snew];
+%         ch = [ch; interp1(CF(startpt:breakpt,1),CF(startpt:breakpt,2),snew)];
+%         tau_wall = [tau_wall; interp1(CF(startpt:breakpt,1),CF(startpt:breakpt,3),snew)];
+%     end
+% end
+% s = s - stagPt;
 % **************************************
+
 %tau_wall(abs(tau_wall) < 0.05*max(abs(tau_wall))) = 0;
 ch = -1*1.412*(1.01e5/1.412)^1.5/(273.15-250)*ch;
 ds = zeros(length(s),1);
@@ -39,11 +54,11 @@ uw = 1.787e-3;
 % Input incoming liquid mass k(s)
 BETA = importdata('BetaXY.dat',',');
 Uinf = 100;
-LWC = 1;
+LWC = 0.55e-3;
 mimp = Uinf*LWC*interp1(BETA(:,1),BETA(:,2),s);
 mimp(isnan(mimp)) = 0;
 % Guess ice profile z(s)
-Z = 0*mimp;
+Z = 1*mimp;
 % **********************************
 % Set up structure for parameters
 scalars.s_ = s;
@@ -51,17 +66,17 @@ scalars.ds_ = ds;
 scalars.pw_ = pw;
 scalars.uw_ = uw;
 scalars.cw_ = 4217.6; % J/(kg C) at T = 0 C and P = 100 kPa
-scalars.Td_ = -20;
+scalars.Td_ = -0.1;
 scalars.ud_ = 80;
 scalars.cice_ = 2093; % J/(kg C) at T = 0
 scalars.Lfus_ = 334774; % J/kg
 scalars.ch_ = ch; % W/(m^2 C)
 scalars.mimp_ = mimp;
-scalars.tau_wall_ = tau_wall;
+scalars.tau_wall_ = tau_wall.*ds*0.5*1.22*Uinf^2; tau_wall = scalars.tau_wall_;
 scalars.Z_ = Z;
 % Set convergence tolerances for water and ice constraints
-epsWATER = -1e-4;
-epsICE = 1e-4;
+epsWATER = -1e-8;
+epsICE = 1e-8;
 % Iterate on mass/energy eqns until physical solution attained
 C_filmPos = true; C_icePos = true; C_waterWarm = false; C_iceCold = false;
 iter = 1;
@@ -72,7 +87,7 @@ while (iter<6)
     % MASS (solve for X)
     x0 = linspace(0,10e-3,length(s))'; % Initial guess
     eps = 1e-4;
-    X = NewtonKrylovIteration(@MassBalance,scalars,x0,eps);
+    %X = NewtonKrylovIteration(@MassBalance,scalars,x0,eps);
     %{
     x0 = zeros(length(s),1);
     X = x0; epsT = 1e-8; iterMASS = 1; ERR = 1;
@@ -89,37 +104,23 @@ while (iter<6)
     end
     iterMASS
     %}
-    %X = sqrt((2*uw/pw./tau_wall).*cumtrapz(s,mimp-Z));
+    X = sqrt((2*uw/pw./tau_wall).*cumtrapz(s,mimp-Z));
     scalars.X_ = X;
+
     % Constraint: check that conservation of mass is not violated
     scalars = correctFilmHeight(scalars); 
     X = scalars.X_;
     % ENERGY (solve for Y)
     eps = 1e-4;
     if (iter == 1)
-        Y = scalars.Td_*ones(length(s),1);
+        %Y = scalars.Td_*ones(length(s),1);
+        Y = 0*ones(length(s),1);
     end
     Ynew = NewtonKrylovIteration(@EnergyBalance,scalars,Y,eps);
     Y = Ynew;
     scalars.Y_ = Ynew;
-    % Check constraints
-    XY = X.*Y;
-    indWATER = find(XY<epsWATER);
     % CONSTRAINTS
-    % Water cannot be cold
-    if (isempty(indWATER))
-        C_waterWarm = true;
-    else
-        disp('Water below freezing detected');
-        % If we have freezing water, warm it up using epsWATER
-        C_waterWarm = false;
-        Y(indWATER) = epsWATER./X(indWATER);
-        scalars.Y_ = Y;
-        % Resolve for ice profile (Z)
-        Z = SolveThermoForIceRate(X,Y,scalars);
-        Z(Z<0) = 0;
-        scalars.Z_ = Z;
-    end
+    %
     YZ = Y.*Z;
     % Ice cannot be warm
     indICE = find(YZ>epsICE);
@@ -129,14 +130,33 @@ while (iter<6)
         disp('Ice above freezing detected');
         % If we have warm ice, cool it down using epsICE
         C_iceCold = false;
-        Y(indICE) = epsICE./Z(indICE);
-        scalars.Y_ = Y;
+        Z(indICE) = epsICE./Y(indICE);
+        %scalars.Z_ = Z;
         % Resolve for ice profile
-        Z = SolveThermoForIceRate(X,Y,scalars);
+        %Z = SolveThermoForIceRate(X,Ytmp,scalars);
         Z(Z<0) = 0;
         scalars.Z_ = Z;
     end
+    %}
     
+    %
+    XY = X.*Y;
+    indWATER = find(XY<epsWATER);
+    % Water cannot be cold
+    if (isempty(indWATER))
+        C_waterWarm = true;
+    else
+        disp('Water below freezing detected');
+        % If we have freezing water, warm it up using epsWATER
+        C_waterWarm = false;
+        Ytmp = Y;
+        Ytmp(indWATER) = 0;
+        Z = SolveThermoForIceRate(X,Ytmp,scalars);
+        scalars.Z_ = Z;
+    end
+    %}
+    
+    %}
     % Plot
     figure(11); hold on; plot(s,X); drawnow;
     figure(12); hold on; plot(s,Y); drawnow;

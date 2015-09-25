@@ -2,7 +2,7 @@ function un = NewtonKrylovIteration(F,J,u0,scalars)
 
 nitermax = 20;
 restart = 10;
-maxit = 2000;
+maxit = 100;
 tol = 1e-3;
 globaltol = 1e-5;
 
@@ -14,7 +14,8 @@ for i = 1:nitermax
     u0 = un;
     x = u0;
     F_k = F(u0,scalars);
-    du0 = gmresGramSchmidt(J, -F_k, restart, tol, maxit, x, u0, scalars);
+    [du0,flag] = gmres(@(du) J(du,u0,scalars),-F_k,restart,tol,maxit);
+    %du0 = gmres(J, -F_k, restart, tol, maxit, x, u0, scalars);
     %[du0,flag] = bicgstab( @(du) J(du), -F_k, tol, maxit );
     %[du0,flag] = bicgstab( @(du) J(du), -F_k, tol, maxit,[],[],du0 );
     un = u0 + du0;

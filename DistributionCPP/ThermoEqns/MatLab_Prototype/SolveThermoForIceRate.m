@@ -22,17 +22,18 @@ F = (0.5*cw/uw)*x.^2.*y.*tau_wall;
 k = [1:length(x)-1];
 f = zeros(length(x)-1,1);
 xFACE = 0.5*(x(k)+x(k+1));
+sFACE = 0.5*(s(k)+s(k+1));
 tauFACE = 0.5*(tau_wall(k)+tau_wall(k+1));
 DF = (cw/2/uw).*tauFACE.*xFACE.^2;
 f = 0.5*(F(k)+F(k+1)) - 0.5*abs(DF).*(y(k+1)-y(k));
 % Solve discretization for ice accretion rate
 k = [2:length(x)-1];
 D_flux = f(k)-f(k-1);
-RHS = (1/pw)*(mimp(k)*(cw*Td + 0.5*ud^2) + ch(k).*(Td - y(k)));
-I_sources = ds(k).*RHS;
+dsFACE = sFACE(k)-sFACE(k-1);
+RHS = mimp(k)*(cw*Td + 0.5*ud^2) + ch(k).*(Td - y(k));
 
 zn = zeros(length(x),1);
-zn(2:end-1) = (D_flux - I_sources)./(Lfus - cice*y(k))./ds(k);
+zn(2:end-1) = ((pw./dsFACE).*D_flux - RHS)./(Lfus - cice*y(k));
 zn(1) = zn(2);
 zn(end) = zn(end-1);
 

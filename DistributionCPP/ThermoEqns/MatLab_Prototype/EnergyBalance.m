@@ -32,6 +32,7 @@ err = zeros(length(x),1);
 k = [2:length(x)-1];
 D_flux = f(k)-f(k-1);
 RHS = (1/pw)*(mimp(k)*(cw*Td + 0.5*ud^2) + z(k).*(Lfus - cice.*y(k)) + ch(k).*(Td - y(k)));
+%RHS = (1/pw)*( ch(k).*(Td - y(k)) + z(k).*(Lfus - cice.*y(k)));
 I_sources = ds(k).*RHS;
 err(k) = D_flux-I_sources;
 
