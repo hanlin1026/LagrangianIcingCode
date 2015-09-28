@@ -58,7 +58,7 @@ LWC = 0.55e-3;
 mimp = Uinf*LWC*interp1(BETA(:,1),BETA(:,2),s);
 mimp(isnan(mimp)) = 0;
 % Guess ice profile z(s)
-Z = 1*mimp;
+Z = 0*mimp;
 % **********************************
 % Set up structure for parameters
 scalars.s_ = s;
@@ -66,7 +66,7 @@ scalars.ds_ = ds;
 scalars.pw_ = pw;
 scalars.uw_ = uw;
 scalars.cw_ = 4217.6; % J/(kg C) at T = 0 C and P = 100 kPa
-scalars.Td_ = -0.1;
+scalars.Td_ = -13;
 scalars.ud_ = 80;
 scalars.cice_ = 2093; % J/(kg C) at T = 0
 scalars.Lfus_ = 334774; % J/kg
@@ -82,7 +82,7 @@ C_filmPos = true; C_icePos = true; C_waterWarm = false; C_iceCold = false;
 iter = 1;
 %%
 %while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter < 11) )
-while (iter<6)
+while (iter<11)
     iter
     % MASS (solve for X)
     x0 = linspace(0,10e-3,length(s))'; % Initial guess
@@ -90,7 +90,7 @@ while (iter<6)
     %X = NewtonKrylovIteration(@MassBalance,scalars,x0,eps);
     %{
     x0 = zeros(length(s),1);
-    X = x0; epsT = 1e-8; iterMASS = 1; ERR = 1;
+    X = x0; epsT = 1e2; iterMASS = 1; ERR = 1;
     DX = MassBalance(X,scalars);
     X = X - epsT*DX;
     X(X<0) = 0;
@@ -104,7 +104,13 @@ while (iter<6)
     end
     iterMASS
     %}
-    X = sqrt((2*uw/pw./tau_wall).*cumtrapz(s,mimp-Z));
+    %X = sqrt((2*uw/pw./tau_wall).*cumtrapz(s,mimp-Z));
+    %
+    if (iter==1)
+        X = zeros(length(s),1);
+    end
+    [X,~] = implicitSolver(@MassBalance,X,scalars,1e2,1e-2);
+    %}
     scalars.X_ = X;
 
     % Constraint: check that conservation of mass is not violated
@@ -116,9 +122,9 @@ while (iter<6)
         %Y = scalars.Td_*ones(length(s),1);
         Y = 0*ones(length(s),1);
     end
-    Ynew = NewtonKrylovIteration(@EnergyBalance,scalars,Y,eps);
-    Y = Ynew;
-    scalars.Y_ = Ynew;
+    %Ynew = NewtonKrylovIteration(@EnergyBalance,scalars,Y,eps); Y = Ynew;
+    [Y,~] = implicitSolver(@EnergyBalance,Y,scalars,1e1,1e-4);
+    scalars.Y_ = Y;
     % CONSTRAINTS
     %
     YZ = Y.*Z;
