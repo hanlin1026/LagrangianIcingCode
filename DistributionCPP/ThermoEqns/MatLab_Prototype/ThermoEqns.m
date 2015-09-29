@@ -82,40 +82,29 @@ C_filmPos = true; C_icePos = true; C_waterWarm = false; C_iceCold = false;
 iter = 1;
 %%
 %while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter < 11) )
-while (iter<11)
+con = 1;
+figure(13); plot(s,mimp,'k--');
+while ((iter<7) )
     iter
+    con = 0;
     % MASS (solve for X)
-    x0 = linspace(0,10e-3,length(s))'; % Initial guess
-    eps = 1e-4;
+    %x0 = linspace(0,10e-3,length(s))'; % Initial guess
+    %eps = 1e-4;
     %X = NewtonKrylovIteration(@MassBalance,scalars,x0,eps);
-    %{
-    x0 = zeros(length(s),1);
-    X = x0; epsT = 1e2; iterMASS = 1; ERR = 1;
-    DX = MassBalance(X,scalars);
-    X = X - epsT*DX;
-    X(X<0) = 0;
-    ERR0 = max(abs(DX));
-    while ((ERR > 1e-2*ERR0) && (iterMASS < 20000))
-        iterMASS = iterMASS+1;
-        DX = MassBalance(X,scalars);
-        X = X - epsT*DX;
-        X(X<0) = 0;
-        ERR = max(abs(DX));
-    end
-    iterMASS
-    %}
     %X = sqrt((2*uw/pw./tau_wall).*cumtrapz(s,mimp-Z));
     %
     if (iter==1)
         X = zeros(length(s),1);
     end
-    [X,~] = implicitSolver(@MassBalance,X,scalars,1e2,1e-2);
+    [X,err,con] = explicitSolver(@MassBalance,X,scalars,1e2,1e-4,'MASS');
+    if (con == 1)
+        disp('CONSTRAINT: Mass balance violated (negative film height)');
+    end
     %}
     scalars.X_ = X;
-
     % Constraint: check that conservation of mass is not violated
-    scalars = correctFilmHeight(scalars); 
-    X = scalars.X_;
+    scalars = correctFilmHeight(scalars);
+    X = scalars.X_; Z = scalars.Z_;
     % ENERGY (solve for Y)
     eps = 1e-4;
     if (iter == 1)
@@ -123,17 +112,18 @@ while (iter<11)
         Y = 0*ones(length(s),1);
     end
     %Ynew = NewtonKrylovIteration(@EnergyBalance,scalars,Y,eps); Y = Ynew;
-    [Y,~] = implicitSolver(@EnergyBalance,Y,scalars,1e1,1e-4);
+    [Y,~,~] = explicitSolver(@EnergyBalance,Y,scalars,1e1,1e-4,'ENERGY');
     scalars.Y_ = Y;
     % CONSTRAINTS
     %
     YZ = Y.*Z;
     % Ice cannot be warm
-    indICE = find(YZ>epsICE);
+    indICE = find(YZ>100*epsICE);
     if (isempty(indICE))
         C_iceCold = true;
     else
-        disp('Ice above freezing detected');
+        disp('CONSTRAINT: Ice above freezing detected');
+        con = 1;
         % If we have warm ice, cool it down using epsICE
         C_iceCold = false;
         Z(indICE) = epsICE./Y(indICE);
@@ -147,12 +137,13 @@ while (iter<11)
     
     %
     XY = X.*Y;
-    indWATER = find(XY<epsWATER);
+    indWATER = find(XY<100*epsWATER);
     % Water cannot be cold
     if (isempty(indWATER))
         C_waterWarm = true;
     else
-        disp('Water below freezing detected');
+        disp('CONSTRAINT: Water below freezing detected');
+        con = 1;
         % If we have freezing water, warm it up using epsWATER
         C_waterWarm = false;
         Ytmp = Y;
@@ -160,6 +151,7 @@ while (iter<11)
         Z = SolveThermoForIceRate(X,Ytmp,scalars);
         scalars.Z_ = Z;
     end
+    scalars.Z_ = Z;
     %}
     
     %}
@@ -170,8 +162,9 @@ while (iter<11)
     iter = iter + 1;
     
 end
-disp('All compatibility relations satisfied');
-
+if (con==0)
+    disp('All compatibility relations satisfied');
+end
 
 
 

@@ -6,11 +6,11 @@ Z = scalars.Z_;
 mimp = scalars.mimp_;
 
 tolIMAG = 1e-6;
-indX = find((abs(imag(X)) > tolIMAG) | (isnan(X)) | (isinf(X)) | X<0);
+tolNEG = (5e-3)*max(X);
+indX = find((abs(imag(X)) > tolIMAG) | (isnan(X)) | (isinf(X)) | X<=tolNEG);
 if (~isempty(indX))
-    disp('Mass balance violated (negative film height)');
-    % Set ice accretion rate (z) equal to mimp everywhere prior
-    indFix = [1:max(indX)];
+    % Set ice accretion rate (z) equal to mimp everywhere where hf = 0
+    indFix = indX;
     Z(indFix) = mimp(indFix);
     scalars.Z_ = Z;
     % Reset new physically consistent film height (= 0)
