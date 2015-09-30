@@ -84,15 +84,15 @@ iter = 1;
 %while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter < 11) )
 con = 1;
 figure(13); plot(s,mimp,'k--');
-while ((iter<7) )
+while ((iter<4) )
     iter
     con = 0;
     % MASS (solve for X)
     %x0 = linspace(0,10e-3,length(s))'; % Initial guess
     %eps = 1e-4;
     %X = NewtonKrylovIteration(@MassBalance,scalars,x0,eps);
-    %X = sqrt((2*uw/pw./tau_wall).*cumtrapz(s,mimp-Z));
-    %
+    X = sqrt((2*uw/pw./tau_wall).*cumtrapz(s,mimp-Z));
+    %{
     if (iter==1)
         X = zeros(length(s),1);
     end
@@ -162,10 +162,57 @@ while ((iter<7) )
     iter = iter + 1;
     
 end
+%%
 if (con==0)
     disp('All compatibility relations satisfied');
+else
+    % Check to see if need refinement of ice profile
+    % Need to work out exactly where glaze accretion stops and rime begins
+    % Yupper = glaze ice everywhere; Ylower = rime profile everywhere
+    massSurplus = trapz(s,mimp-Z);
+    Yzero = zeros(length(s),1);
+    Zupper = SolveThermoForIceRate(X,Yzero,scalars);
+    Zlower = mimp;
+    if (massSurplus<0)
+        indLOWER = find(Z==Zupper);
+        % Water mass deficit (too much ice)
+        % Iteratively convert glaze to rime accretion until mass balance is fixed
+        % Start at current glaze/rime interface and iteratively march forward
+        for i=length(indLOWER):-1:1
+            indSTMP = indLOWER(i);
+            Ztmp = Z; Ytmp = Y;
+            Ztmp(indSTMP:end) = Zlower(indSTMP:end);
+            Ytmp(indSTMP:end) = 0;
+            massSurplus = trapz(s,mimp-Ztmp);
+            if (massSurplus>=0)
+                break;
+            end
+        end
+    else
+        indRAISE = find(Z==Zlower);
+        if (indRAISE(1)==1)
+            indRAISE = indRAISE(2:end);
+        end
+        % Water mass surplus (too much water)
+        % Iteratively convert rime to glaze accretion until mass balance is fixed
+        % Start at current glaze/rime intergace and iteratively march aft
+        for i=1:length(indRAISE)
+            indSTMP = indRAISE(i);
+            Ztmp = Z; Ytmp = Y;
+            Ztmp(1:indSTMP) = Zupper(1:indSTMP);
+            Ytmp(1:indSTMP) = 0;
+            massSurplus = trapz(s,mimp-Ztmp);
+            if (massSurplus<=0)
+                break;
+            end
+        end
+    end
+    % Accept final solution
+    %
+    Z = Ztmp; Y = Ytmp;
+    X = real(sqrt((2*uw/pw./tau_wall).*cumtrapz(s,mimp-Z)));
+    %}
 end
-
 
 
 
