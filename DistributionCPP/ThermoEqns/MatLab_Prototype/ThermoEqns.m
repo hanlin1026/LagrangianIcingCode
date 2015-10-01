@@ -1,17 +1,28 @@
 %% Example solver (nonlinear iteration)
 
 % INPUT ****************************
+SURF = 'UPPER';
 % Import skin friction coefficient data
 CF = importdata('heatflux');
 stagPt = 1.008358;
-s_min = stagPt; s_max = stagPt + 0.4;
-[val,indFirst] = min(abs(CF(:,1)-s_min));
-[val,indLast] = min(abs(CF(:,1)-s_max));
 NPts = 1000;
-% Find stagPt w.r.t. skin friction
-[val,ind] = min(CF(indFirst-5:indFirst+5,3));
-indFirst = indFirst-5+(ind-1);
-stagPt = CF(indFirst,1);
+if (strcmp(SURF,'LOWER')==1)
+    s_min = stagPt - 0.4; s_max = stagPt + 0.0;
+    [val,indFirst] = min(abs(CF(:,1)-s_min));
+    [val,indLast] = min(abs(CF(:,1)-s_max));
+    % Find stagPt w.r.t. skin friction
+    [val,ind] = min(CF(indLast-5:indLast+5,3));
+    indLast = indLast-5+(ind-1);
+    stagPt = CF(indLast,1);
+elseif (strcmp(SURF,'UPPER')==1)
+    s_min = stagPt; s_max = stagPt + 0.4;
+    [val,indFirst] = min(abs(CF(:,1)-s_min));
+    [val,indLast] = min(abs(CF(:,1)-s_max));
+    % Find stagPt w.r.t. skin friction
+    [val,ind] = min(CF(indFirst-5:indFirst+5,3));
+    indFirst = indFirst-5+(ind-1);
+    stagPt = CF(indFirst,1);
+end
 % Interpolation
 s = linspace(CF(indFirst,1),CF(indLast,1),NPts)';
 ch = interp1(CF(indFirst:indLast,1),CF(indFirst:indLast,2),s);
@@ -44,8 +55,6 @@ s = s - stagPt;
 % end
 % s = s - stagPt;
 % **************************************
-
-%tau_wall(abs(tau_wall) < 0.05*max(abs(tau_wall))) = 0;
 ch = -1*1.412*(1.01e5/1.412)^1.5/(273.15-250)*ch;
 ds = zeros(length(s),1);
 ds(1:end-1) = diff(s); ds(end) = s(end)-s(end-1);
@@ -57,8 +66,16 @@ Uinf = 100;
 LWC = 0.55e-3;
 mimp = Uinf*LWC*interp1(BETA(:,1),BETA(:,2),s);
 mimp(isnan(mimp)) = 0;
+% Scaling for skin friction
+tau_wall = tau_wall.*ds*0.5*1.22*Uinf^2;
 % Guess ice profile z(s)
 Z = 0*mimp;
+if (strcmp(SURF,'LOWER')==1)
+    s = -flipud(s);
+    ch = flipud(ch);
+    tau_wall = flipud(tau_wall);
+    mimp = flipud(mimp);
+end
 % **********************************
 % Set up structure for parameters
 scalars.s_ = s;
@@ -72,7 +89,7 @@ scalars.cice_ = 2093; % J/(kg C) at T = 0
 scalars.Lfus_ = 334774; % J/kg
 scalars.ch_ = ch; % W/(m^2 C)
 scalars.mimp_ = mimp;
-scalars.tau_wall_ = tau_wall.*ds*0.5*1.22*Uinf^2; tau_wall = scalars.tau_wall_;
+scalars.tau_wall_ = tau_wall;
 scalars.Z_ = Z;
 % Set convergence tolerances for water and ice constraints
 epsWATER = -1e-8;
@@ -84,7 +101,7 @@ iter = 1;
 %while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter < 11) )
 con = 1;
 figure(13); plot(s,mimp,'k--');
-while ((iter<4) )
+while ((iter<5) )
     iter
     con = 0;
     % MASS (solve for X)
@@ -129,7 +146,6 @@ while ((iter<4) )
         Z(indICE) = epsICE./Y(indICE);
         %scalars.Z_ = Z;
         % Resolve for ice profile
-        %Z = SolveThermoForIceRate(X,Ytmp,scalars);
         Z(Z<0) = 0;
         scalars.Z_ = Z;
     end
@@ -156,9 +172,9 @@ while ((iter<4) )
     
     %}
     % Plot
-    figure(11); hold on; plot(s,X); drawnow;
-    figure(12); hold on; plot(s,Y); drawnow;
-    figure(13); hold on; plot(s,Z); drawnow;
+    figure(1); hold on; plot(s,X); drawnow;
+    figure(2); hold on; plot(s,Y); drawnow;
+    figure(3); hold on; plot(s,Z); drawnow;
     iter = iter + 1;
     
 end
@@ -184,12 +200,15 @@ else
             Ztmp(indSTMP:end) = Zlower(indSTMP:end);
             Ytmp(indSTMP:end) = 0;
             massSurplus = trapz(s,mimp-Ztmp);
+            figure(3); hold on; plot(s,Ztmp,'k');
             if (massSurplus>=0)
+                X = real(sqrt((2*uw/pw./tau_wall).*cumtrapz(s,mimp-Z)));
+                X(indSTMP:end) = 0;
                 break;
             end
         end
     else
-        indRAISE = find(Z==Zlower);
+        indRAISE = [find(Z==Zlower); find(Z<1e-4)];
         if (indRAISE(1)==1)
             indRAISE = indRAISE(2:end);
         end
@@ -202,7 +221,9 @@ else
             Ztmp(1:indSTMP) = Zupper(1:indSTMP);
             Ytmp(1:indSTMP) = 0;
             massSurplus = trapz(s,mimp-Ztmp);
+            figure(3); hold on; plot(s,Ztmp,'k');
             if (massSurplus<=0)
+                X = real(sqrt((2*uw/pw./tau_wall).*cumtrapz(s,mimp-Z)));
                 break;
             end
         end
@@ -210,11 +231,18 @@ else
     % Accept final solution
     %
     Z = Ztmp; Y = Ytmp;
-    X = real(sqrt((2*uw/pw./tau_wall).*cumtrapz(s,mimp-Z)));
     %}
 end
 
-
+if (strcmp(SURF,'LOWER')==1)
+    s = -flipud(s);
+    ch = flipud(ch);
+    tau_wall = flipud(tau_wall);
+    mimp = flipud(mimp);
+    X = flipud(X);
+    Y = flipud(Y);
+    Z = flipud(Z);
+end
 
 
 
