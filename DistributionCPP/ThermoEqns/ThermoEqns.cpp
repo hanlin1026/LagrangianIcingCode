@@ -7,6 +7,43 @@
 using namespace std;
 using namespace Eigen;
 
+std::vector<double> operator*(double scal, std::vector<double> vec) {
+  for (int i=0; i<vec.size(); i++) {
+    vec[i] *= scal;
+  }
+  return vec;
+}
+
+std::vector<double> operator-(std::vector<double>& vec1, std::vector<double> vec2) {
+  vector<double> vec = vec1;
+  for (int i=0; i<vec.size(); i++) {
+    vec[i] -= vec2[i];
+  }
+  return vec;
+}
+
+double max(vector<double>& vec) {
+  double maximum = 0.0;
+  for (int i=0; i<vec.size(); i++) {
+    if (vec[i]>maximum) {
+      maximum = vec[i];
+    }
+  }
+
+  return maximum;
+}
+
+vector<double> abs(vector<double>& vec) {
+  vector<double> absVec = vec;
+  for (int i=0; i<vec.size(); i++) {
+    if (vec[i]<0) {
+      absVec[i] = -1.0*vec[i];
+    }
+  }
+  
+  return absVec;
+}
+
 ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfoil& airfoil, FluidScalars& fluid) {
   // Constructor to read in input files and initialize thermo eqns
 
@@ -28,9 +65,9 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
   rhoINF_ = (3.302857142857084e-05)*pow(TINF_,2) + (-0.022130857142857)*TINF_ + 4.875685714285685; // O(2) fit between T=[175,275]
   pINF_ = rhoINF_*287.058*TINF_;
   // Initial guess for ice accretion
-  mice_upper_.resize(NPts_);
+  mice_.resize(NPts_);
   for (int i=0; i<NPts_; i++)
-    mice_upper_[i] = 0.0;
+    mice_[i] = 0.0;
   this->interpUpperSurface(filenameCHCF,airfoil,"CHCF");
   this->interpUpperSurface(filenameBETA,airfoil,"BETA");
 
@@ -80,42 +117,42 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     s_upper_orig[i] = s(zero_ind+i);
   }
   // Refine upper surface grid
-  s_upper_.resize(NPts_);
+  s_.resize(NPts_);
   //double s_max = s.maxCoeff();
   double s_max = 0.4;
   double ds = (s_max-zero)/NPts_;
   for (int i=0; i<NPts_; i++) {
-    s_upper_[i] = zero + i*ds;
+    s_[i] = zero + i*ds;
   }
   // Interpolate parameter values on grids
   gsl_interp_accel *acc = gsl_interp_accel_alloc();
   if (strcmp(parameter,"CHCF") == 0) {    
-    cH_upper_.resize(NPts_);
-    cF_upper_.resize(NPts_);
+    cH_.resize(NPts_);
+    cF_.resize(NPts_);
     gsl_spline *splineCH = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
     gsl_spline *splineCF = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
     gsl_spline_init(splineCH, &s_upper_orig[0], &ch[zero_ind], NPts_orig);
     gsl_spline_init(splineCF, &s_upper_orig[0], &cf[zero_ind], NPts_orig);
     for (int i=0; i<NPts_; i++) {
-      if (s_upper_[i] <= s.maxCoeff()) { 
-	cH_upper_[i] = gsl_spline_eval(splineCH, s_upper_[i], acc);
-        cF_upper_[i] = gsl_spline_eval(splineCF, s_upper_[i], acc);
+      if (s_[i] <= s.maxCoeff()) { 
+	cH_[i] = gsl_spline_eval(splineCH, s_[i], acc);
+        cF_[i] = gsl_spline_eval(splineCF, s_[i], acc);
       }
       else {
-	cH_upper_[i] = 0.0;
-        cF_upper_[i] = 0.0;
+	cH_[i] = 0.0;
+        cF_[i] = 0.0;
       }
     }
   }
   else if (strcmp(parameter,"BETA") == 0) {
-    beta_upper_.resize(NPts_);
+    beta_.resize(NPts_);
     gsl_spline *splineBETA = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
     gsl_spline_init(splineBETA, &s_upper_orig[0], &beta[zero_ind], NPts_orig);
     for (int i=0; i<NPts_; i++) {
-      if (s_upper_[i] <= s.maxCoeff())
-	beta_upper_[i] = gsl_spline_eval(splineBETA, s_upper_[i], acc);
+      if (s_[i] <= s.maxCoeff())
+	beta_[i] = gsl_spline_eval(splineBETA, s_[i], acc);
       else
-	beta_upper_[i] = 0.0;
+	beta_[i] = 0.0;
     }
   }
 
@@ -193,12 +230,12 @@ vector<double> ThermoEqns::JX(int func, vector<double>& X, vector<double>& u0) {
   vector<double> f1;
   vector<double> f2;
   if (func==0) {
-    f2 = massBalanceUpper(X2);
-    f1 = massBalanceUpper(u0);
+    f2 = massBalance(X2);
+    f1 = massBalance(u0);
   }
   else if (func==1) {
-    f2 = energyBalanceUpper(X2);
-    f1 = energyBalanceUpper(u0);
+    f2 = energyBalance(X2);
+    f1 = energyBalance(u0);
   }
   else if (func==2) {
     f2 = testBalance(X2);
@@ -210,7 +247,7 @@ vector<double> ThermoEqns::JX(int func, vector<double>& X, vector<double>& u0) {
   return jx;
 }
 
-vector<double> ThermoEqns::massBalanceUpper(vector<double>& x) {
+vector<double> ThermoEqns::massBalance(vector<double>& x) {
   // Function to compute mass balance
 
   vector<double> err(x.size());
@@ -223,22 +260,22 @@ vector<double> ThermoEqns::massBalanceUpper(vector<double>& x) {
   vector<double> I_sources(x.size()-2);
   // Calculate body centered fluxes
   for (int i=0; i<x.size(); i++) {
-    F[i] = (0.5/muL_)*pow(x[i],2)*cF_upper_[i];
+    F[i] = (0.5/muL_)*pow(x[i],2)*cF_[i];
   }
   // Calculate fluxes at cell faces (Roe scheme upwinding)
   for (int i=0; i<x.size()-1; i++) {
     xFACE[i] = 0.5*(x[i]+x[i+1]);
-    cfFACE[i] = 0.5*(cF_upper_[i]+cF_upper_[i+1]);
+    cfFACE[i] = 0.5*(cF_[i]+cF_[i+1]);
     DF[i] = (1/muL_)*(xFACE[i]*cfFACE[i]);
     f[i] = 0.5*(F[i]+F[i+1]) - 0.5*std::abs(DF[i])*(x[i+1]-x[i]);
   }
   // Calculate error for internal cells
   double ds,mimp;
   for (int i=1; i<x.size()-1; i++) {
-    ds = s_upper_[i+1]-s_upper_[i];
-    mimp = beta_upper_[i]*LWC_*Uinf_;
+    ds = s_[i+1]-s_[i];
+    mimp = beta_[i]*LWC_*Uinf_;
     D_flux[i-1] = f[i]-f[i-1];
-    I_sources[i-1] = (1./rhoL_)*ds*(mimp-mice_upper_[i]);
+    I_sources[i-1] = (1./rhoL_)*ds*(mimp-mice_[i]);
     err[i] = D_flux[i-1] - I_sources[i-1];
   }
   // Boundary conditions
@@ -248,11 +285,11 @@ vector<double> ThermoEqns::massBalanceUpper(vector<double>& x) {
   return err;
 }
 
-vector<double> ThermoEqns::energyBalanceUpper(vector<double>& Y) {
+vector<double> ThermoEqns::energyBalance(vector<double>& Y) {
   // Function to compute energy balance
 
-  vector<double> x = hf_upper_;
-  vector<double> z = mice_upper_;
+  vector<double> x = hf_;
+  vector<double> z = mice_;
 
   vector<double> err(x.size());
   vector<double> F(x.size());
@@ -264,21 +301,21 @@ vector<double> ThermoEqns::energyBalanceUpper(vector<double>& Y) {
   vector<double> I_sources(x.size()-2);
   // Calculate body centered fluxes
   for (int i=0; i<NPts_; i++)
-    F[i] = (0.5*cW_/muL_)*pow(x[i],2)*Y[i]*cF_upper_[i];
+    F[i] = (0.5*cW_/muL_)*pow(x[i],2)*Y[i]*cF_[i];
   // Calculate fluxes at cell faces (Roe scheme upwinding)
   for (int i=0; i<NPts_-1; i++) {
     xFACE[i] = 0.5*(x[i]+x[i+1]);
-    cfFACE[i] = 0.5*(cF_upper_[i]+cF_upper_[i+1]);
-    DF[i] = (cW_/2.0/muL_)*cF_upper_[i]*pow(xFACE[i],2);
+    cfFACE[i] = 0.5*(cF_[i]+cF_[i+1]);
+    DF[i] = (cW_/2.0/muL_)*cF_[i]*pow(xFACE[i],2);
     f[i] = 0.5*(F[i]+F[i+1]) - 0.5*std::abs(DF[i])*(Y[i+1]-Y[i]);
   }
   // Calculate error for internal cells
   double ds,mimp,RHS;
   for (int i=1; i<NPts_-1; i++) {
-    ds = s_upper_[i+1]-s_upper_[i];
-    mimp = beta_upper_[i]*LWC_*Uinf_;
+    ds = s_[i+1]-s_[i];
+    mimp = beta_[i]*LWC_*Uinf_;
     D_flux[i-1] = f[i]-f[i-1];
-    RHS = (1./rhoL_)*(mimp*(cW_*Td_ + 0.5*pow(ud_,2)) + z[i]*(Lfus_ - cICE_*Y[i]) + cH_upper_[i]*(Td_ - Y[i]));
+    RHS = (1./rhoL_)*(mimp*(cW_*Td_ + 0.5*pow(ud_,2)) + z[i]*(Lfus_ - cICE_*Y[i]) + cH_[i]*(Td_ - Y[i]));
     I_sources[i-1] = ds*RHS;
     err[i] = D_flux[i-1] - I_sources[i-1];
   }
@@ -327,25 +364,24 @@ vector<double> ThermoEqns::trapz(vector<double>& X, vector<double>& Y) {
   return Z;
 }
 
-vector<double> ThermoEqns::integrateMassEqnUpper() {
+vector<double> ThermoEqns::integrateMassEqn() {
   // Integrate mass eqn with trapz
 
   vector<double> Z(NPts_);
-  vector<double> X = s_upper_;
+  vector<double> X = s_;
   vector<double> I(NPts_);
   double mimp;
   for (int i=0; i<NPts_; i++) {
-    mimp = beta_upper_[i]*LWC_*Uinf_;
-    I[i] = mimp - mice_upper_[i];
+    mimp = beta_[i]*LWC_*Uinf_;
+    I[i] = mimp - mice_[i];
   }
   vector<double> INT = trapz(X,I);
   for (int i=0; i<NPts_; i++) {
-    if ((INT[i] >= 0) && (cF_upper_[i] != 0))
-      Z[i] = sqrt((2.0*muL_/rhoL_/cF_upper_[i])*INT[i]);
+    if ((INT[i] >= 0) && (cF_[i] != 0))
+      Z[i] = sqrt((2.0*muL_/rhoL_/cF_[i])*INT[i]);
     else {
-      // Set film height to zero everywhere prior and up to i
-      for (int j=0; j<i+1; j++)
-	Z[j] = 0.0;
+      // Set film height to zero
+      Z[i] = 0.0;
     }
   }
   //for (int i=0; i<NPts_; i++)
@@ -392,9 +428,9 @@ vector<double> ThermoEqns::NewtonKrylovIteration(const char* balance, vector<dou
     x = u0;
     // Compute RHS
     if (balFlag==0)
-      b = massBalanceUpper(u0);
+      b = massBalance(u0);
     else if (balFlag == 1)
-      b = energyBalanceUpper(u0);
+      b = energyBalance(u0);
     else if (balFlag==2)
       b = testBalance(u0);
     b = b*-1.0;
@@ -403,9 +439,9 @@ vector<double> ThermoEqns::NewtonKrylovIteration(const char* balance, vector<dou
     un = u0 + x;
     // Compute global error
     if (balFlag==0)
-      globalerr = massBalanceUpper(un);
+      globalerr = massBalance(un);
     else if (balFlag == 1)
-      globalerr = energyBalanceUpper(un);
+      globalerr = energyBalance(un);
     else if (balFlag==2)
       globalerr = testBalance(un);
     jx = JX(balFlag,x,u0);
@@ -419,25 +455,25 @@ vector<double> ThermoEqns::NewtonKrylovIteration(const char* balance, vector<dou
     }
   }
   //for (int ii=0; ii<stateSize; ii++)
-  //  printf("%e\t%e\n",s_upper_[ii],un[ii]);
+  //  printf("%e\t%e\n",s_[ii],un[ii]);
 
   return un;
 }
 
-void ThermoEqns::setHF_upper(vector<double>& hf) {
-  hf_upper_ = hf;
+void ThermoEqns::setHF(vector<double>& hf) {
+  hf_ = hf;
 }
 
-void ThermoEqns::setTS_upper(vector<double>& ts) {
-  ts_upper_ = ts;
+void ThermoEqns::setTS(vector<double>& ts) {
+  ts_ = ts;
 }
 
-void ThermoEqns::setMICE_upper(vector<double>& mice) {
-  mice_upper_ = mice;
+void ThermoEqns::setMICE(vector<double>& mice) {
+  mice_ = mice;
 }
 
-vector<double> ThermoEqns::getS_upper() {
-  return s_upper_;
+vector<double> ThermoEqns::getS() {
+  return s_;
 }
 
 vector<double> ThermoEqns::SolveThermoForIceRate(vector<double>& X, vector<double>& Y, const char* surface) {
@@ -454,9 +490,9 @@ vector<double> ThermoEqns::SolveThermoForIceRate(vector<double>& X, vector<doubl
   double mimp;
   // Switch for upper/lower surface
   if (strcmp(surface,"UPPER") == 0) {
-    s = s_upper_;
-    beta = beta_upper_;
-    cH = cH_upper_;
+    s = s_;
+    beta = beta_;
+    cH = cH_;
   }
   // Calculate XY and DXY
   for (int i=0; i<NPts_; i++)
@@ -476,50 +512,131 @@ vector<double> ThermoEqns::SolveThermoForIceRate(vector<double>& X, vector<doubl
   return Z;
 }
 
+vector<double> ThermoEqns::explicitSolver(const char* balance, vector<double>& y0, double eps, double tol) {
+  // Function to explicitly drive mass/energy balance to steady state
+  
+  int iter = 1;
+  double ERR = 1.0;
+  vector<double> DY(y0.size());
+  vector<double> Y = y0;
+  // Figure out which balance we are using
+  int switchBal;
+  if (strcmp(balance,"MASS")==0)
+    switchBal = 1;
+  else if (strcmp(balance,"ENERGY")==0)
+    switchBal = 2;
+  // Get initial quantities
+  if (switchBal==1)
+    DY = massBalance(Y);
+  else if (switchBal==2)
+    DY = energyBalance(Y);
+  Y = Y - eps*DY;
+  vector<double> absVec = abs(DY);
+  double ERR0 = max(absVec);
+  // Iteratively drive balance to steady state
+  while ((ERR > tol*ERR0) && (ERR > 1.0e-10) && (iter < 50000)) {
+    iter++;
+    // Get balance and update Y
+    if (switchBal==1)
+      DY = massBalance(Y);
+    else if (switchBal==2)
+      DY = energyBalance(Y);
+    Y = Y - eps*DY;
+    // Flag for mass balance
+    if (switchBal==1) {
+      for (int i=0; i<Y.size(); i++) {
+	if (Y[i]<0)
+	  Y[i] = 0;
+      }
+    }
+    // Get error
+    absVec = abs(DY);
+    ERR = max(absVec); 
+  }
+  // If still not converged, try increasing step size
+  if (iter == 50000) {
+    eps = 10*eps;
+    while ((ERR > tol*ERR0) && (ERR > 1.0e-10) && (iter < 75000)) {
+      iter++;
+      // Get balance and update Y
+      if (switchBal==1)
+	DY = massBalance(Y);
+      else if (switchBal==2)
+	DY = energyBalance(Y);
+      Y = Y - eps*DY;
+      // Flag for mass balance
+      if (switchBal==1) {
+	for (int i=0; i<Y.size(); i++) {
+	  if (Y[i]<0)
+	    Y[i] = 0;
+	}
+      }
+      // Get error
+      absVec = abs(DY);
+      ERR = max(absVec); 
+    }
+  }
+  printf("Explicit solver converged after %d iterations\n",iter);
+
+  return Y;
+}
+
+
 
 void ThermoEqns::SolveIcingEqns() {
   // Main subroutine to iteratively solve mass/energy equations
 
-  vector<double> Xthermo(1000);
-  vector<double> Ythermo(1000);
-  vector<double> Zthermo(1000);
-  vector<double> XY(1000);
-  vector<double> YZ(1000);
+  vector<double> Xthermo(NPts_);
+  vector<double> Ythermo(NPts_);
+  vector<double> Zthermo(NPts_);
+  vector<double> XY(NPts_);
+  vector<double> YZ(NPts_);
+  vector<double> Ytmp(NPts_);
   vector<int> indWater;
   vector<int> indIce;
   int indWaterSize, indIceSize;
-  vector<double> Xnew(1000);
-  vector<double> Ynew(1000);
+  vector<double> Xnew(NPts_);
+  vector<double> Ynew(NPts_);
   double epsWater = -1.0e-4;
   double epsIce = 1.0e-4;
   bool C_waterWarm, C_iceCold;
+  double mimp;
   // Initial guess for X and Y (hf and Ts)
   double dXthermo = (10.0e-3)/999;
   for (int i=0; i<Xthermo.size(); i++) {
     //Xthermo[i] = i*dXthermo;
     Xthermo[i] = 1.e-3;
-    Ythermo[i] = -1.0;
+    Ythermo[i] = 0.0;
+    Zthermo[i] = 0.0;
   }
+  setHF(Xthermo);
+  setTS(Ythermo);
+  setMICE(Zthermo);
   // Begin main iterative solver
+  double epsEnergy = 1.0e1;
+  double tolEnergy = 1.0e-4;
   for (int iterThermo = 0; iterThermo<5; iterThermo++) {
-    // Mass
+    // MASS
     printf("ITER = %d\n\n",iterThermo);
     printf("Solving mass equation...\n");
-    Xnew = integrateMassEqnUpper();
+    Xnew = integrateMassEqn();
     //Xnew = NewtonKrylovIteration("MASS",Xthermo,1.0e-5);
     Xthermo = Xnew;
     // Constraint: check that conservation of mass is not violated
     for (int i=0; i<Xthermo.size(); i++) {
-      if (Xthermo[i]<0)
-	Xthermo[i] = 0.0;
+      if (Xthermo[i]==0.0) {
+	mimp = beta_[i]*LWC_*Uinf_;
+	Zthermo[i] = mimp;
+      }
     }
-    setHF_upper(Xthermo);
-    // Energy
+    setMICE(Zthermo);
+    // ENERGY
     printf("Solving energy equation...\n");
-    Ynew = NewtonKrylovIteration("ENERGY",Ythermo,0.06);
+    Ynew = explicitSolver("ENERGY",Ythermo,epsEnergy,tolEnergy);
+    //Ynew = NewtonKrylovIteration("ENERGY",Ythermo,0.06);
     Ythermo = Ynew;
-    setTS_upper(Ythermo);
-    // Check constraints
+    setTS(Ythermo);
+    // CONSTRAINTS
     indWaterSize = 0;
     for (int i=0; i<XY.size(); i++) {
       XY[i] = Xthermo[i]*Ythermo[i];
@@ -528,26 +645,6 @@ void ThermoEqns::SolveIcingEqns() {
 	indWaterSize++;
       }
     }
-    // Water cannot be cold
-    if (indWaterSize == 0)
-      C_waterWarm = true;
-    else {
-      printf("Water below freezing detected.\n");
-      // If we have freezing water, warm it up using epsWater
-      C_waterWarm = false;
-      for (int i=0; i<indWaterSize; i++) 
-	Ythermo[indWater[i]] = epsWater/Xthermo[indWater[i]];
-      setTS_upper(Ythermo);
-      // Re-solve for ice profile
-      Zthermo = SolveThermoForIceRate(Xthermo,Ythermo,"UPPER");
-      // Correct for ice rate < 0
-      for (int i=0; i<Zthermo.size(); i++) {
-	if (Zthermo[i]<0)
-	  Zthermo[i] = 0.0;
-      }
-      setMICE_upper(Zthermo);
-    }
-    // Ice cannot be warm
     indIceSize = 0;
     for (int i=0; i<Ythermo.size(); i++) {
       YZ[i] = Ythermo[i]*Zthermo[i];
@@ -556,6 +653,7 @@ void ThermoEqns::SolveIcingEqns() {
 	indIceSize++;
       }
     }
+    // Ice cannot be warm
     if (indIceSize == 0)
       C_iceCold = true;
     else {
@@ -563,16 +661,33 @@ void ThermoEqns::SolveIcingEqns() {
       // If we have warm ice, cool it down using epsIce
       C_iceCold = false;
       for (int i=0; i<indIce.size(); i++)
-	Ythermo[indIce[i]] = epsIce/Zthermo[indIce[i]];
-      setTS_upper(Ythermo);
-      // Re-solve for ice profile
-      Zthermo = SolveThermoForIceRate(Xthermo,Ythermo,"UPPER");
+	Zthermo[indIce[i]] = epsIce/Ythermo[indIce[i]];
       // Correct for ice rate < 0
       for (int i=0; i<Zthermo.size(); i++) {
 	if (Zthermo[i]<0)
 	  Zthermo[i] = 0.0;
       }
-      setMICE_upper(Zthermo); 
+      setMICE(Zthermo);
+    }
+    // Water cannot be cold
+    if (indWaterSize == 0)
+      C_waterWarm = true;
+    else {
+      printf("Water below freezing detected.\n");
+      // If we have freezing water, warm it up using epsWater
+      C_waterWarm = false;
+      for (int i=0; i<NPts_; i++)
+	Ytmp[i] = Ythermo[i];
+      for (int i=0; i<indWaterSize; i++)
+	Ytmp[indWater[i]] = 0.0;
+      // Re-solve for ice profile
+      Zthermo = SolveThermoForIceRate(Xthermo,Ytmp,"UPPER");
+      // Correct for ice rate < 0
+      for (int i=0; i<Zthermo.size(); i++) {
+	if (Zthermo[i]<0)
+	  Zthermo[i] = 0.0;
+      }
+      setMICE(Zthermo);
     }
     // Check constraints
     if ((C_waterWarm == true) && (C_iceCold == true)) {
@@ -581,9 +696,9 @@ void ThermoEqns::SolveIcingEqns() {
     }
   }
   // Output everything to screen
-  vector<double> sThermo = getS_upper();
+  vector<double> sThermo = getS();
   printf("S\tHF\tTS\tMICE\n");
-  for (int i=0; i<1000; i++) {
+  for (int i=0; i<NPts_; i++) {
     printf("%lf\t%lf\t%lf\t%lf\n",sThermo[i],Xthermo[i],Ythermo[i],Zthermo[i]);
   }
 
