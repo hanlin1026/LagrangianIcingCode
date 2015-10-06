@@ -33,6 +33,19 @@ double max(vector<double>& vec) {
   return maximum;
 }
 
+double min(vector<double>& vec, int& ind) {
+  double minimum = vec[0];
+  ind = 0;
+  for (int i=1; i<vec.size(); i++) {
+    if (vec[i]<minimum) {
+      minimum = vec[i];
+      ind = i;
+    }
+  }
+
+  return minimum;
+}
+
 vector<double> abs(vector<double>& vec) {
   vector<double> absVec = vec;
   for (int i=0; i<vec.size(); i++) {
@@ -51,7 +64,7 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
   // Set rhoL_,muL_
   muL_ = 1.787e-3;
   // Set LWC_,Uinf_
-  LWC_ = 1.0;
+  LWC_ = 0.55e-3;
   Uinf_ = 100;
   // TEST: set values of other parameters
   Td_ = -20.0;
@@ -79,6 +92,8 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
   MatrixXd data; VectorXd s; 
   VectorXd beta;
   VectorXd ch; VectorXd cf;
+  double s_min = 0.0;
+  double s_max = 0.4;
   if (strcmp(parameter,"BETA") == 0) {
     // Import (s,beta)
     data = this->readBetaXY(filename);
@@ -96,6 +111,29 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
       ch(i) = -1.0*rhoINF_*pow(pINF_/rhoINF_,1.5)/(273.15-TINF_)*ch(i);
     // Set stagPt at s=0
     double stagPt = airfoil.getStagPt();
+    // Compensate for slight misalignment of stagPt by finding where cF is approx 0
+    int indFirst, indLast, indMinCF;
+    double minCF;
+    vector<double> SFirst(s.size());
+    vector<double> SLast(s.size());
+    vector<double> SFirstABS(s.size());
+    vector<double> SLastABS(s.size());
+    vector<double> CFtmp(11);
+    for (int i=0; i<s.size(); i++) {
+      SFirst[i] = s(i) - (stagPt+s_min);
+      SLast[i] = s(i) - (stagPt+s_max);
+    }
+    SFirstABS = abs(SFirst);
+    SLastABS = abs(SLast);
+    minCF = min(SFirstABS,indFirst);
+    minCF = min(SLastABS,indLast);
+    for (int i=0; i<CFtmp.size(); i++) {
+      CFtmp[i] = cf(indFirst+i-5);
+    }
+    minCF = min(CFtmp,indMinCF);
+    indFirst += indMinCF-5;
+    stagPt = s(indFirst);
+    // Center s-coords about the stagnation point
     for (int i=0; i<s.size(); i++) {
       s(i) -= stagPt;
     }
@@ -118,8 +156,6 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
   }
   // Refine upper surface grid
   s_.resize(NPts_);
-  //double s_max = s.maxCoeff();
-  double s_max = 0.4;
   double ds = (s_max-zero)/NPts_;
   for (int i=0; i<NPts_; i++) {
     s_[i] = zero + i*ds;
@@ -136,7 +172,7 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     for (int i=0; i<NPts_; i++) {
       if (s_[i] <= s.maxCoeff()) { 
 	cH_[i] = gsl_spline_eval(splineCH, s_[i], acc);
-        cF_[i] = gsl_spline_eval(splineCF, s_[i], acc);
+        cF_[i] = (0.5*rhoINF_*pow(Uinf_,2)*ds)*gsl_spline_eval(splineCF, s_[i], acc);
       }
       else {
 	cH_[i] = 0.0;
@@ -306,7 +342,7 @@ vector<double> ThermoEqns::energyBalance(vector<double>& Y) {
   for (int i=0; i<NPts_-1; i++) {
     xFACE[i] = 0.5*(x[i]+x[i+1]);
     cfFACE[i] = 0.5*(cF_[i]+cF_[i+1]);
-    DF[i] = (cW_/2.0/muL_)*cF_[i]*pow(xFACE[i],2);
+    DF[i] = (cW_/2.0/muL_)*cfFACE[i]*pow(xFACE[i],2);
     f[i] = 0.5*(F[i]+F[i+1]) - 0.5*std::abs(DF[i])*(Y[i+1]-Y[i]);
   }
   // Calculate error for internal cells
@@ -551,7 +587,7 @@ vector<double> ThermoEqns::explicitSolver(const char* balance, vector<double>& y
     }
     // Get error
     absVec = abs(DY);
-    ERR = max(absVec); 
+    ERR = max(absVec);
   }
   // If still not converged, try increasing step size
   if (iter == 50000) {
@@ -615,7 +651,7 @@ void ThermoEqns::SolveIcingEqns() {
   // Begin main iterative solver
   double epsEnergy = 1.0e1;
   double tolEnergy = 1.0e-4;
-  for (int iterThermo = 0; iterThermo<5; iterThermo++) {
+  for (int iterThermo = 0; iterThermo<1; iterThermo++) {
     // MASS
     printf("ITER = %d\n\n",iterThermo);
     printf("Solving mass equation...\n");
