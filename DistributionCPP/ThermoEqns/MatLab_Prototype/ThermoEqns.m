@@ -101,7 +101,7 @@ iter = 1;
 %while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter < 11) )
 con = 1;
 figure(13); plot(s,mimp,'k--');
-while ((iter<2) )
+while ((iter<5) )
     iter
     con = 0;
     % MASS (solve for X)

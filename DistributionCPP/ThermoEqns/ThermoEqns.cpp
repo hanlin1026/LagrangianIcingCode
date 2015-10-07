@@ -3,6 +3,11 @@
 #include <gsl_errno.h>
 #include <gsl_spline.h>
 #include <GMRES/include/gmres.h>            // IML++ GMRES template
+#include <stdio.h>
+#include <stdlib.h>
+#include <iterator>
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 using namespace Eigen;
@@ -55,6 +60,36 @@ vector<double> abs(vector<double>& vec) {
   }
   
   return absVec;
+}
+
+vector<double> find(vector<double>& vec, double val, bool& flag) {
+  // Function to find indices where vec equals val
+
+  vector<double> indices;
+  flag = false;
+  for (int i=0; i<vec.size(); i++) {
+    if (vec[i] == val) {
+      indices.push_back(i);
+      flag = true;
+    }
+  }
+
+  return indices;
+}
+
+vector<double> find(vector<double>& vec, vector<double>& vec2, bool& flag) {
+  // Function to find indices where vec[i] equals vec2[i]
+
+  vector<double> indices;
+  flag = false;
+  for (int i=0; i<vec.size(); i++) {
+    if (vec[i] == vec2[i]) {
+      indices.push_back(i);
+      flag = true;
+    }
+  }
+
+  return indices;
 }
 
 ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfoil& airfoil, FluidScalars& fluid) {
@@ -400,13 +435,14 @@ vector<double> ThermoEqns::trapz(vector<double>& X, vector<double>& Y) {
   return Z;
 }
 
-vector<double> ThermoEqns::integrateMassEqn() {
+vector<double> ThermoEqns::integrateMassEqn(bool& C_filmHeight) {
   // Integrate mass eqn with trapz
 
   vector<double> Z(NPts_);
   vector<double> X = s_;
   vector<double> I(NPts_);
   double mimp;
+  C_filmHeight = true;
   for (int i=0; i<NPts_; i++) {
     mimp = beta_[i]*LWC_*Uinf_;
     I[i] = mimp - mice_[i];
@@ -418,10 +454,10 @@ vector<double> ThermoEqns::integrateMassEqn() {
     else {
       // Set film height to zero
       Z[i] = 0.0;
+      C_filmHeight = false;
     }
   }
-  //for (int i=0; i<NPts_; i++)
-  //  printf("%lf\n",Z[i]);
+
   return Z;
 }
 
@@ -569,6 +605,7 @@ vector<double> ThermoEqns::explicitSolver(const char* balance, vector<double>& y
   Y = Y - eps*DY;
   vector<double> absVec = abs(DY);
   double ERR0 = max(absVec);
+  vector<double> err;
   // Iteratively drive balance to steady state
   while ((ERR > tol*ERR0) && (ERR > 1.0e-10) && (iter < 50000)) {
     iter++;
@@ -588,6 +625,7 @@ vector<double> ThermoEqns::explicitSolver(const char* balance, vector<double>& y
     // Get error
     absVec = abs(DY);
     ERR = max(absVec);
+    err.push_back(ERR);
   }
   // If still not converged, try increasing step size
   if (iter == 50000) {
@@ -609,7 +647,8 @@ vector<double> ThermoEqns::explicitSolver(const char* balance, vector<double>& y
       }
       // Get error
       absVec = abs(DY);
-      ERR = max(absVec); 
+      ERR = max(absVec);
+      err.push_back(ERR);
     }
   }
   printf("Explicit solver converged after %d iterations\n",iter);
@@ -635,7 +674,7 @@ void ThermoEqns::SolveIcingEqns() {
   vector<double> Ynew(NPts_);
   double epsWater = -1.0e-4;
   double epsIce = 1.0e-4;
-  bool C_waterWarm, C_iceCold;
+  bool C_filmHeight, C_waterWarm, C_iceCold;
   double mimp;
   // Initial guess for X and Y (hf and Ts)
   double dXthermo = (10.0e-3)/999;
@@ -651,14 +690,18 @@ void ThermoEqns::SolveIcingEqns() {
   // Begin main iterative solver
   double epsEnergy = 1.0e1;
   double tolEnergy = 1.0e-4;
-  for (int iterThermo = 0; iterThermo<1; iterThermo++) {
+  for (int iterThermo = 0; iterThermo<4; iterThermo++) {
     // MASS
     printf("ITER = %d\n\n",iterThermo);
     printf("Solving mass equation...\n");
-    Xnew = integrateMassEqn();
+    Xnew = integrateMassEqn(C_filmHeight);
+    //Xnew = explicitSolver("MASS",Xthermo,1.0e1,1.0e-6);
     //Xnew = NewtonKrylovIteration("MASS",Xthermo,1.0e-5);
     Xthermo = Xnew;
+    setHF(Xthermo);
     // Constraint: check that conservation of mass is not violated
+    if (C_filmHeight == false)
+      printf("CONSTRAINT: Conservation of mass violated (negative film height)\n");
     for (int i=0; i<Xthermo.size(); i++) {
       if (Xthermo[i]==0.0) {
 	mimp = beta_[i]*LWC_*Uinf_;
@@ -693,7 +736,7 @@ void ThermoEqns::SolveIcingEqns() {
     if (indIceSize == 0)
       C_iceCold = true;
     else {
-      printf("Ice above freezing detected.\n");
+      printf("CONSTRAINT: Ice above freezing detected.\n");
       // If we have warm ice, cool it down using epsIce
       C_iceCold = false;
       for (int i=0; i<indIce.size(); i++)
@@ -709,7 +752,7 @@ void ThermoEqns::SolveIcingEqns() {
     if (indWaterSize == 0)
       C_waterWarm = true;
     else {
-      printf("Water below freezing detected.\n");
+      printf("CONSTRAINT: Water below freezing detected.\n");
       // If we have freezing water, warm it up using epsWater
       C_waterWarm = false;
       for (int i=0; i<NPts_; i++)
@@ -726,16 +769,77 @@ void ThermoEqns::SolveIcingEqns() {
       setMICE(Zthermo);
     }
     // Check constraints
-    if ((C_waterWarm == true) && (C_iceCold == true)) {
+    if ((C_filmHeight == true) && (C_waterWarm == true) && (C_iceCold == true)) {
       printf("All compatibility relations satisfied.\n");
       break;
     }
   }
-  // Output everything to screen
-  vector<double> sThermo = getS();
-  printf("S\tHF\tTS\tMICE\n");
-  for (int i=0; i<NPts_; i++) {
-    printf("%lf\t%lf\t%lf\t%lf\n",sThermo[i],Xthermo[i],Ythermo[i],Zthermo[i]);
+  // Check to see if need refinement of ice profile for mixed glaze/rime conditions
+  if ((C_filmHeight == false) || (C_waterWarm == false) || (C_iceCold == false)) {
+    printf("Mixed glaze/rime conditions detected, refining ice profile...\n");
+    // Calculate mass surplus
+    vector<double> massTotal(NPts_);
+    vector<double> MIMP(NPts_);
+    for (int i=0; i<NPts_; i++) {
+      MIMP[i] = beta_[i]*LWC_*Uinf_;
+      massTotal[i] = MIMP[i] - Zthermo[i];
+    }
+    vector<double> massSurplusCumSum = trapz(s_,massTotal);
+    double massSurplus = massSurplusCumSum[NPts_-1];
+    // Yupper = glaze ice everywhere; Ylower = rime profile everywhere
+    vector<double> Yzero(s.size());
+    for (int i=0; i<NPts_; i++)
+      Yzero[i] = 0.0;
+    vector<double> Zupper = SolveThermoForIceRate(Xthermo,Yzero);
+    vector<double> Zlower = MIMP;
+    vector<double> Ztmp(NPts_);
+    vector<double> Ytmp(NPts_);
+    bool flag;
+    int indSTMP;
+    if (massSurplus<0) {
+      // Water mass deficit (too much ice)
+      // Iteratively convert glaze to rime accretion, starting at glaze/rime interface and marching forward
+      vector<double> indLOWER = find(Zthermo,Zupper,flag); 
+      if (flag == true) {
+	for (int i=indLOWER.size()-1; i>-1; i--) {
+	  indSTMP = indLOWER[i];
+	  Ztmp = Zthermo;
+	  Ytmp = Ythermo;
+	  for (int j=indSTMP; j<NPts_; j++) {
+	    Ztmp[j] = Zlower[j];
+	    Ytmp[j] = 0.0;
+	  }
+	  for (int j=0; j<NPts_; j++)
+	    massTotal[j] = MIMP[j] - Ztmp[j];
+	  massSurplusCumSum = trapz(s_,massTotal);
+	  massSurplus = massSurplusCumSum[NPts_-1];
+	  if (massSurplus>=0) {
+	    Xthermo = integrateMassEqn(C_filmHeight);
+	    for (int j=indSTMP; j<NPts_; j++) {
+	      Xthermo[j] = 0.0;
+	      break;
+	    }
+	  }
+	}
+	
+      }
+      else {
+	// Water mass surplus (too much water)
+	// Iteratively convert rime to glaze accretion, starting at rime/glaze interface and marching aft
+      }
+
+      
+    }
   }
+
+
+
+  // Output everything to file
+  vector<double> sThermo = getS();
+  FILE* outfile;
+  outfile = fopen("THERMO_SOLN.out","w");
+  for (int i=0; i<NPts_; i++)
+    fprintf(outfile,"%lf\t%lf\t%lf\t%lf\n",sThermo[i],Xthermo[i],Ythermo[i],Zthermo[i]);
+  fclose(outfile);
 
 }
