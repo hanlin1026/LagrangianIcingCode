@@ -155,7 +155,7 @@ int main(int argc, const char *argv[]) {
   // Initialize thermo eqns solver
   const char *filenameCHCF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/heatflux";
   const char *filenameBETA = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/BetaXY.dat";
-  ThermoEqns thermo = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid);
+  ThermoEqns thermo = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid,"UPPER");
   // Solve thermo equations
   thermo.SolveIcingEqns();
   // *************************************************

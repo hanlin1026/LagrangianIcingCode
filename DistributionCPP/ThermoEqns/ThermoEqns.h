@@ -10,7 +10,7 @@
 
 class ThermoEqns {
  public:
-  ThermoEqns(const char* filenameCF,const char* filenameBETA,Airfoil& airfoil,FluidScalars& fluid);
+  ThermoEqns(const char* filenameCF,const char* filenameBETA,Airfoil& airfoil,FluidScalars& fluid,const char* strSurf);
   ~ThermoEqns();
   std::vector<double> NewtonKrylovIteration(const char* balance,std::vector<double>& u0,double globaltol);
   std::vector<double> trapz(std::vector<double>& X, std::vector<double>& Y);
@@ -36,6 +36,8 @@ class ThermoEqns {
   void interpUpperSurface(const char* filenameBeta, Airfoil& airfoil, const char* parameter);
   // Size of grid
   int NPts_;
+  // Upper or lower surface string
+  const char* strSurf_;
   // Grid (s) and unknowns (film height, temperature, ice rate, impinging water mass)
   std::vector<double> s_;
   std::vector<double> hf_;

@@ -92,9 +92,10 @@ vector<double> find(vector<double>& vec, vector<double>& vec2, bool& flag) {
   return indices;
 }
 
-ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfoil& airfoil, FluidScalars& fluid) {
+ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfoil& airfoil, FluidScalars& fluid, const char* strSurf) {
   // Constructor to read in input files and initialize thermo eqns
 
+  strSurf_ = strSurf;
   NPts_ = 1000;
   // Set rhoL_,muL_
   muL_ = 1.787e-3;
@@ -102,7 +103,7 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
   LWC_ = 0.55e-3;
   Uinf_ = 100;
   // TEST: set values of other parameters
-  Td_ = -20.0;
+  Td_ = -12.0;
   cW_ = 4217.6;     // J/(kg C) at T = 0 C and P = 100 kPa
   ud_ = 80.0;
   cICE_ = 2093.0;   // J/(kg C) at T = 0
@@ -127,8 +128,18 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
   MatrixXd data; VectorXd s; 
   VectorXd beta;
   VectorXd ch; VectorXd cf;
-  double s_min = 0.0;
-  double s_max = 0.4;
+  int indFirst, indLast, indMinCF;
+  double stagPt;
+  // Determine if we are doing the upper or lower airfoil surface (w.r.t. stagPt)
+  double s_min,s_max;
+  if (strcmp(strSurf_,"UPPER")==0) {
+    s_min = 0.0;
+    s_max = 0.4;
+  }
+  else if (strcmp(strSurf_,"LOWER")==0) {
+    s_min = -0.4;
+    s_max = 0.0;
+  }
   if (strcmp(parameter,"BETA") == 0) {
     // Import (s,beta)
     data = this->readBetaXY(filename);
@@ -145,9 +156,8 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     for (int i=0; i<ch.size(); i++)
       ch(i) = -1.0*rhoINF_*pow(pINF_/rhoINF_,1.5)/(273.15-TINF_)*ch(i);
     // Set stagPt at s=0
-    double stagPt = airfoil.getStagPt();
+    stagPt = airfoil.getStagPt();
     // Compensate for slight misalignment of stagPt by finding where cF is approx 0
-    int indFirst, indLast, indMinCF;
     double minCF;
     vector<double> SFirst(s.size());
     vector<double> SLast(s.size());
@@ -163,49 +173,58 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     minCF = min(SFirstABS,indFirst);
     minCF = min(SLastABS,indLast);
     for (int i=0; i<CFtmp.size(); i++) {
-      CFtmp[i] = cf(indFirst+i-5);
+      if (strcmp(strSurf_,"UPPER")==0)
+	CFtmp[i] = cf(indFirst+i-5);
+      else if (strcmp(strSurf_,"LOWER")==0)
+	CFtmp[i] = cf(indLast+i-5);
     }
     minCF = min(CFtmp,indMinCF);
-    indFirst += indMinCF-5;
-    stagPt = s(indFirst);
+    if (strcmp(strSurf_,"UPPER")==0) {
+      indFirst += indMinCF-5;
+      stagPt = s(indFirst);
+    }
+    else if (strcmp(strSurf_,"LOWER")==0) {
+      indLast += indMinCF-5;
+      stagPt = s(indLast);
+    }
     // Center s-coords about the stagnation point
     for (int i=0; i<s.size(); i++) {
       s(i) -= stagPt;
     }
   }
-  // Find stagnation point
-  double zero = 1.0; double zero_new = 1.0;
-  int zero_ind = 0;
-  for (int i=0; i<s.size(); i++) {
-    zero_new = abs(s(i));
-    if (zero_new < zero) {
-      zero = zero_new;
-      zero_ind = i;
-    }
-  }
-  // Split into upper/lower surface grids
-  int NPts_orig = s.size() - zero_ind;
-  vector<double> s_upper_orig(NPts_orig);
-  for (int i=0; i<NPts_orig; i++) {
-    s_upper_orig[i] = s(zero_ind+i);
-  }
-  // Refine upper surface grid
+  // Refine surface grid
   s_.resize(NPts_);
-  double ds = (s_max-zero)/NPts_;
+  double ds = (s(indLast)-s(indFirst))/NPts_;
   for (int i=0; i<NPts_; i++) {
-    s_[i] = zero + i*ds;
+    s_[i] = (s(indFirst)-stagPt) + i*ds;
   }
   // Interpolate parameter values on grids
+  int NPts_orig = indLast-indFirst+1;
+  vector<double> s_orig(NPts_orig);
+  vector<double> ch_orig(NPts_orig);
+  vector<double> cf_orig(NPts_orig);
+  vector<double> beta_orig(NPts_orig);
+  for (int i=0; i<NPts_orig; i++) {
+    s_orig[i] = s(indFirst+i)-stagPt;
+    if (strcmp(strSurf_,"UPPER")==0) {
+      ch_orig[i] = ch(indFirst+i);
+      cf_orig[i] = cf(indFirst+i);
+    }
+    else if (strcmp(strSurf_,"LOWER")==0) {
+      ch_orig[i] = ch(indLast-i);
+      cf_orig[i] = cf(indLast-i);
+    }
+  }
   gsl_interp_accel *acc = gsl_interp_accel_alloc();
   if (strcmp(parameter,"CHCF") == 0) {    
     cH_.resize(NPts_);
     cF_.resize(NPts_);
     gsl_spline *splineCH = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
     gsl_spline *splineCF = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
-    gsl_spline_init(splineCH, &s_upper_orig[0], &ch[zero_ind], NPts_orig);
-    gsl_spline_init(splineCF, &s_upper_orig[0], &cf[zero_ind], NPts_orig);
+    gsl_spline_init(splineCH, &s_orig[0], &ch_orig[0], NPts_orig);
+    gsl_spline_init(splineCF, &s_orig[0], &cf_orig[0], NPts_orig);
     for (int i=0; i<NPts_; i++) {
-      if (s_[i] <= s.maxCoeff()) { 
+      if (s_[i] <= s_orig[NPts_orig-1]) { 
 	cH_[i] = gsl_spline_eval(splineCH, s_[i], acc);
         cF_[i] = (0.5*rhoINF_*pow(Uinf_,2)*ds)*gsl_spline_eval(splineCF, s_[i], acc);
       }
@@ -216,11 +235,19 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     }
   }
   else if (strcmp(parameter,"BETA") == 0) {
+    for (int i=0; i<NPts_orig; i++) {
+      if (strcmp(strSurf_,"UPPER")==0) {
+	beta_orig[i] = beta(indFirst+i);
+      }
+      else if (strcmp(strSurf_,"LOWER")==0) {
+	beta_orig[i] = beta(indLast-i);
+      }
+    }
     beta_.resize(NPts_);
     gsl_spline *splineBETA = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
-    gsl_spline_init(splineBETA, &s_upper_orig[0], &beta[zero_ind], NPts_orig);
+    gsl_spline_init(splineBETA, &s_orig[0], &beta_orig[0], NPts_orig);
     for (int i=0; i<NPts_; i++) {
-      if (s_[i] <= s.maxCoeff())
+      if (s_[i] <= s_orig[NPts_orig-1])
 	beta_[i] = gsl_spline_eval(splineBETA, s_[i], acc);
       else
 	beta_[i] = 0.0;
@@ -672,8 +699,8 @@ void ThermoEqns::SolveIcingEqns() {
   int indWaterSize, indIceSize;
   vector<double> Xnew(NPts_);
   vector<double> Ynew(NPts_);
-  double epsWater = -1.0e-4;
-  double epsIce = 1.0e-4;
+  double epsWater = -1.0e-8;
+  double epsIce = 1.0e-8;
   bool C_filmHeight, C_waterWarm, C_iceCold;
   double mimp;
   // Initial guess for X and Y (hf and Ts)
@@ -719,7 +746,7 @@ void ThermoEqns::SolveIcingEqns() {
     indWaterSize = 0;
     for (int i=0; i<XY.size(); i++) {
       XY[i] = Xthermo[i]*Ythermo[i];
-      if (XY[i] < epsWater) {
+      if (XY[i] < 100*epsWater) {
 	indWater.push_back(i);
 	indWaterSize++;
       }
@@ -727,7 +754,7 @@ void ThermoEqns::SolveIcingEqns() {
     indIceSize = 0;
     for (int i=0; i<Ythermo.size(); i++) {
       YZ[i] = Ythermo[i]*Zthermo[i];
-      if (YZ[i] > epsIce) {
+      if (YZ[i] > 100*epsIce) {
 	indIce.push_back(i);
 	indIceSize++;
       }
@@ -787,14 +814,14 @@ void ThermoEqns::SolveIcingEqns() {
     vector<double> massSurplusCumSum = trapz(s_,massTotal);
     double massSurplus = massSurplusCumSum[NPts_-1];
     // Yupper = glaze ice everywhere; Ylower = rime profile everywhere
-    vector<double> Yzero(s.size());
+    vector<double> Yzero(s_.size());
     for (int i=0; i<NPts_; i++)
       Yzero[i] = 0.0;
-    vector<double> Zupper = SolveThermoForIceRate(Xthermo,Yzero);
+    vector<double> Zupper = SolveThermoForIceRate(Xthermo,Yzero,"UPPER");
     vector<double> Zlower = MIMP;
     vector<double> Ztmp(NPts_);
     vector<double> Ytmp(NPts_);
-    bool flag;
+    bool flag,flag1,flag2;
     int indSTMP;
     if (massSurplus<0) {
       // Water mass deficit (too much ice)
@@ -807,7 +834,6 @@ void ThermoEqns::SolveIcingEqns() {
 	  Ytmp = Ythermo;
 	  for (int j=indSTMP; j<NPts_; j++) {
 	    Ztmp[j] = Zlower[j];
-	    Ytmp[j] = 0.0;
 	  }
 	  for (int j=0; j<NPts_; j++)
 	    massTotal[j] = MIMP[j] - Ztmp[j];
@@ -815,25 +841,61 @@ void ThermoEqns::SolveIcingEqns() {
 	  massSurplus = massSurplusCumSum[NPts_-1];
 	  if (massSurplus>=0) {
 	    Xthermo = integrateMassEqn(C_filmHeight);
-	    for (int j=indSTMP; j<NPts_; j++) {
+	    for (int j=indSTMP; j<NPts_; j++)
 	      Xthermo[j] = 0.0;
-	      break;
-	    }
+	    setHF(Xthermo);
+	    setMICE(Ztmp);
+	    Ytmp = explicitSolver("ENERGY",Ythermo,epsEnergy,tolEnergy);
+	    setTS(Ytmp);
+	    break;
+	  }
+	}	
+      }
+    }
+    else {
+      // Water mass surplus (too much water)
+      // Iteratively convert rime to glaze accretion, starting at rime/glaze interface and marching aft
+      vector<double> indRAISE1 = find(Zthermo,Zlower,flag1);
+      vector<double> indRAISE2;
+      for (int i=0; i<NPts_; i++) {
+	if (Zthermo[i] <= 1.0e-4) {
+	  flag2 = true;
+	  indRAISE2.push_back(i);
+	}
+      }
+      vector<double> indRAISE = indRAISE1;
+      if (flag2 == true) {
+	for (int i=0; i<indRAISE2.size(); i++)
+	  indRAISE.push_back(indRAISE2[i]);
+      }
+      if (indRAISE1[0] == 1.0)
+	indRAISE.erase(indRAISE.begin());
+      if ((flag1==true) || (flag2==true)) {
+	for (int i=0; i<indRAISE.size(); i++) {
+	  indSTMP = indRAISE[i];
+	  Ztmp = Zthermo;
+	  Ytmp = Ythermo;
+	  for (int j=1; j<indSTMP; j++) {
+	    Ztmp[j] = Zupper[j];
+	    Ytmp[j] = 0.0;
+	  }
+	  for (int j=0; j<NPts_; j++)
+	    massTotal[j] = MIMP[j] - Ztmp[j];
+	  massSurplusCumSum = trapz(s_,massTotal);
+	  massSurplus = massSurplusCumSum[NPts_-1];
+	  if (massSurplus<=0) {
+	    Xthermo = integrateMassEqn(C_filmHeight);
+	    break;
 	  }
 	}
-	
       }
-      else {
-	// Water mass surplus (too much water)
-	// Iteratively convert rime to glaze accretion, starting at rime/glaze interface and marching aft
-      }
-
-      
     }
+    // Accept final solution
+    setMICE(Ztmp); Zthermo = Ztmp;
+    setTS(Ytmp); Ythermo = Ytmp;
+    setHF(Xthermo);
+      
   }
-
-
-
   // Output everything to file
   vector<double> sThermo = getS();
   FILE* outfile;
