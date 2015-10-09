@@ -92,6 +92,17 @@ vector<double> find(vector<double>& vec, vector<double>& vec2, bool& flag) {
   return indices;
 }
 
+vector<double> flipud(vector<double>& vec) {
+  // Function to flip a vector so that vec[0] becomes vec[end] and vice versa
+
+  vector<double> tmp(vec.size());
+  for (int i=0; i<vec.size(); i++) {
+    tmp[i] = vec[vec.size()-1-i];
+  }
+  
+  return tmp;
+}
+
 ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfoil& airfoil, FluidScalars& fluid, const char* strSurf) {
   // Constructor to read in input files and initialize thermo eqns
 
@@ -119,6 +130,14 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
     mice_[i] = 0.0;
   this->interpUpperSurface(filenameCHCF,airfoil,"CHCF");
   this->interpUpperSurface(filenameBETA,airfoil,"BETA");
+  // Flip things if we are doing the lower surface
+  if (strcmp(strSurf_,"LOWER")==0) {
+    s_ = flipud(s_);
+    s_ = -1*s_;
+    cH_ = flipud(cH_);
+    cF_ = flipud(cF_);
+    beta_ = flipud(beta_);
+  }
 
 }
 
@@ -140,13 +159,7 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     s_min = -0.4;
     s_max = 0.0;
   }
-  if (strcmp(parameter,"BETA") == 0) {
-    // Import (s,beta)
-    data = this->readBetaXY(filename);
-    s = data.col(0);
-    beta = data.col(1);
-  }
-  else if (strcmp(parameter,"CHCF") == 0) {
+  if (strcmp(parameter,"CHCF") == 0) {
     // Import (s,ch,cf)
     data = this->readCHCF(filename);
     s = data.col(0);
@@ -191,32 +204,24 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     for (int i=0; i<s.size(); i++) {
       s(i) -= stagPt;
     }
-  }
-  // Refine surface grid
-  s_.resize(NPts_);
-  double ds = (s(indLast)-s(indFirst))/NPts_;
-  for (int i=0; i<NPts_; i++) {
-    s_[i] = (s(indFirst)-stagPt) + i*ds;
-  }
-  // Interpolate parameter values on grids
-  int NPts_orig = indLast-indFirst+1;
-  vector<double> s_orig(NPts_orig);
-  vector<double> ch_orig(NPts_orig);
-  vector<double> cf_orig(NPts_orig);
-  vector<double> beta_orig(NPts_orig);
-  for (int i=0; i<NPts_orig; i++) {
-    s_orig[i] = s(indFirst+i)-stagPt;
-    if (strcmp(strSurf_,"UPPER")==0) {
+    // Refine surface grid
+    s_.resize(NPts_);
+    double ds = (s(indLast)-s(indFirst))/NPts_;
+    for (int i=0; i<NPts_; i++) {
+      s_[i] = s(indFirst) + i*ds;
+    }
+    // Interpolate parameter values on grids
+    int NPts_orig = indLast-indFirst+1;
+    vector<double> s_orig(NPts_orig);
+    vector<double> ch_orig(NPts_orig);
+    vector<double> cf_orig(NPts_orig);
+    vector<double> beta_orig(NPts_orig);
+    for (int i=0; i<NPts_orig; i++) {
+      s_orig[i] = s(indFirst+i);
       ch_orig[i] = ch(indFirst+i);
       cf_orig[i] = cf(indFirst+i);
     }
-    else if (strcmp(strSurf_,"LOWER")==0) {
-      ch_orig[i] = ch(indLast-i);
-      cf_orig[i] = cf(indLast-i);
-    }
-  }
-  gsl_interp_accel *acc = gsl_interp_accel_alloc();
-  if (strcmp(parameter,"CHCF") == 0) {    
+    gsl_interp_accel *acc = gsl_interp_accel_alloc();
     cH_.resize(NPts_);
     cF_.resize(NPts_);
     gsl_spline *splineCH = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
@@ -224,7 +229,7 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     gsl_spline_init(splineCH, &s_orig[0], &ch_orig[0], NPts_orig);
     gsl_spline_init(splineCF, &s_orig[0], &cf_orig[0], NPts_orig);
     for (int i=0; i<NPts_; i++) {
-      if (s_[i] <= s_orig[NPts_orig-1]) { 
+      if ((s_[i] >= s_orig[0]) && (s_[i] <= s_orig[NPts_orig-1])) { 
 	cH_[i] = gsl_spline_eval(splineCH, s_[i], acc);
         cF_[i] = (0.5*rhoINF_*pow(Uinf_,2)*ds)*gsl_spline_eval(splineCF, s_[i], acc);
       }
@@ -235,19 +240,40 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     }
   }
   else if (strcmp(parameter,"BETA") == 0) {
-    for (int i=0; i<NPts_orig; i++) {
-      if (strcmp(strSurf_,"UPPER")==0) {
-	beta_orig[i] = beta(indFirst+i);
-      }
-      else if (strcmp(strSurf_,"LOWER")==0) {
-	beta_orig[i] = beta(indLast-i);
-      }
+    // Assumes we have already imported/interpolated CHCF
+    // Import (s,beta)
+    data = this->readBetaXY(filename);
+    s = data.col(0);
+    beta = data.col(1);
+    // Extract relevant segment of beta
+    double minCF;
+    vector<double> SFirst(s.size());
+    vector<double> SLast(s.size());
+    vector<double> SFirstABS(s.size());
+    vector<double> SLastABS(s.size());
+    vector<double> BETAtmp(11);
+    for (int i=0; i<s.size(); i++) {
+      SFirst[i] = s(i) - s_min;
+      SLast[i] = s(i) - s_max;
     }
+    SFirstABS = abs(SFirst);
+    SLastABS = abs(SLast);
+    minCF = min(SFirstABS,indFirst);
+    minCF = min(SLastABS,indLast);
+    int NPts_orig = indLast-indFirst+1;
+    vector<double> s_orig(NPts_orig);
+    vector<double> beta_orig(NPts_orig);
+    for (int i=0; i<NPts_orig; i++) {
+      s_orig[i] = s(indFirst+i);
+      beta_orig[i] = beta(indFirst+i);
+    }
+    // Interpolate on grid
+    gsl_interp_accel *acc = gsl_interp_accel_alloc();
     beta_.resize(NPts_);
     gsl_spline *splineBETA = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
     gsl_spline_init(splineBETA, &s_orig[0], &beta_orig[0], NPts_orig);
     for (int i=0; i<NPts_; i++) {
-      if (s_[i] <= s_orig[NPts_orig-1])
+      if ((s_[i] >= s_orig[0]) && (s_[i] <= s_orig[NPts_orig-1]))
 	beta_[i] = gsl_spline_eval(splineBETA, s_[i], acc);
       else
 	beta_[i] = 0.0;
@@ -717,7 +743,7 @@ void ThermoEqns::SolveIcingEqns() {
   // Begin main iterative solver
   double epsEnergy = 1.0e1;
   double tolEnergy = 1.0e-4;
-  for (int iterThermo = 0; iterThermo<4; iterThermo++) {
+  for (int iterThermo = 0; iterThermo<2; iterThermo++) {
     // MASS
     printf("ITER = %d\n\n",iterThermo);
     printf("Solving mass equation...\n");
@@ -802,6 +828,7 @@ void ThermoEqns::SolveIcingEqns() {
     }
   }
   // Check to see if need refinement of ice profile for mixed glaze/rime conditions
+  /**
   if ((C_filmHeight == false) || (C_waterWarm == false) || (C_iceCold == false)) {
     printf("Mixed glaze/rime conditions detected, refining ice profile...\n");
     // Calculate mass surplus
@@ -896,8 +923,20 @@ void ThermoEqns::SolveIcingEqns() {
     setHF(Xthermo);
       
   }
-  // Output everything to file
+  **/
+  // Mirror solution if we are doing the lower surface
   vector<double> sThermo = getS();
+  /**
+  if (strcmp(strSurf_,"LOWER")==0) {
+    sThermo = flipud(sThermo);
+    sThermo = -1*sThermo;
+    Xthermo = flipud(Xthermo);
+    Ythermo = flipud(Ythermo);
+    Zthermo = flipud(Zthermo);
+    printf("Flipped\n");
+  }
+  **/
+  // Output everything to file
   FILE* outfile;
   outfile = fopen("THERMO_SOLN.out","w");
   for (int i=0; i<NPts_; i++)

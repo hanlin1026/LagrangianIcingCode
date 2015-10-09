@@ -1,7 +1,7 @@
 %% Example solver (nonlinear iteration)
 
 % INPUT ****************************
-SURF = 'UPPER';
+SURF = 'LOWER';
 % Import skin friction coefficient data
 CF = importdata('heatflux');
 stagPt = 1.008358;
@@ -101,7 +101,7 @@ iter = 1;
 %while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter < 11) )
 con = 1;
 figure(13); plot(s,mimp,'k--');
-while ((iter<5) )
+while ((iter<3) )
     iter
     con = 0;
     % MASS (solve for X)
