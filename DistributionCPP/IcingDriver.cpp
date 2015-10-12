@@ -155,9 +155,37 @@ int main(int argc, const char *argv[]) {
   // Initialize thermo eqns solver
   const char *filenameCHCF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/heatflux";
   const char *filenameBETA = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/BetaXY.dat";
-  ThermoEqns thermo = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid,"LOWER");
-  // Solve thermo equations
-  thermo.SolveIcingEqns();
+  // Solve upper surface
+  printf("SOLVING UPPER SURFACE...\n\n");
+  ThermoEqns thermoUPPER = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid,"UPPER");
+  thermoUPPER.SolveIcingEqns();
+  printf("...DONE\n\n");
+  // Solve lower surface
+  printf("SOLVING LOWER SURFACE...\n\n");
+  ThermoEqns thermoLOWER = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid,"LOWER");
+  thermoLOWER.SolveIcingEqns();
+  printf("...DONE\n\n");
+  // Get old grid XY coordinates
+  vector<double> XOLD = airfoil.getX();
+  vector<double> YOLD = airfoil.getY();
+  // Update grid (grow ice)
+  double DT = 60.0*10;
+  printf("GROWING ICE FOR DT = %lf SECONDS...\n\n",DT);
+  vector<double> sTHERMO = thermoUPPER.getS();
+  vector<double> mice = thermoUPPER.getMICE();
+  airfoil.growIce(sTHERMO,mice,DT,"UPPER");
+  sTHERMO = thermoLOWER.getS();
+  mice = thermoLOWER.getMICE();
+  airfoil.growIce(sTHERMO,mice,DT,"LOWER");
+  printf("...DONE\n\n");
+  // Output new grid coordinates to file
+  vector<double> XNEW = airfoil.getX();
+  vector<double> YNEW = airfoil.getY();
+  FILE* outfileXYNEW;
+  outfileXYNEW = fopen("XY_OLD_NEW.out","w");
+  for (int i=0; i<XNEW.size(); i++) {
+    fprintf(outfileXYNEW,"%lf\t%lf\t%lf\t%lf\n",XOLD[i],YOLD[i],XNEW[i],YNEW[i]);
+  }
   // *************************************************
 
   // Clear any allocated memory, close files/streams

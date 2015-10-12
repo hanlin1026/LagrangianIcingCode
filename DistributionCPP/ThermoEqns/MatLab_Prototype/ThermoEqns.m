@@ -1,7 +1,7 @@
 %% Example solver (nonlinear iteration)
 
 % INPUT ****************************
-SURF = 'LOWER';
+SURF = 'UPPER';
 % Import skin friction coefficient data
 CF = importdata('heatflux');
 stagPt = 1.008358;
@@ -100,8 +100,7 @@ iter = 1;
 %%
 %while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter < 11) )
 con = 1;
-figure(13); plot(s,mimp,'k--');
-while ((iter<3) )
+while ((iter<2) )
     iter
     con = 0;
     % MASS (solve for X)
@@ -172,9 +171,9 @@ while ((iter<3) )
     
     %}
     % Plot
-    figure(1); hold on; plot(s,X); drawnow;
-    figure(2); hold on; plot(s,Y); drawnow;
-    figure(3); hold on; plot(s,Z); drawnow;
+    figure(11); hold on; plot(s,X); drawnow;
+    figure(12); hold on; plot(s,Y); drawnow;
+    figure(13); hold on; plot(s,Z); drawnow;
     iter = iter + 1;
     
 end
@@ -200,7 +199,7 @@ else
             Ztmp(indSTMP:end) = Zlower(indSTMP:end);
             %Ytmp(indSTMP:end) = 0;
             massSurplus = trapz(s,mimp-Ztmp);
-            figure(3); hold on; plot(s,Ztmp,'k');
+            figure(13); hold on; plot(s,Ztmp,'k');
             if (massSurplus>=0)
                 X = real(sqrt((2*uw/pw./tau_wall).*cumtrapz(s,mimp-Z)));
                 X(indSTMP:end) = 0;
@@ -225,7 +224,7 @@ else
             Ztmp(1:indSTMP) = Zupper(1:indSTMP);
             Ytmp(1:indSTMP) = 0;
             massSurplus = trapz(s,mimp-Ztmp);
-            figure(3); hold on; plot(s,Ztmp,'k');
+            figure(13); hold on; plot(s,Ztmp,'k');
             if (massSurplus<=0)
                 X = real(sqrt((2*uw/pw./tau_wall).*cumtrapz(s,mimp-Z)));
                 break;

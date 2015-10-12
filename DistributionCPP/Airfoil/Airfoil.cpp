@@ -2,6 +2,7 @@
 #include <cmath>
 #include <stdlib.h>
 #include <gsl/gsl_histogram.h>
+#include <VectorOperations/VectorOperations.h>
 
 using namespace std;
 
@@ -227,6 +228,56 @@ void Airfoil::calcStagnationPt(PLOT3D& grid) {
 
 }
 
+void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, const char* strSurf) {
+  // Function to update XY grid coordinates based on ice growth rate for DT time interval
+
+  vector<double> indAIRFOIL;
+  vector<double> indTHERMO;
+  // Interpolate s-coordinates from thermo onto airfoil grid
+  double minimum;
+  int ind;
+  double s_min,s_max;
+  if (strcmp(strSurf,"UPPER")==0) {
+    s_min = 0.0;
+    s_max = 0.4;
+  }
+  else if (strcmp(strSurf,"LOWER")==0) {
+    s_min = -0.4;
+    s_max = 0.0;
+  }
+  vector<double> tmp1(sTHERMO.size());
+  vector<double> tmp2(sTHERMO.size());
+  double sCoord;
+  for (int i=0; i<panelS_.size(); i++) {
+    sCoord = panelS_(i) - stagPt_;
+    if ((sCoord >= s_min) && (sCoord <= s_max)) {
+      for (int j=0; j<sTHERMO.size(); j++)
+	tmp1[j] = sTHERMO[j] - sCoord;
+      tmp2 = abs(tmp1);
+      minimum = min(tmp2,ind);
+      indTHERMO.push_back(ind);
+      indAIRFOIL.push_back(i);
+    }
+  }
+  // Displace each grid point along its normal vector
+  double dt = 1.0;
+  double rhoICE = 917.0;
+  double time = 0.0;
+  double xNEW,yNEW,dH;
+  while (time <= DT) {
+    for (int i=0; i<indAIRFOIL.size(); i++) {
+      dH = mice[indTHERMO[i]]*dt/rhoICE;
+      xNEW = panelX_(indAIRFOIL[i]) + dH*normal_(indAIRFOIL[i],0);
+      yNEW = panelY_(indAIRFOIL[i]) + dH*normal_(indAIRFOIL[i],1);
+      panelX_(indAIRFOIL[i]) = xNEW;
+      panelY_(indAIRFOIL[i]) = yNEW;
+    }
+    time += dt;
+  }
+
+}
+
+
 vector<double> Airfoil::getBetaBins() {
 
   return BetaBins_;
@@ -237,6 +288,20 @@ vector<double> Airfoil::getBeta() {
 
   return Beta_;
 
+}
+
+vector<double> Airfoil::getX() {
+  vector<double> X(panelX_.rows());
+  for (int i=0; i<X.size(); i++)
+    X[i] = panelX_(i);
+  return X;
+}
+
+vector<double> Airfoil::getY() {
+  vector<double> Y(panelY_.rows());
+  for (int i=0; i<Y.size(); i++)
+    Y[i] = panelY_(i);
+  return Y;
 }
 
 void Airfoil::setStagPt(double sLoc) {

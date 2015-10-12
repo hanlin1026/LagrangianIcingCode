@@ -19,7 +19,7 @@ class ThermoEqns {
   std::vector<double> massBalance(std::vector<double>& X);
   std::vector<double> energyBalance(std::vector<double>& Y);
   std::vector<double> testBalance(std::vector<double>& X);
-  std::vector<double> SolveThermoForIceRate(std::vector<double>& X, std::vector<double>& Y, const char* surface);
+  std::vector<double> SolveThermoForIceRate(std::vector<double>& X, std::vector<double>& Y);
   std::vector<double> integrateMassEqn(bool& C_filmHeight);
   std::vector<double> explicitSolver(const char* balance, std::vector<double>& y0, double eps, double tol);
   void SolveIcingEqns();
@@ -28,6 +28,7 @@ class ThermoEqns {
   void setTS(std::vector<double>& ts);
   void setMICE(std::vector<double>& mice);
   std::vector<double> getS();
+  std::vector<double> getMICE();
 
  private:
   // Functions to read in data files

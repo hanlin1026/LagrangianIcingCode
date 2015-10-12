@@ -8,100 +8,10 @@
 #include <iterator>
 #include <iostream>
 #include <fstream>
+#include <VectorOperations/VectorOperations.h>
 
 using namespace std;
 using namespace Eigen;
-
-std::vector<double> operator*(double scal, std::vector<double> vec) {
-  for (int i=0; i<vec.size(); i++) {
-    vec[i] *= scal;
-  }
-  return vec;
-}
-
-std::vector<double> operator-(std::vector<double>& vec1, std::vector<double> vec2) {
-  vector<double> vec = vec1;
-  for (int i=0; i<vec.size(); i++) {
-    vec[i] -= vec2[i];
-  }
-  return vec;
-}
-
-double max(vector<double>& vec) {
-  double maximum = 0.0;
-  for (int i=0; i<vec.size(); i++) {
-    if (vec[i]>maximum) {
-      maximum = vec[i];
-    }
-  }
-
-  return maximum;
-}
-
-double min(vector<double>& vec, int& ind) {
-  double minimum = vec[0];
-  ind = 0;
-  for (int i=1; i<vec.size(); i++) {
-    if (vec[i]<minimum) {
-      minimum = vec[i];
-      ind = i;
-    }
-  }
-
-  return minimum;
-}
-
-vector<double> abs(vector<double>& vec) {
-  vector<double> absVec = vec;
-  for (int i=0; i<vec.size(); i++) {
-    if (vec[i]<0) {
-      absVec[i] = -1.0*vec[i];
-    }
-  }
-  
-  return absVec;
-}
-
-vector<double> find(vector<double>& vec, double val, bool& flag) {
-  // Function to find indices where vec equals val
-
-  vector<double> indices;
-  flag = false;
-  for (int i=0; i<vec.size(); i++) {
-    if (vec[i] == val) {
-      indices.push_back(i);
-      flag = true;
-    }
-  }
-
-  return indices;
-}
-
-vector<double> find(vector<double>& vec, vector<double>& vec2, bool& flag) {
-  // Function to find indices where vec[i] equals vec2[i]
-
-  vector<double> indices;
-  flag = false;
-  for (int i=0; i<vec.size(); i++) {
-    if (vec[i] == vec2[i]) {
-      indices.push_back(i);
-      flag = true;
-    }
-  }
-
-  return indices;
-}
-
-vector<double> flipud(vector<double>& vec) {
-  // Function to flip a vector so that vec[0] becomes vec[end] and vice versa
-
-  vector<double> tmp(vec.size());
-  for (int i=0; i<vec.size(); i++) {
-    tmp[i] = vec[vec.size()-1-i];
-  }
-  
-  return tmp;
-}
 
 ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfoil& airfoil, FluidScalars& fluid, const char* strSurf) {
   // Constructor to read in input files and initialize thermo eqns
@@ -601,38 +511,43 @@ vector<double> ThermoEqns::getS() {
   return s_;
 }
 
-vector<double> ThermoEqns::SolveThermoForIceRate(vector<double>& X, vector<double>& Y, const char* surface) {
+vector<double> ThermoEqns::getMICE() {
+  return mice_;
+}
+
+vector<double> ThermoEqns::SolveThermoForIceRate(vector<double>& X, vector<double>& Y) {
   // Function to solve thermo eqn for ice accretion rate
 
-  vector<double> XY(NPts_);
-  vector<double> DXY(NPts_);
-  vector<double> s(NPts_);
-  vector<double> LHS(NPts_);
-  vector<double> RHS(NPts_);
-  vector<double> beta(NPts_);
-  vector<double> cH(NPts_);
+  vector<double> F(NPts_);
+  vector<double> f(NPts_-1);
+  double D_flux,dsFACE,mimp,RHS;
+  vector<double> xFACE(NPts_-1);
+  vector<double> sFACE(NPts_-1);
+  vector<double> cfFACE(NPts_-1);
+  vector<double> DF(NPts_-1);
   vector<double> Z(NPts_);
-  double mimp;
-  // Switch for upper/lower surface
-  if (strcmp(surface,"UPPER") == 0) {
-    s = s_;
-    beta = beta_;
-    cH = cH_;
+  // Implementation using finite volume with Roe scheme calculation of fluxes
+  // Calculate body centered fluxes
+  F = (0.5*cW_/muL_)*X*X*Y*cF_;
+  // Calculate fluxes at cell faces
+  for (int i=0; i<NPts_-1; i++) {
+    xFACE[i] = 0.5*(X[i]+X[i+1]);
+    sFACE[i] = 0.5*(s_[i]+s_[i+1]);
+    cfFACE[i] = 0.5*(cF_[i]+cF_[i+1]);
   }
-  // Calculate XY and DXY
-  for (int i=0; i<NPts_; i++)
-    XY[i] = X[i]*Y[i];
-  for (int i=1; i<NPts_-1; i++)
-    DXY[i] = (XY[i+1]-XY[i-1])/(s[i+1]-s[i]);
-  DXY[0] = (XY[1]-XY[0])/(s[1]-s[0]);
-  DXY[NPts_] = (XY[NPts_]-XY[NPts_-1])/(s[NPts_]-s[NPts_-1]);
-  // Invert thermo eqn for ice accretion rate
-  for (int i=0; i<NPts_; i++) {
-    LHS[i] = (rhoL_*cW_/2.0/muL_)*DXY[i];
-    mimp = beta[i]*LWC_*Uinf_;
-    RHS[i] = mimp*(cW_*Td_ + 0.5*pow(ud_,2)) + cH[i]*(Td_ - Y[i]);
-    Z[i] = (LHS[i]-RHS[i])/(Lfus_ - cICE_*Y[i]);
+  DF = (cW_/2/muL_)*cF_*xFACE*xFACE;
+  for (int i=0; i<NPts_-1; i++)
+    f[i] = 0.5*(F[i]+F[i+1]) - 0.5*std::abs(DF[i])*(Y[i+1]-Y[i]);
+  // Solve discretization for ice accretion rate
+  for (int i=1; i<NPts_-1; i++) {
+    D_flux = f[i]-f[i-1];
+    dsFACE = sFACE[i]-sFACE[i-1];
+    mimp = beta_[i]*Uinf_*LWC_;
+    RHS = mimp*(cW_*Td_ + 0.5*pow(ud_,2)) + cH_[i]*(Td_ - Y[i]);
+    Z[i] = ((rhoL_/dsFACE)*D_flux - RHS)/(Lfus_ - cICE_*Y[i]);
   }
+  Z[0] = Z[1];
+  Z[NPts_-1] = Z[NPts_-2];
 
   return Z;
 }
@@ -743,7 +658,7 @@ void ThermoEqns::SolveIcingEqns() {
   // Begin main iterative solver
   double epsEnergy = 1.0e1;
   double tolEnergy = 1.0e-4;
-  for (int iterThermo = 0; iterThermo<2; iterThermo++) {
+  for (int iterThermo = 0; iterThermo<5; iterThermo++) {
     // MASS
     printf("ITER = %d\n\n",iterThermo);
     printf("Solving mass equation...\n");
@@ -755,7 +670,7 @@ void ThermoEqns::SolveIcingEqns() {
     // Constraint: check that conservation of mass is not violated
     if (C_filmHeight == false)
       printf("CONSTRAINT: Conservation of mass violated (negative film height)\n");
-    for (int i=0; i<Xthermo.size(); i++) {
+    for (int i=1; i<Xthermo.size(); i++) {
       if (Xthermo[i]==0.0) {
 	mimp = beta_[i]*LWC_*Uinf_;
 	Zthermo[i] = mimp;
@@ -813,7 +728,7 @@ void ThermoEqns::SolveIcingEqns() {
       for (int i=0; i<indWaterSize; i++)
 	Ytmp[indWater[i]] = 0.0;
       // Re-solve for ice profile
-      Zthermo = SolveThermoForIceRate(Xthermo,Ytmp,"UPPER");
+      Zthermo = SolveThermoForIceRate(Xthermo,Ytmp);
       // Correct for ice rate < 0
       for (int i=0; i<Zthermo.size(); i++) {
 	if (Zthermo[i]<0)
@@ -828,7 +743,6 @@ void ThermoEqns::SolveIcingEqns() {
     }
   }
   // Check to see if need refinement of ice profile for mixed glaze/rime conditions
-  /**
   if ((C_filmHeight == false) || (C_waterWarm == false) || (C_iceCold == false)) {
     printf("Mixed glaze/rime conditions detected, refining ice profile...\n");
     // Calculate mass surplus
@@ -844,7 +758,7 @@ void ThermoEqns::SolveIcingEqns() {
     vector<double> Yzero(s_.size());
     for (int i=0; i<NPts_; i++)
       Yzero[i] = 0.0;
-    vector<double> Zupper = SolveThermoForIceRate(Xthermo,Yzero,"UPPER");
+    vector<double> Zupper = SolveThermoForIceRate(Xthermo,Yzero);
     vector<double> Zlower = MIMP;
     vector<double> Ztmp(NPts_);
     vector<double> Ytmp(NPts_);
@@ -923,22 +837,23 @@ void ThermoEqns::SolveIcingEqns() {
     setHF(Xthermo);
       
   }
-  **/
   // Mirror solution if we are doing the lower surface
   vector<double> sThermo = getS();
-  /**
   if (strcmp(strSurf_,"LOWER")==0) {
     sThermo = flipud(sThermo);
     sThermo = -1*sThermo;
     Xthermo = flipud(Xthermo);
     Ythermo = flipud(Ythermo);
     Zthermo = flipud(Zthermo);
-    printf("Flipped\n");
   }
-  **/
   // Output everything to file
   FILE* outfile;
-  outfile = fopen("THERMO_SOLN.out","w");
+  const char* thermoFileName;
+  if (strcmp(strSurf_,"UPPER")==0)
+    thermoFileName = "THERMO_SOLN_UPPER.out";
+  else if (strcmp(strSurf_,"LOWER")==0)
+    thermoFileName = "THERMO_SOLN_LOWER.out";
+  outfile = fopen(thermoFileName,"w");
   for (int i=0; i<NPts_; i++)
     fprintf(outfile,"%lf\t%lf\t%lf\t%lf\n",sThermo[i],Xthermo[i],Ythermo[i],Zthermo[i]);
   fclose(outfile);
