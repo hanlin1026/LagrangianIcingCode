@@ -224,7 +224,7 @@ void Airfoil::calcStagnationPt(PLOT3D& grid) {
   std::vector<double> XYstag(2);
   XYstag[0] = stagPtX_; XYstag[1] = stagPtY_;
   stagPt_ = this->interpXYtoS(XYstag);
-  printf("stagPtS = %f, stagPtX = %f, stagPtY = %f\n",stagPt_,stagPtX_,stagPtY_);
+  //printf("stagPtS = %f, stagPtX = %f, stagPtY = %f\n",stagPt_,stagPtX_,stagPtY_);
 
 }
 
@@ -260,19 +260,14 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
     }
   }
   // Displace each grid point along its normal vector
-  double dt = 1.0;
   double rhoICE = 917.0;
-  double time = 0.0;
   double xNEW,yNEW,dH;
-  while (time <= DT) {
-    for (int i=0; i<indAIRFOIL.size(); i++) {
-      dH = mice[indTHERMO[i]]*dt/rhoICE;
-      xNEW = panelX_(indAIRFOIL[i]) + dH*normal_(indAIRFOIL[i],0);
-      yNEW = panelY_(indAIRFOIL[i]) + dH*normal_(indAIRFOIL[i],1);
-      panelX_(indAIRFOIL[i]) = xNEW;
-      panelY_(indAIRFOIL[i]) = yNEW;
-    }
-    time += dt;
+  for (int i=0; i<indAIRFOIL.size(); i++) {
+    dH = mice[indTHERMO[i]]*DT/rhoICE;
+    xNEW = panelX_(indAIRFOIL[i]) + dH*normal_(indAIRFOIL[i],0);
+    yNEW = panelY_(indAIRFOIL[i]) + dH*normal_(indAIRFOIL[i],1);
+    panelX_(indAIRFOIL[i]) = xNEW;
+    panelY_(indAIRFOIL[i]) = yNEW;
   }
 
 }

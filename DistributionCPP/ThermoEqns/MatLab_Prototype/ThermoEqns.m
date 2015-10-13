@@ -83,7 +83,7 @@ scalars.ds_ = ds;
 scalars.pw_ = pw;
 scalars.uw_ = uw;
 scalars.cw_ = 4217.6; % J/(kg C) at T = 0 C and P = 100 kPa
-scalars.Td_ = -12;
+scalars.Td_ = -5;
 scalars.ud_ = 80;
 scalars.cice_ = 2093; % J/(kg C) at T = 0
 scalars.Lfus_ = 334774; % J/kg
@@ -100,7 +100,7 @@ iter = 1;
 %%
 %while (((C_filmPos && C_icePos && C_waterWarm && C_iceCold) == false) && (iter < 11) )
 con = 1;
-while ((iter<2) )
+while ((iter<6) )
     iter
     con = 0;
     % MASS (solve for X)

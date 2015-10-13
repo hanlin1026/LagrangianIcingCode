@@ -24,7 +24,7 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
   LWC_ = 0.55e-3;
   Uinf_ = 100;
   // TEST: set values of other parameters
-  Td_ = -12.0;
+  Td_ = -5.0;
   cW_ = 4217.6;     // J/(kg C) at T = 0 C and P = 100 kPa
   ud_ = 80.0;
   cICE_ = 2093.0;   // J/(kg C) at T = 0
@@ -619,7 +619,7 @@ vector<double> ThermoEqns::explicitSolver(const char* balance, vector<double>& y
       err.push_back(ERR);
     }
   }
-  printf("Explicit solver converged after %d iterations\n",iter);
+  //printf("Explicit solver converged after %d iterations\n",iter);
 
   return Y;
 }
@@ -661,8 +661,9 @@ void ThermoEqns::SolveIcingEqns() {
   for (int iterThermo = 0; iterThermo<5; iterThermo++) {
     // MASS
     printf("ITER = %d\n\n",iterThermo);
-    printf("Solving mass equation...\n");
+    printf("Solving mass equation...");
     Xnew = integrateMassEqn(C_filmHeight);
+    printf("done.\n");
     //Xnew = explicitSolver("MASS",Xthermo,1.0e1,1.0e-6);
     //Xnew = NewtonKrylovIteration("MASS",Xthermo,1.0e-5);
     Xthermo = Xnew;
@@ -678,8 +679,9 @@ void ThermoEqns::SolveIcingEqns() {
     }
     setMICE(Zthermo);
     // ENERGY
-    printf("Solving energy equation...\n");
+    printf("Solving energy equation...");
     Ynew = explicitSolver("ENERGY",Ythermo,epsEnergy,tolEnergy);
+    printf("done.\n");
     //Ynew = NewtonKrylovIteration("ENERGY",Ythermo,0.06);
     Ythermo = Ynew;
     setTS(Ythermo);
@@ -687,7 +689,7 @@ void ThermoEqns::SolveIcingEqns() {
     indWaterSize = 0;
     for (int i=0; i<XY.size(); i++) {
       XY[i] = Xthermo[i]*Ythermo[i];
-      if (XY[i] < 100*epsWater) {
+      if (XY[i] < 1000*epsWater) {
 	indWater.push_back(i);
 	indWaterSize++;
       }
@@ -695,7 +697,7 @@ void ThermoEqns::SolveIcingEqns() {
     indIceSize = 0;
     for (int i=0; i<Ythermo.size(); i++) {
       YZ[i] = Ythermo[i]*Zthermo[i];
-      if (YZ[i] > 100*epsIce) {
+      if (YZ[i] > 1000*epsIce) {
 	indIce.push_back(i);
 	indIceSize++;
       }
@@ -835,7 +837,7 @@ void ThermoEqns::SolveIcingEqns() {
     setMICE(Ztmp); Zthermo = Ztmp;
     setTS(Ytmp); Ythermo = Ytmp;
     setHF(Xthermo);
-      
+    
   }
   // Mirror solution if we are doing the lower surface
   vector<double> sThermo = getS();
@@ -845,6 +847,10 @@ void ThermoEqns::SolveIcingEqns() {
     Xthermo = flipud(Xthermo);
     Ythermo = flipud(Ythermo);
     Zthermo = flipud(Zthermo);
+    s_ = sThermo;
+    setHF(Xthermo);
+    setTS(Ythermo);
+    setMICE(Zthermo);
   }
   // Output everything to file
   FILE* outfile;
