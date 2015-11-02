@@ -24,7 +24,7 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
   LWC_ = 0.55e-3;
   Uinf_ = 100;
   // TEST: set values of other parameters
-  Td_ = -5.0;
+  Td_ = -10.0;
   cW_ = 4217.6;     // J/(kg C) at T = 0 C and P = 100 kPa
   ud_ = 80.0;
   cICE_ = 2093.0;   // J/(kg C) at T = 0

@@ -16,7 +16,9 @@
 #include <iterator>
 #include <findAll.h>
 
-// Airfoil icing code driver program
+// *******************************************************
+// AIRFOIL ICING CODE DRIVER PROGRAM
+// *******************************************************
 
 int main(int argc, const char *argv[]) {
   // Check that user has specified an input filepath
@@ -27,8 +29,8 @@ int main(int argc, const char *argv[]) {
   }
   // Specify initialization files
   const char *inFileName = argv[1];
-  const char *meshFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/MESH.P3D";
-  const char *solnFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/q103.0.25E+01.bin";
+  const char *meshFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/MESH.P3D";
+  const char *solnFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/q103.0.40E+01.bin";
   // Read in initialization scalars from input file
   FluidScalars scalarsFluid;
   ParcelScalars scalarsParcel;
@@ -71,12 +73,6 @@ int main(int argc, const char *argv[]) {
   airfoil.calcStagnationPt(p3d);
   //airfoil.setStagPt(1.0238);
   // Advect (no splashing/fracture)
-  ofstream foutX("CloudX.out");
-  ofstream foutY("CloudY.out");
-  ofstream foutCELLX("CloudCELLX.out");
-  ofstream foutCELLY("CloudCELLY.out");
-  ofstream foutBINS("BetaBins.out");
-  ofstream foutMASS("Beta.out");
   State stateCloud;
   iter = 0;
   int totalImpinge = 0;
@@ -97,7 +93,10 @@ int main(int argc, const char *argv[]) {
   int particles = scalarsParcel.particles_;
   printf("maxiter = %d\n",maxiter);
 
-  // DROPLET ADVECTION MODULE ******************************
+  // *******************************************************
+  // DROPLET ADVECTION MODULE
+  // *******************************************************
+
   while ((totalImpinge < particles) && (iter < maxiter)) {
     cloud.calcDtandImpinge(airfoil,p3d);
     cloud.transportSLD(p3d);
@@ -131,27 +130,27 @@ int main(int argc, const char *argv[]) {
     iter++;
 
   }
-  // Output particle state history to file
-  ostream_iterator<double> out_itX (foutX,"\n");
-  copy ( x.begin(), x.end(), out_itX );
-  ostream_iterator<double> out_itY (foutY,"\n");
-  copy ( y.begin(), y.end(), out_itY );
-  ostream_iterator<double> out_itCELLX (foutCELLX,"\n");
-  copy ( XCENT.begin(), XCENT.end(), out_itCELLX );
-  ostream_iterator<double> out_itCELLY (foutCELLY,"\n");
-  copy ( YCENT.begin(), YCENT.end(), out_itCELLY );
   // Get collection efficiency and output to file
-  double dS = 0.001;
+  double dS = 0.005;
   airfoil.calcCollectionEfficiency(fluxFreeStream,dS);
   std::vector<double> BetaBins = airfoil.getBetaBins();
   std::vector<double> Beta = airfoil.getBeta();
-  ostream_iterator<double> out_itBINS(foutBINS,"\n");
-  copy ( BetaBins.begin(), BetaBins.end(), out_itBINS );
-  ostream_iterator<double> out_itMASS(foutMASS,"\n");
-  copy ( Beta.begin(), Beta.end(), out_itMASS );
-  // **************************************************************
+  // Output particle state history to file
+  FILE* outfileDROP;
+  FILE* outfileBETA;
+  outfileDROP = fopen("DropletXY.out","w");
+  outfileBETA = fopen("BETA.out","w");
+  for (int i=0; i<x.size(); i++)
+    fprintf(outfileDROP,"%lf\t%lf\n",x[i],y[i]);
+  for (int i=0; i<Beta.size(); i++) 
+    fprintf(outfileBETA,"%lf\t%lf\n",BetaBins[i],Beta[i]);
+  fclose(outfileDROP);
+  fclose(outfileBETA);
 
-  // THERMO EQUATIONS ********************************
+  // *******************************************************
+  // THERMO EQUATIONS
+  // *******************************************************
+  /*****
   // Initialize thermo eqns solver
   const char *filenameCHCF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/heatflux";
   const char *filenameBETA = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/BetaXY.dat";
@@ -186,8 +185,6 @@ int main(int argc, const char *argv[]) {
   for (int i=0; i<XNEW.size(); i++) {
     fprintf(outfileXYNEW,"%lf\t%lf\t%lf\t%lf\n",XOLD[i],YOLD[i],XNEW[i],YNEW[i]);
   }
-  // *************************************************
-
-  // Clear any allocated memory, close files/streams
+  *****/
   
 }
