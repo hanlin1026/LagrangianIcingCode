@@ -209,8 +209,8 @@ void Airfoil::calcStagnationPt(PLOT3D& grid) {
   Eigen::MatrixXd X = grid.getXCENT();
   Eigen::MatrixXd Y = grid.getYCENT();
   double u; double v;
-  int i1 = floor(0.30*I);
-  int i2 = floor(0.70*I);
+  int i1 = floor(0.45*I);
+  int i2 = floor(0.55*I);
   vector<double> VelMagSq(i2-i1);
   // Get first wrap of (u,v)
   for (int i=i1; i<i2; i++) {
@@ -224,11 +224,11 @@ void Airfoil::calcStagnationPt(PLOT3D& grid) {
   std::vector<double> XYstag(2);
   XYstag[0] = stagPtX_; XYstag[1] = stagPtY_;
   stagPt_ = this->interpXYtoS(XYstag);
-  //printf("stagPtS = %f, stagPtX = %f, stagPtY = %f\n",stagPt_,stagPtX_,stagPtY_);
+  printf("stagPtS = %f, stagPtX = %f, stagPtY = %f\n",stagPt_,stagPtX_,stagPtY_);
 
 }
 
-void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, const char* strSurf) {
+void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, double chord, const char* strSurf) {
   // Function to update XY grid coordinates based on ice growth rate for DT time interval
 
   vector<double> indAIRFOIL;
@@ -250,7 +250,7 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
   double sCoord;
   for (int i=0; i<panelS_.size(); i++) {
     sCoord = panelS_(i) - stagPt_;
-    if ((sCoord >= s_min) && (sCoord <= s_max)) {
+    if ( ((sCoord >= s_min) && (sCoord <= s_max)) ) {
       for (int j=0; j<sTHERMO.size(); j++)
 	tmp1[j] = sTHERMO[j] - sCoord;
       tmp2 = abs(tmp1);

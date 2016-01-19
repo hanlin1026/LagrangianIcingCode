@@ -12,7 +12,7 @@ from matplotlib.pyplot import figure, axes, plot, xlabel, ylabel, title, grid, s
 
 inches_per_pt = 1.0/72.27
 width = 700
-height = 500
+height = 300
 fig_size = [width*inches_per_pt,height*inches_per_pt]
 
 params = {   #'axes.labelsize': 30,
@@ -25,16 +25,34 @@ params = {   #'axes.labelsize': 30,
 }
 pylab.rcParams.update(params)
 
-XY = genfromtxt("XY_OLD_NEW.out", delimiter = "\t")
+chord = 0.5334;
+#chord = 21;
+basedir = "/home/adegenna/LagrangianIcingCode/Validations/Ice/Run405Multilayer/";
+for i in range(0,7):
+    filename = basedir + "XY_NEW" + str(i+1) + ".out";
+    XY = genfromtxt(filename, delimiter = "\t")
+    figure(1);
+    plot(XY[:,0]*chord,XY[:,1]*chord,lw=3,c='b')
+filename = basedir + "NACA0012.dat";
+XY = genfromtxt(filename,delimiter="\t");
 figure(1);
-plot(XY[:,0],XY[:,1],c='k')
-plot(XY[:,2],XY[:,3],c='r')
+plot(XY[:,0]*chord,XY[:,1]*chord,lw=3,c='k');
+#XY = genfromtxt("XY_NEW.out", delimiter="\t");
+#plot(XY[:,0],XY[:,1],lw=3,c='r');
 axis('equal')
+plt.grid(b=True)
+plt.xlim([-0.05,0.2])
+#legend(['230 K','240 K','250 K','260 K','270 K','NACA0012'])
+# Compare to LEWICE results
+lewice = genfromtxt(basedir + "../../LewiceIceshapes/Run405.csv", delimiter = ",");
+plt.scatter(lewice[:,0]/21.0*chord,lewice[:,1]/21.0*chord,c='g');
+habashi = genfromtxt("/home/adegenna/LagrangianIcingCode/Validations/LewiceIceshapes/Habashi405.csv",delimiter=",");
+plt.scatter(habashi[:,0]/21.0*chord,habashi[:,1]/21.0*chord,c='r');
 
 UPPER = genfromtxt("THERMO_SOLN_UPPER.out", delimiter = "\t");
 LOWER = genfromtxt("THERMO_SOLN_LOWER.out", delimiter = "\t");
-BETA = genfromtxt("ThermoEqns/BetaXY.dat", delimiter = ",");
-LWC = 0.55e-3; Uinf = 100; 
+BETA = genfromtxt("BETA.out", delimiter = "\t");
+LWC = 0.55e-3; Uinf = 102.8; 
 figure(2);
 subplot(311); plot(UPPER[:,0],UPPER[:,1],c='b'); plot(LOWER[:,0],LOWER[:,1],c='r'); 
 subplot(312); plot(UPPER[:,0],UPPER[:,2],c='b'); plot(LOWER[:,0],LOWER[:,2],c='r');

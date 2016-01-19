@@ -29,12 +29,13 @@ int main(int argc, const char *argv[]) {
   }
   // Specify initialization files
   const char *inFileName = argv[1];
-  const char *meshFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/MESH.P3D";
-  const char *solnFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/q103.0.40E+01.bin";
+  const char *meshFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/TEST2/T1/MESH.P3D";
+  const char *solnFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/TEST2/T1/q103.0.40E+01.bin";
   // Read in initialization scalars from input file
   FluidScalars scalarsFluid;
   ParcelScalars scalarsParcel;
   readInputParams(scalarsFluid,scalarsParcel,inFileName);
+  double chord = scalarsFluid.chord_;
   // Initialize plot3D object, read in basic problem data
   PLOT3D p3d = PLOT3D(meshFileName, solnFileName, &scalarsFluid);
   double dY;
@@ -63,7 +64,7 @@ int main(int argc, const char *argv[]) {
   std::vector<double> Y;
   int iter = 0;
   for (int i=0; i<Xgrid.rows(); i++) {
-    if (Xgrid(i,0) <= 1) {
+    if (Xgrid(i,0) <= chord) {
       X.push_back(Xgrid(i,0));
       Y.push_back(Ygrid(i,0));
       iter++;
@@ -96,7 +97,7 @@ int main(int argc, const char *argv[]) {
   // *******************************************************
   // DROPLET ADVECTION MODULE
   // *******************************************************
-
+  
   while ((totalImpinge < particles) && (iter < maxiter)) {
     cloud.calcDtandImpinge(airfoil,p3d);
     cloud.transportSLD(p3d);
@@ -131,7 +132,7 @@ int main(int argc, const char *argv[]) {
 
   }
   // Get collection efficiency and output to file
-  double dS = 0.005;
+  double dS = 0.0025;
   airfoil.calcCollectionEfficiency(fluxFreeStream,dS);
   std::vector<double> BetaBins = airfoil.getBetaBins();
   std::vector<double> Beta = airfoil.getBeta();
@@ -143,48 +144,51 @@ int main(int argc, const char *argv[]) {
   for (int i=0; i<x.size(); i++)
     fprintf(outfileDROP,"%lf\t%lf\n",x[i],y[i]);
   for (int i=0; i<Beta.size(); i++) 
-    fprintf(outfileBETA,"%lf\t%lf\n",BetaBins[i],Beta[i]);
+    fprintf(outfileBETA,"%lf\t%lf\n",BetaBins[i],Beta[i]*.74/.83);
   fclose(outfileDROP);
   fclose(outfileBETA);
-
+  
   // *******************************************************
   // THERMO EQUATIONS
   // *******************************************************
-  /*****
+  
   // Initialize thermo eqns solver
-  const char *filenameCHCF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/heatflux";
-  const char *filenameBETA = "/home/adegenna/LagrangianIcingCode/DistributionCPP/ThermoEqns/BetaXY.dat";
+  const char *filenameCHCF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/TEST2/T1/heatflux";
+  const char *filenameBETA = "/home/adegenna/LagrangianIcingCode/DistributionCPP/BETA.out";
   // Solve upper surface
   printf("SOLVING UPPER SURFACE...\n\n");
-  ThermoEqns thermoUPPER = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid,"UPPER");
+  ThermoEqns thermoUPPER = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid,cloud,"UPPER");
   thermoUPPER.SolveIcingEqns();
   printf("...DONE\n\n");
   // Solve lower surface
   printf("SOLVING LOWER SURFACE...\n\n");
-  ThermoEqns thermoLOWER = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid,"LOWER");
+  ThermoEqns thermoLOWER = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid,cloud,"LOWER");
   thermoLOWER.SolveIcingEqns();
   printf("...DONE\n\n");
   // Get old grid XY coordinates
   vector<double> XOLD = airfoil.getX();
   vector<double> YOLD = airfoil.getY();
   // Update grid (grow ice)
-  double DT = 60.0*10;
+  double DT = 60.0*1;
   printf("GROWING ICE FOR DT = %lf SECONDS...\n\n",DT);
   vector<double> sTHERMO = thermoUPPER.getS();
   vector<double> mice = thermoUPPER.getMICE();
-  airfoil.growIce(sTHERMO,mice,DT,"UPPER");
+  airfoil.growIce(sTHERMO,mice,DT,chord,"UPPER");
   sTHERMO = thermoLOWER.getS();
   mice = thermoLOWER.getMICE();
-  airfoil.growIce(sTHERMO,mice,DT,"LOWER");
+  airfoil.growIce(sTHERMO,mice,DT,chord,"LOWER");
   printf("...DONE\n\n");
   // Output new grid coordinates to file
   vector<double> XNEW = airfoil.getX();
   vector<double> YNEW = airfoil.getY();
-  FILE* outfileXYNEW;
-  outfileXYNEW = fopen("XY_OLD_NEW.out","w");
+  FILE* outfileXYOLDNEW; FILE* outfileXYNEW;
+  outfileXYOLDNEW = fopen("XY_OLD_NEW.out","w");
+  outfileXYNEW = fopen("XY_NEW.out","w");
   for (int i=0; i<XNEW.size(); i++) {
-    fprintf(outfileXYNEW,"%lf\t%lf\t%lf\t%lf\n",XOLD[i],YOLD[i],XNEW[i],YNEW[i]);
+    fprintf(outfileXYOLDNEW,"%lf\t%lf\t%lf\t%lf\n",XOLD[i],YOLD[i],XNEW[i],YNEW[i]);
+    fprintf(outfileXYNEW,"%lf\t%lf\n",XNEW[i],YNEW[i]);
   }
-  *****/
+  fclose(outfileXYOLDNEW);
+  fclose(outfileXYNEW);
   
 }

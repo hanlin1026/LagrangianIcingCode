@@ -18,7 +18,7 @@ class Airfoil {
     void calcCollectionEfficiency(double fluxFreeStream,double dS);
     void calcStagnationPt(PLOT3D& grid);
     // Method for updating grid based on thermodynamic ice calculation
-    void growIce(std::vector<double>& sTHERMO, std::vector<double>& mice, double DT, const char* strSurf);
+    void growIce(std::vector<double>& sTHERMO, std::vector<double>& mice, double DT, double chord, const char* strSurf);
     // Set/get methods
     std::vector<double> getBetaBins();
     std::vector<double> getBeta();

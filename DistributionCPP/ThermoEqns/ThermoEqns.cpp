@@ -13,7 +13,7 @@
 using namespace std;
 using namespace Eigen;
 
-ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfoil& airfoil, FluidScalars& fluid, const char* strSurf) {
+ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfoil& airfoil, FluidScalars& fluid, Cloud& cloud, const char* strSurf) {
   // Constructor to read in input files and initialize thermo eqns
 
   strSurf_ = strSurf;
@@ -22,18 +22,22 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
   muL_ = 1.787e-3;
   // Set LWC_,Uinf_
   LWC_ = 0.55e-3;
-  Uinf_ = 100;
-  // TEST: set values of other parameters
-  Td_ = -10.0;
+  Uinf_ = 102.8;
+  State state = cloud.getState();
+  Td_ = fluid.Td_-273.15;
+  // ASSUMPTION: set values of some parameters at certain temperature/pressure
   cW_ = 4217.6;     // J/(kg C) at T = 0 C and P = 100 kPa
-  ud_ = 80.0;
-  cICE_ = 2093.0;   // J/(kg C) at T = 0
+  //cW_ = 4393.0;      // J/(kg C) at T = -20 C and P = 100 kPa
+  ud_ = 102.8;
+  cICE_ = 2093.0;   // J/(kg C) at T = 0 C       
+  //cICE_ = 1943.0;    // J/(kg C) at T = -20 C
   Lfus_ = 334774.0; // J/kg
   // Read in values of fluid parameters
-  TINF_ = 250.0; // K
+  TINF_ = Td_+273.15; // K
   rhoL_ = fluid.rhol_;
   rhoINF_ = (3.302857142857084e-05)*pow(TINF_,2) + (-0.022130857142857)*TINF_ + 4.875685714285685; // O(2) fit between T=[175,275]
   pINF_ = rhoINF_*287.058*TINF_;
+  chord_ = fluid.chord_;
   // Initial guess for ice accretion
   mice_.resize(NPts_);
   for (int i=0; i<NPts_; i++)
@@ -43,7 +47,7 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
   // Flip things if we are doing the lower surface
   if (strcmp(strSurf_,"LOWER")==0) {
     s_ = flipud(s_);
-    s_ = -1*s_;
+    s_ = -1.0*s_;
     cH_ = flipud(cH_);
     cF_ = flipud(cF_);
     beta_ = flipud(beta_);
@@ -63,21 +67,27 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
   double s_min,s_max;
   if (strcmp(strSurf_,"UPPER")==0) {
     s_min = 0.0;
-    s_max = 0.4;
+    s_max = 0.2*chord_;
   }
   else if (strcmp(strSurf_,"LOWER")==0) {
-    s_min = -0.4;
+    s_min = -0.2*chord_;
     s_max = 0.0;
   }
   if (strcmp(parameter,"CHCF") == 0) {
     // Import (s,ch,cf)
     data = this->readCHCF(filename);
-    s = data.col(0);
+    s = data.col(0)*chord_;
     ch = data.col(1);
     cf = data.col(2);
     // Scale CH
-    for (int i=0; i<ch.size(); i++)
-      ch(i) = -1.0*rhoINF_*pow(pINF_/rhoINF_,1.5)/(273.15-TINF_)*ch(i);
+    for (int i=0; i<ch.size(); i++) {
+      if (cf(i)<0)
+	cf(i) = 1.0e-3;
+      ch(i) = rhoINF_*(1003)*Uinf_*0.5*cf(i);
+      if (ch(i)<150)
+	 ch(i) = 150;
+      //ch(i) = -1.0*rhoINF_*pow(pINF_/rhoINF_,1.5)/(273.15-TINF_)*ch(i);
+    }
     // Set stagPt at s=0
     stagPt = airfoil.getStagPt();
     // Compensate for slight misalignment of stagPt by finding where cF is approx 0
@@ -242,7 +252,7 @@ MatrixXd ThermoEqns::readBetaXY(const char* filenameBeta) {
   MatrixXd s_Beta(sizeBeta,2);
   double a,b;
   for (int i=0; i<sizeBeta; i++) {
-    fscanf(filept,"%lf,%lf",&a,&b);
+    fscanf(filept,"%lf\t%lf",&a,&b);
     s_Beta(i,0) = a; s_Beta(i,1) = b;
   }
   // Close file streams
@@ -660,7 +670,7 @@ void ThermoEqns::SolveIcingEqns() {
   double tolEnergy = 1.0e-4;
   for (int iterThermo = 0; iterThermo<5; iterThermo++) {
     // MASS
-    printf("ITER = %d\n\n",iterThermo);
+    printf("ITER = %d\n\n",iterThermo+1);
     printf("Solving mass equation...");
     Xnew = integrateMassEqn(C_filmHeight);
     printf("done.\n");
@@ -677,10 +687,16 @@ void ThermoEqns::SolveIcingEqns() {
 	Zthermo[i] = mimp;
       }
     }
+    if (Xthermo[1]==0.0)
+      Zthermo[0] = beta_[0]*LWC_*Uinf_;
     setMICE(Zthermo);
     // ENERGY
     printf("Solving energy equation...");
     Ynew = explicitSolver("ENERGY",Ythermo,epsEnergy,tolEnergy);
+    for (int i=0; i<Ynew.size(); i++) {
+      if (std::isnan(Ynew[i]))
+	Ynew[i] = 0.0;
+    }
     printf("done.\n");
     //Ynew = NewtonKrylovIteration("ENERGY",Ythermo,0.06);
     Ythermo = Ynew;
@@ -745,6 +761,7 @@ void ThermoEqns::SolveIcingEqns() {
     }
   }
   // Check to see if need refinement of ice profile for mixed glaze/rime conditions
+  
   if ((C_filmHeight == false) || (C_waterWarm == false) || (C_iceCold == false)) {
     printf("Mixed glaze/rime conditions detected, refining ice profile...\n");
     // Calculate mass surplus
@@ -839,6 +856,7 @@ void ThermoEqns::SolveIcingEqns() {
     setHF(Xthermo);
     
   }
+  
   // Mirror solution if we are doing the lower surface
   vector<double> sThermo = getS();
   if (strcmp(strSurf_,"LOWER")==0) {
@@ -851,6 +869,24 @@ void ThermoEqns::SolveIcingEqns() {
     setHF(Xthermo);
     setTS(Ythermo);
     setMICE(Zthermo);
+  }
+  // Check boundary condition of ice for bug
+  int ind1,ind2;
+  if (strcmp(strSurf_,"UPPER")==0) {
+    for (int i=0; i<15; i++) {
+      if ((Zthermo[i] < 1.0e-4) && (Zthermo[15] > 1.0e-4)) {
+	Zthermo[i] = Zthermo[15];
+      }
+      setMICE(Zthermo);
+    }
+  }
+  else {
+     for (int i=NPts_; i>NPts_-15; i--) {
+      if ((Zthermo[i] < 1.0e-4) && (Zthermo[NPts_-15] > 1.0e-4)) {
+	Zthermo[i] = Zthermo[NPts_-15];
+      }
+      setMICE(Zthermo);
+    }
   }
   // Output everything to file
   FILE* outfile;

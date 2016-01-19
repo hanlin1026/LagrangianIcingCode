@@ -9,6 +9,7 @@ struct FluidScalars {
   double rhoinf_;
   double Ubar_;
   double rhol_;
+  double chord_;
   // Scalars needed for constructor of Grid class
   int nx_;
   int ny_;
@@ -18,6 +19,9 @@ struct FluidScalars {
   float time_;
   // Track splashed particles indicator
   int calcImpingementLimits_;
+
+  // Scalars needed for thermodynamics module
+  double Td_;
 
 };
 

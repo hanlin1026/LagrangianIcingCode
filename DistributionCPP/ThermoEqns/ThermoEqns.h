@@ -7,10 +7,11 @@
 #include <Eigen/Dense>
 #include <Airfoil/Airfoil.h>
 #include <Grid/FluidScalars.h>
+#include <Cloud/Cloud.h>
 
 class ThermoEqns {
  public:
-  ThermoEqns(const char* filenameCF,const char* filenameBETA,Airfoil& airfoil,FluidScalars& fluid,const char* strSurf);
+  ThermoEqns(const char* filenameCF,const char* filenameBETA,Airfoil& airfoil,FluidScalars& fluid,Cloud& cloud,const char* strSurf);
   ~ThermoEqns();
   std::vector<double> NewtonKrylovIteration(const char* balance,std::vector<double>& u0,double globaltol);
   std::vector<double> trapz(std::vector<double>& X, std::vector<double>& Y);
@@ -51,6 +52,7 @@ class ThermoEqns {
   double rhoL_, muL_, LWC_, Uinf_;
   double Td_, cW_, ud_, cICE_, Lfus_;
   double rhoINF_, pINF_, TINF_;
+  double chord_;
 
 };
 

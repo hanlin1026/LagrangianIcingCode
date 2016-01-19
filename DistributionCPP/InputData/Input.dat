@@ -1,12 +1,21 @@
-// Input parameters for IcingDriver
+// Input parameters for droplet advection
 
 pinf	    R		     Tinf		rhol
-0.90760e5   287.058	     256.5		1000.0
+0.90760e5   287.058	     256.15		1000.0
 particles   Rmean	     Tmean
-5000	    20.0e-6	     256.50
+5000	    20.0e-6	     256.15
 Xmin	    Xmax	     Ymin		Ymax
--5.0	    -5.0	     -0.3073		-0.2180
+-5.0	    -5.0	     -0.5		-0.40
 maxiter	    RefreshRate	     calcImpLimits
-2000	    1999	     1
+1000	    999	     	     1
 Splashing   TrackSplash
 1	    0
+// **********************************
+// Input parameters for thermo module
+// **********************************
+NPts        Uinf             LWC                Td		chord
+1000	    100		     0.55e-3		256.15		0.5334
+cW          ud               cICE               Lfus
+4217.6	    100		     2093.0		334774.0
+TINF	    muL
+256.15	    1.787e-3

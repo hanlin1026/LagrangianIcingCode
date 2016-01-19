@@ -51,6 +51,20 @@ void readInputParams(FluidScalars& PROPS, ParcelScalars& PARCEL, const char *inF
   // Compute derived parameters
   PROPS.rhoinf_ = PROPS.pinf_/PROPS.R_/PROPS.Tinf_;
   PROPS.Ubar_ = sqrt(1.4*PROPS.pinf_/PROPS.rhoinf_);
+
+  // Thermo module parameters
+  std::getline(inFile,line);
+  std::getline(inFile,line);
+  std::getline(inFile,line);
+  std::getline(inFile,line);
+  std::getline(inFile,line);
+  // First line (NPts,Uinf,LWC,Td)
+  double tmp;
+  inFile >> tmp;
+  inFile >> tmp;
+  inFile >> tmp;
+  inFile >> PROPS.Td_;
+  inFile >> PROPS.chord_;
   // Close file stream
   inFile.close();
 

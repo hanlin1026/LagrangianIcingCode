@@ -9,6 +9,7 @@ using namespace Eigen;
 PLOT3D::PLOT3D(const char *meshfname, const char *solnfname, FluidScalars* scalars) {
   // Constructor: read in mesh/soln file data
 
+  double chord = scalars->chord_;
   // Read in size of mesh
   int nx, ny, n;
   ifstream meshfile;
@@ -25,8 +26,8 @@ PLOT3D::PLOT3D(const char *meshfname, const char *solnfname, FluidScalars* scala
   int iter = 0;
   for (int j=0; j<ny_; j++) {
     for (int i=0; i<nx_; i++) {
-      x_(i,j) = xy[iter];
-      y_(i,j) = xy[iter+n];
+      x_(i,j) = xy[iter]*chord;
+      y_(i,j) = xy[iter+n]*chord;
       iter++;
     }
   }
@@ -46,7 +47,7 @@ PLOT3D::PLOT3D(const char *meshfname, const char *solnfname, FluidScalars* scala
   rhoinf_ = scalars->rhoinf_;
   Ubar_ =   scalars->Ubar_;
   rhol_ =   scalars->rhol_;
-  Uinf_ = mach_*340;
+  Uinf_ = mach_*sqrt(1.4*R_*Tinf_);
   // Read in solution data
   rho_.resize(nx_,ny_);
   u_.resize(nx_,ny_);
