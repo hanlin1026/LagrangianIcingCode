@@ -27,14 +27,14 @@ pylab.rcParams.update(params)
 
 chord = 0.5334;
 #chord = 21;
-basedir = "/home/adegenna/LagrangianIcingCode/Validations/Ice/Run405Multilayer/";
-for i in range(0,7):
-    filename = basedir + "XY_NEW" + str(i+1) + ".out";
+basedir = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/TEST/";
+for i in range(0,6):
+    filename = basedir + "T" + str(i+1) + "/XY_NEW" + str(i+1) + ".out";
     XY = genfromtxt(filename, delimiter = "\t")
     figure(1);
     plot(XY[:,0]*chord,XY[:,1]*chord,lw=3,c='b')
 filename = basedir + "NACA0012.dat";
-XY = genfromtxt(filename,delimiter="\t");
+XY = genfromtxt(basedir + "CLEAN/NACA0012.dat",delimiter="\t");
 figure(1);
 plot(XY[:,0]*chord,XY[:,1]*chord,lw=3,c='k');
 #XY = genfromtxt("XY_NEW.out", delimiter="\t");
@@ -44,10 +44,10 @@ plt.grid(b=True)
 plt.xlim([-0.05,0.2])
 #legend(['230 K','240 K','250 K','260 K','270 K','NACA0012'])
 # Compare to LEWICE results
-lewice = genfromtxt(basedir + "../../LewiceIceshapes/Run405.csv", delimiter = ",");
+lewice = genfromtxt("/home/adegenna/LagrangianIcingCode/Validations/LewiceIceshapes/Run405.csv", delimiter = ",");
 plt.scatter(lewice[:,0]/21.0*chord,lewice[:,1]/21.0*chord,c='g');
-habashi = genfromtxt("/home/adegenna/LagrangianIcingCode/Validations/LewiceIceshapes/Habashi405.csv",delimiter=",");
-plt.scatter(habashi[:,0]/21.0*chord,habashi[:,1]/21.0*chord,c='r');
+#habashi = genfromtxt("/home/adegenna/LagrangianIcingCode/Validations/LewiceIceshapes/Habashi405.csv",delimiter=",");
+#plt.scatter(habashi[:,0]/21.0*chord,habashi[:,1]/21.0*chord,c='r');
 
 UPPER = genfromtxt("THERMO_SOLN_UPPER.out", delimiter = "\t");
 LOWER = genfromtxt("THERMO_SOLN_LOWER.out", delimiter = "\t");
