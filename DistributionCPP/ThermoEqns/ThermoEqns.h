@@ -55,7 +55,7 @@ class ThermoEqns {
   std::vector<double> cH_;
   std::vector<double> beta_;
   double rhoL_, muL_, LWC_, Uinf_;
-  double Td_, cW_, ud_, cICE_, Lfus_;
+  double Td_, cW_, ud_, cICE_, Lfus_, Levap_, Lsub_;
   double rhoINF_, pINF_, TINF_;
   double chord_;
   double cpAir_;

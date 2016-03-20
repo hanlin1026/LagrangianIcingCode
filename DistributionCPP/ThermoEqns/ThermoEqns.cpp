@@ -39,6 +39,8 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
   pINF_ = fluid.pinf_;
   rhoINF_ = pINF_/(287.058*TINF_);
   chord_ = fluid.chord_;
+  Levap_ = (2500.8 - 2.36*(TINF_-273.15) + 0.0016*pow((TINF_-273.15),2) - 0.00006*pow((TINF_-273.15),3))*1000;
+  Lsub_  = (2834.1 - 0.29*(TINF_-273.15) - 0.0040*pow((TINF_-273.15),2))*1000;
   // Initial guess for ice accretion
   mice_.resize(NPts_);
   for (int i=0; i<NPts_; i++)
@@ -56,6 +58,10 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
   // Compute static pressure from P3D grid reference
   computePstat(p3d);
   interpUpperSurface(" ",airfoil,"PSTAT");
+  // Initialize evaporating mass
+  mevap_.resize(NPts_);
+  for (int i=0; i<NPts_; i++)
+    mevap_[i] = 0.0;
 
 }
 
@@ -360,7 +366,7 @@ vector<double> ThermoEqns::massBalance(vector<double>& x) {
     ds = s_[i+1]-s_[i];
     mimp = beta_[i]*LWC_*Uinf_;
     D_flux[i-1] = f[i]-f[i-1];
-    I_sources[i-1] = (1./rhoL_)*ds*(mimp-mice_[i]);
+    I_sources[i-1] = (1./rhoL_)*ds*(mimp-mice_[i]-mevap_[i]);
     err[i] = D_flux[i-1] - I_sources[i-1];
   }
   // Boundary conditions
@@ -396,11 +402,16 @@ vector<double> ThermoEqns::energyBalance(vector<double>& Y) {
   }
   // Calculate error for internal cells
   double ds,mimp,RHS;
+  double S_imp,S_ice,S_conv,S_evap,S_rad;
   for (int i=1; i<NPts_-1; i++) {
     ds = s_[i+1]-s_[i];
     mimp = beta_[i]*LWC_*Uinf_;
     D_flux[i-1] = f[i]-f[i-1];
-    RHS = (1./rhoL_)*(mimp*(cW_*Td_ + 0.5*pow(ud_,2)) + z[i]*(Lfus_ - cICE_*Y[i]) + cH_[i]*(Td_ - Y[i]));
+    S_imp  = (1./rhoL_)*(mimp*(cW_*Td_ + 0.5*pow(ud_,2)));
+    S_ice  = (1./rhoL_)*(z[i]*(Lfus_ - cICE_*Y[i]));
+    S_conv = (1./rhoL_)*(cH_[i]*(Td_ - Y[i]));
+    S_evap = (1./rhoL_)*(-0.5*(Levap_ + Lsub_)*mevap_[i]);
+    RHS = S_imp + S_ice + S_conv + S_evap;
     I_sources[i-1] = ds*RHS;
     err[i] = D_flux[i-1] - I_sources[i-1];
   }
@@ -440,13 +451,13 @@ void ThermoEqns::computeMevap() {
 
   vector<double> Y = ts_;
   double Ts_tilda, Tinf_tilda, p_vp, p_vinf;
+  double TINF_C = TINF_-273.15;
   double Hr = 0.5; // Relative humidity (between 0 and 1)
-  mevap_.resize(NPts_);
-  Tinf_tilda = 72 + 1.8*TINF_;
-  p_vinf = 3386*(0.0039 + (6.8096e-6)*pow(TINF_,2) + (3.5579e-7)*pow(TINF_,3));
+  Tinf_tilda = 72.0 + 1.8*TINF_C;
+  p_vinf = 3386.0*(0.0039 + (6.8096e-6)*pow(TINF_C,2) + (3.5579e-7)*pow(TINF_C,3));
   for (int i=0; i<NPts_; i++) {
-    Ts_tilda = 72 + 1.8*Y[i];
-    p_vp = 3386*(0.0039 + (6.8096e-6)*pow(Ts_tilda,2) + (3.5579e-7)*pow(Ts_tilda,3));
+    Ts_tilda = 72.0 + 1.8*Y[i];
+    p_vp = 3386.0*(0.0039 + (6.8096e-6)*pow(Ts_tilda,2) + (3.5579e-7)*pow(Ts_tilda,3));
     mevap_[i] = (0.7*cH_[i]/cpAir_)*(p_vp - Hr*p_vinf)/pstat_[i];
   }
 
@@ -490,7 +501,7 @@ vector<double> ThermoEqns::integrateMassEqn(bool& C_filmHeight) {
   C_filmHeight = true;
   for (int i=0; i<NPts_; i++) {
     mimp = beta_[i]*LWC_*Uinf_;
-    I[i] = mimp - mice_[i];
+    I[i] = mimp - mice_[i] - mevap_[i];
   }
   vector<double> INT = trapz(X,I);
   for (int i=0; i<NPts_; i++) {
@@ -621,11 +632,15 @@ vector<double> ThermoEqns::SolveThermoForIceRate(vector<double>& X, vector<doubl
   for (int i=0; i<NPts_-1; i++)
     f[i] = 0.5*(F[i]+F[i+1]) - 0.5*std::abs(DF[i])*(Y[i+1]-Y[i]);
   // Solve discretization for ice accretion rate
+  double S_imp,S_conv,S_evap;
   for (int i=1; i<NPts_-1; i++) {
     D_flux = f[i]-f[i-1];
     dsFACE = sFACE[i]-sFACE[i-1];
     mimp = beta_[i]*Uinf_*LWC_;
-    RHS = mimp*(cW_*Td_ + 0.5*pow(ud_,2)) + cH_[i]*(Td_ - Y[i]);
+    S_imp = mimp*(cW_*Td_ + 0.5*pow(ud_,2));
+    S_conv = cH_[i]*(Td_ - Y[i]);
+    S_evap = -0.5*(Levap_ + Lsub_)*mevap_[i];
+    RHS = S_imp + S_conv + S_evap;
     Z[i] = ((rhoL_/dsFACE)*D_flux - RHS)/(Lfus_ - cICE_*Y[i]);
   }
   Z[0] = Z[1];
@@ -742,9 +757,14 @@ void ThermoEqns::SolveIcingEqns() {
   // Begin main iterative solver
   double epsEnergy = 1.0e1;
   double tolEnergy = 1.0e-4;
-  for (int iterThermo = 0; iterThermo<5; iterThermo++) {
-    // MASS
+  for (int iterThermo = 0; iterThermo<2; iterThermo++) {
     printf("ITER = %d\n\n",iterThermo+1);
+    // Calculate evaporating mass
+    if (iterThermo!=0)
+      computeMevap();
+    //for (int i=0; i<NPts_; i++)
+    //  printf("%10f\t%10f\n",s_[i],mevap_[i]);
+    // MASS
     printf("Solving mass equation..."); fflush(stdout);
     Xnew = integrateMassEqn(C_filmHeight);
     //Xnew = explicitSolver("MASS",Xthermo,1.0e1,1.0e-6);
@@ -758,11 +778,11 @@ void ThermoEqns::SolveIcingEqns() {
     for (int i=1; i<Xthermo.size(); i++) {
       if (Xthermo[i]==0.0) {
 	mimp = beta_[i]*LWC_*Uinf_;
-	Zthermo[i] = mimp;
+	Zthermo[i] = mimp-mevap_[i];
       }
     }
     if (Xthermo[1]==0.0)
-      Zthermo[0] = beta_[0]*LWC_*Uinf_;
+      Zthermo[0] = beta_[0]*LWC_*Uinf_-mevap_[0];
     setMICE(Zthermo);
     // ENERGY
     printf("Solving energy equation..."); fflush(stdout);
@@ -840,7 +860,7 @@ void ThermoEqns::SolveIcingEqns() {
   FILE* outfileTMP;
   outfileTMP = fopen("UncorrectedSoln.out","w");
   for (int i=0; i<NPts_; i++)
-    fprintf(outfileTMP,"%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n",sTMP[i],Xthermo[i],Ythermo[i],Zthermo[i],cF_[i],cH_[i]);
+    fprintf(outfileTMP,"%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\n",sTMP[i],Xthermo[i],Ythermo[i],Zthermo[i],cF_[i],cH_[i]);
   fclose(outfileTMP);
 
   // Check to see if need refinement of ice profile for mixed glaze/rime conditions

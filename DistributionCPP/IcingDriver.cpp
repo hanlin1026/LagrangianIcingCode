@@ -153,7 +153,7 @@ int main(int argc, const char *argv[]) {
   // *******************************************************
   
   // Initialize thermo eqns solver
-  const char *filenameCHCF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/heatfluxTMP";
+  const char *filenameCHCF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/heatflux";
   const char *filenameBETA = "/home/adegenna/LagrangianIcingCode/DistributionCPP/BETATMP.out";
   // Solve upper surface
   printf("SOLVING UPPER SURFACE...\n\n");
