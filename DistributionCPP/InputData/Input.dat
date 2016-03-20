@@ -5,7 +5,7 @@ pinf	    R		     Tinf		rhol
 particles   Rmean	     Tmean
 5000	    20.0e-6	     256.15
 Xmin	    Xmax	     Ymin		Ymax
--5.0	    -5.0	     -0.5		-0.40
+-4.0	    -4.0	     -0.5		-0.40
 maxiter	    RefreshRate	     calcImpLimits
 1000	    999	     	     1
 Splashing   TrackSplash

@@ -24,6 +24,7 @@ class PLOT3D {
   Eigen::MatrixXf getU();      float  getU(int ind);
   Eigen::MatrixXf getV();      float  getV(int ind);
   Eigen::MatrixXf getE();      float  getE(int ind);
+  Eigen::MatrixXf getP();      float  getP(int ind);
   Eigen::MatrixXd getXCENT();  double getXCENT(int ind);
   Eigen::MatrixXd getYCENT();  double getYCENT(int ind);
   Eigen::MatrixXd getLMIN();   double getLMIN(int ind);
@@ -52,6 +53,7 @@ class PLOT3D {
   Eigen::MatrixXf u_; 
   Eigen::MatrixXf v_; 
   Eigen::MatrixXf E_;
+  Eigen::MatrixXf P_;
   // Properties of the grid/soln
   int nx_, ny_;
   float mach_, alpha_, reynolds_, time_;

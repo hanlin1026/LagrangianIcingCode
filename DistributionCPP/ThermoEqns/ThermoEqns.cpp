@@ -13,7 +13,7 @@
 using namespace std;
 using namespace Eigen;
 
-ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfoil& airfoil, FluidScalars& fluid, Cloud& cloud, const char* strSurf) {
+ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfoil& airfoil, FluidScalars& fluid, Cloud& cloud, PLOT3D& p3d, const char* strSurf) {
   // Constructor to read in input files and initialize thermo eqns
 
   strSurf_ = strSurf;
@@ -23,6 +23,7 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
   // Set LWC_,Uinf_
   LWC_ = 0.55e-3;
   Uinf_ = 102.8;
+  cpAir_ = 1003.0;
   State state = cloud.getState();
   Td_ = fluid.Td_-273.15;
   // ASSUMPTION: set values of some parameters at certain temperature/pressure
@@ -35,8 +36,8 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
   // Read in values of fluid parameters
   TINF_ = Td_+273.15; // K
   rhoL_ = fluid.rhol_;
-  rhoINF_ = (3.302857142857084e-05)*pow(TINF_,2) + (-0.022130857142857)*TINF_ + 4.875685714285685; // O(2) fit between T=[175,275]
-  pINF_ = rhoINF_*287.058*TINF_;
+  pINF_ = fluid.pinf_;
+  rhoINF_ = pINF_/(287.058*TINF_);
   chord_ = fluid.chord_;
   // Initial guess for ice accretion
   mice_.resize(NPts_);
@@ -52,6 +53,9 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
     cF_ = flipud(cF_);
     beta_ = flipud(beta_);
   }
+  // Compute static pressure from P3D grid reference
+  computePstat(p3d);
+  interpUpperSurface(" ",airfoil,"PSTAT");
 
 }
 
@@ -73,6 +77,8 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     s_min = -0.2*chord_;
     s_max = 0.0;
   }
+
+  // CHCF
   if (strcmp(parameter,"CHCF") == 0) {
     // Import (s,ch,cf)
     data = this->readCHCF(filename);
@@ -82,11 +88,9 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     // Scale CH
     for (int i=0; i<ch.size(); i++) {
       if (cf(i)<0)
-	cf(i) = 1.0e-3;
-      ch(i) = rhoINF_*(1003)*Uinf_*0.5*cf(i);
-      if (ch(i)<150)
-	 ch(i) = 150;
-      //ch(i) = -1.0*rhoINF_*pow(pINF_/rhoINF_,1.5)/(273.15-TINF_)*ch(i);
+        cf(i) = 1.0e-3;
+      //ch(i) = rhoINF_*(1003)*Uinf_*0.5*cf(i); // Reynolds Analogy
+      ch(i) = -1.0*rhoINF_*pow(pINF_/rhoINF_,1.5)/(273.15-TINF_)*ch(i);
     }
     // Set stagPt at s=0
     stagPt = airfoil.getStagPt();
@@ -121,8 +125,10 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
       stagPt = s(indLast);
     }
     // Center s-coords about the stagnation point
+    sP3D_.resize(s.size());
     for (int i=0; i<s.size(); i++) {
       s(i) -= stagPt;
+      sP3D_[i] = s(i);
     }
     // Refine surface grid
     s_.resize(NPts_);
@@ -131,6 +137,7 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
       s_[i] = s(indFirst) + i*ds;
     }
     // Interpolate parameter values on grids
+    indFirst_ = indFirst; indLast_ = indLast;
     int NPts_orig = indLast-indFirst+1;
     vector<double> s_orig(NPts_orig);
     vector<double> ch_orig(NPts_orig);
@@ -151,7 +158,7 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     for (int i=0; i<NPts_; i++) {
       if ((s_[i] >= s_orig[0]) && (s_[i] <= s_orig[NPts_orig-1])) { 
 	cH_[i] = gsl_spline_eval(splineCH, s_[i], acc);
-        cF_[i] = (0.5*rhoINF_*pow(Uinf_,2)*ds)*gsl_spline_eval(splineCF, s_[i], acc);
+        cF_[i] = (0.5*rhoINF_*pow(Uinf_,2))*gsl_spline_eval(splineCF, s_[i], acc);
       }
       else {
 	cH_[i] = 0.0;
@@ -159,6 +166,8 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
       }
     }
   }
+
+  // BETA
   else if (strcmp(parameter,"BETA") == 0) {
     // Assumes we have already imported/interpolated CHCF
     // Import (s,beta)
@@ -200,6 +209,38 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     }
   }
 
+  // PSTAT
+  else if (strcmp(parameter,"PSTAT") == 0) {
+    // Interpolate static pressure
+    
+    // Get relevant portion of pstat
+    int NPts_orig = indLast_-indFirst_+1;
+    vector<double> s = sP3D_;
+    vector<double> s_orig(NPts_orig);
+    vector<double> pstat_orig(NPts_orig);
+    for (int i=0; i<NPts_orig; i++) {
+      s_orig[i] = s[indFirst_+i];
+      pstat_orig[i] = pstat_[indFirst_+i];
+    }
+    // Declare/initialize interpolant
+    gsl_interp_accel *acc = gsl_interp_accel_alloc();
+    gsl_spline *splinePSTAT = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
+    gsl_spline_init(splinePSTAT, &s_orig[0], &pstat_orig[0], NPts_orig);
+    // Interpolate
+    pstat_.resize(NPts_);
+    for (int i=0; i<NPts_; i++) {
+      if ((s_[i] >= s_orig[0]) && (s_[i] <= s_orig[NPts_orig-1])) {
+	// If we are within interpolation bounds, simply interpolate
+	pstat_[i] = gsl_spline_eval(splinePSTAT, s_[i], acc);
+      }
+      else {
+	// If we are outside interpolation bounds, set equal to zero
+	pstat_[i] = 0.0;
+      }
+    } 
+  }
+  
+
 }
 
 ThermoEqns::~ThermoEqns() {
@@ -224,7 +265,7 @@ MatrixXd ThermoEqns::readCHCF(const char* filenameCHCF) {
   MatrixXd s_cH_cF(sizeCHCF,3);
   double a,b,d;
   for (int i=0; i<sizeCHCF; i++) {
-    fscanf(filept,"%lf %lf %lf",&a,&b,&d);
+    fscanf(filept,"%le %le %le",&a,&b,&d);
     s_cH_cF(i,0) = a; s_cH_cF(i,1) = b; s_cH_cF(i,2) = d;
   }
   // Close file streams
@@ -379,6 +420,37 @@ vector<double> ThermoEqns::energyBalance(vector<double>& Y) {
 
 }
 
+void ThermoEqns::computePstat(PLOT3D& p3d) {
+  // Function to compute static pressure (on original PLOT3D) grid
+
+  double gamma = 1.4;
+  // Get flow variables from PLOT3D object
+  Eigen::MatrixXf P = p3d.getP();
+  int NX = p3d.getNX();
+  int NY = p3d.getNY();
+  // Pull out wrap corresponding to edge of boundary layer
+  pstat_.resize(NX);
+  for (int i=0; i<NX; i++)
+    pstat_[i] = P(i,11);
+
+}
+
+void ThermoEqns::computeMevap() {
+  // Function to compute evaporating/sublimating mass
+
+  vector<double> Y = ts_;
+  double Ts_tilda, Tinf_tilda, p_vp, p_vinf;
+  double Hr = 0.5; // Relative humidity (between 0 and 1)
+  mevap_.resize(NPts_);
+  Tinf_tilda = 72 + 1.8*TINF_;
+  p_vinf = 3386*(0.0039 + (6.8096e-6)*pow(TINF_,2) + (3.5579e-7)*pow(TINF_,3));
+  for (int i=0; i<NPts_; i++) {
+    Ts_tilda = 72 + 1.8*Y[i];
+    p_vp = 3386*(0.0039 + (6.8096e-6)*pow(Ts_tilda,2) + (3.5579e-7)*pow(Ts_tilda,3));
+    mevap_[i] = (0.7*cH_[i]/cpAir_)*(p_vp - Hr*p_vinf)/pstat_[i];
+  }
+
+}
 
 
 vector<double> ThermoEqns::testBalance(vector<double>& x) {
@@ -545,7 +617,7 @@ vector<double> ThermoEqns::SolveThermoForIceRate(vector<double>& X, vector<doubl
     sFACE[i] = 0.5*(s_[i]+s_[i+1]);
     cfFACE[i] = 0.5*(cF_[i]+cF_[i+1]);
   }
-  DF = (cW_/2/muL_)*cF_*xFACE*xFACE;
+  DF = (cW_/2/muL_)*cfFACE*xFACE*xFACE;
   for (int i=0; i<NPts_-1; i++)
     f[i] = 0.5*(F[i]+F[i+1]) - 0.5*std::abs(DF[i])*(Y[i+1]-Y[i]);
   // Solve discretization for ice accretion rate
@@ -569,6 +641,8 @@ vector<double> ThermoEqns::explicitSolver(const char* balance, vector<double>& y
   double ERR = 1.0;
   vector<double> DY(y0.size());
   vector<double> Y = y0;
+  int CEIL = 50000;
+  int CEIL2 = 75000;
   // Figure out which balance we are using
   int switchBal;
   if (strcmp(balance,"MASS")==0)
@@ -585,7 +659,7 @@ vector<double> ThermoEqns::explicitSolver(const char* balance, vector<double>& y
   double ERR0 = max(absVec);
   vector<double> err;
   // Iteratively drive balance to steady state
-  while ((ERR > tol*ERR0) && (ERR > 1.0e-10) && (iter < 50000)) {
+  while ((ERR > tol*ERR0) && (ERR > 1.0e-10) && (iter < CEIL)) {
     iter++;
     // Get balance and update Y
     if (switchBal==1)
@@ -606,9 +680,9 @@ vector<double> ThermoEqns::explicitSolver(const char* balance, vector<double>& y
     err.push_back(ERR);
   }
   // If still not converged, try increasing step size
-  if (iter == 50000) {
+  if (iter == CEIL) {
     eps = 10*eps;
-    while ((ERR > tol*ERR0) && (ERR > 1.0e-10) && (iter < 75000)) {
+    while ((ERR > tol*ERR0) && (ERR > 1.0e-10) && (iter < CEIL2)) {
       iter++;
       // Get balance and update Y
       if (switchBal==1)
@@ -629,7 +703,7 @@ vector<double> ThermoEqns::explicitSolver(const char* balance, vector<double>& y
       err.push_back(ERR);
     }
   }
-  //printf("Explicit solver converged after %d iterations\n",iter);
+  printf("Explicit solver converged after %d iterations... ",iter);
 
   return Y;
 }
@@ -671,11 +745,11 @@ void ThermoEqns::SolveIcingEqns() {
   for (int iterThermo = 0; iterThermo<5; iterThermo++) {
     // MASS
     printf("ITER = %d\n\n",iterThermo+1);
-    printf("Solving mass equation...");
+    printf("Solving mass equation..."); fflush(stdout);
     Xnew = integrateMassEqn(C_filmHeight);
-    printf("done.\n");
     //Xnew = explicitSolver("MASS",Xthermo,1.0e1,1.0e-6);
     //Xnew = NewtonKrylovIteration("MASS",Xthermo,1.0e-5);
+    printf("done.\n");
     Xthermo = Xnew;
     setHF(Xthermo);
     // Constraint: check that conservation of mass is not violated
@@ -691,7 +765,7 @@ void ThermoEqns::SolveIcingEqns() {
       Zthermo[0] = beta_[0]*LWC_*Uinf_;
     setMICE(Zthermo);
     // ENERGY
-    printf("Solving energy equation...");
+    printf("Solving energy equation..."); fflush(stdout);
     Ynew = explicitSolver("ENERGY",Ythermo,epsEnergy,tolEnergy);
     for (int i=0; i<Ynew.size(); i++) {
       if (std::isnan(Ynew[i]))
@@ -760,8 +834,16 @@ void ThermoEqns::SolveIcingEqns() {
       break;
     }
   }
+
+  // Output uncorrected soln
+  vector<double> sTMP = getS();
+  FILE* outfileTMP;
+  outfileTMP = fopen("UncorrectedSoln.out","w");
+  for (int i=0; i<NPts_; i++)
+    fprintf(outfileTMP,"%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n",sTMP[i],Xthermo[i],Ythermo[i],Zthermo[i],cF_[i],cH_[i]);
+  fclose(outfileTMP);
+
   // Check to see if need refinement of ice profile for mixed glaze/rime conditions
-  
   if ((C_filmHeight == false) || (C_waterWarm == false) || (C_iceCold == false)) {
     printf("Mixed glaze/rime conditions detected, refining ice profile...\n");
     // Calculate mass surplus
@@ -897,7 +979,7 @@ void ThermoEqns::SolveIcingEqns() {
     thermoFileName = "THERMO_SOLN_LOWER.out";
   outfile = fopen(thermoFileName,"w");
   for (int i=0; i<NPts_; i++)
-    fprintf(outfile,"%lf\t%lf\t%lf\t%lf\n",sThermo[i],Xthermo[i],Ythermo[i],Zthermo[i]);
+    fprintf(outfile,"%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\n",sThermo[i],Xthermo[i],Ythermo[i],Zthermo[i],cF_[i],cH_[i]);
   fclose(outfile);
 
 }

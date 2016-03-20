@@ -53,6 +53,7 @@ PLOT3D::PLOT3D(const char *meshfname, const char *solnfname, FluidScalars* scala
   u_.resize(nx_,ny_);
   v_.resize(nx_,ny_);
   E_.resize(nx_,ny_);
+  P_.resize(nx_,ny_);
   float rhoTMP[nx_*ny_];
   float uTMP[nx_*ny_];
   float vTMP[nx_*ny_];
@@ -68,7 +69,8 @@ PLOT3D::PLOT3D(const char *meshfname, const char *solnfname, FluidScalars* scala
       rho_(i,j) = rhoinf_*rhoTMP[iter];
       u_(i,j) = Ubar_*rhoinf_*uTMP[iter]/rho_(i,j);
       v_(i,j) = Ubar_*rhoinf_*vTMP[iter]/rho_(i,j);
-      E_(i,j) = ETMP[iter];
+      E_(i,j) = pow(Ubar_,2)*rhoinf_*ETMP[iter]/rho_(i,j);
+      P_(i,j) = 0.4*rho_(i,j)*(E_(i,j) - 0.5*(pow(u_(i,j),2)+pow(v_(i,j),2)));
       iter++;
     }
   }
@@ -106,6 +108,9 @@ MatrixXf PLOT3D::getV() {
 MatrixXf PLOT3D::getE() {
   return E_;
 }
+MatrixXf PLOT3D::getP() {
+  return P_;
+}
 MatrixXd PLOT3D::getXCENT() {
   return xCENT_;
 }
@@ -132,6 +137,9 @@ float PLOT3D::getV(int ind) {
 }
 float PLOT3D::getE(int ind) {
   return E_(ind);
+}
+float PLOT3D::getP(int ind) {
+  return P_(ind);
 }
 double PLOT3D::getXCENT(int ind) {
   return xCENT_(ind);

@@ -29,8 +29,8 @@ int main(int argc, const char *argv[]) {
   }
   // Specify initialization files
   const char *inFileName = argv[1];
-  const char *meshFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/TEST2/T1/MESH.P3D";
-  const char *solnFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/TEST2/T1/q103.0.40E+01.bin";
+  const char *meshFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/TEST2/CLEAN/MESH.P3D";
+  const char *solnFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/TEST2/CLEAN/q103.0.40E+01.bin";
   // Read in initialization scalars from input file
   FluidScalars scalarsFluid;
   ParcelScalars scalarsParcel;
@@ -97,7 +97,7 @@ int main(int argc, const char *argv[]) {
   // *******************************************************
   // DROPLET ADVECTION MODULE
   // *******************************************************
-  
+  /***
   while ((totalImpinge < particles) && (iter < maxiter)) {
     cloud.calcDtandImpinge(airfoil,p3d);
     cloud.transportSLD(p3d);
@@ -147,22 +147,22 @@ int main(int argc, const char *argv[]) {
     fprintf(outfileBETA,"%lf\t%lf\n",BetaBins[i],Beta[i]*.74/.83);
   fclose(outfileDROP);
   fclose(outfileBETA);
-  
+  ***/
   // *******************************************************
   // THERMO EQUATIONS
   // *******************************************************
   
   // Initialize thermo eqns solver
-  const char *filenameCHCF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/TEST2/T1/heatflux";
-  const char *filenameBETA = "/home/adegenna/LagrangianIcingCode/DistributionCPP/BETA.out";
+  const char *filenameCHCF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/heatfluxTMP";
+  const char *filenameBETA = "/home/adegenna/LagrangianIcingCode/DistributionCPP/BETATMP.out";
   // Solve upper surface
   printf("SOLVING UPPER SURFACE...\n\n");
-  ThermoEqns thermoUPPER = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid,cloud,"UPPER");
+  ThermoEqns thermoUPPER = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid,cloud,p3d,"UPPER");
   thermoUPPER.SolveIcingEqns();
   printf("...DONE\n\n");
   // Solve lower surface
   printf("SOLVING LOWER SURFACE...\n\n");
-  ThermoEqns thermoLOWER = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid,cloud,"LOWER");
+  ThermoEqns thermoLOWER = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid,cloud,p3d,"LOWER");
   thermoLOWER.SolveIcingEqns();
   printf("...DONE\n\n");
   // Get old grid XY coordinates
@@ -185,8 +185,8 @@ int main(int argc, const char *argv[]) {
   outfileXYOLDNEW = fopen("XY_OLD_NEW.out","w");
   outfileXYNEW = fopen("XY_NEW.out","w");
   for (int i=0; i<XNEW.size(); i++) {
-    fprintf(outfileXYOLDNEW,"%lf\t%lf\t%lf\t%lf\n",XOLD[i],YOLD[i],XNEW[i],YNEW[i]);
-    fprintf(outfileXYNEW,"%lf\t%lf\n",XNEW[i],YNEW[i]);
+    fprintf(outfileXYOLDNEW,"%lf\t%lf\t%lf\t%lf\n",XOLD[i]/chord,YOLD[i]/chord,XNEW[i]/chord,YNEW[i]/chord);
+    fprintf(outfileXYNEW,"%lf\t%lf\n",XNEW[i]/chord,YNEW[i]/chord);
   }
   fclose(outfileXYOLDNEW);
   fclose(outfileXYNEW);

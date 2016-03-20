@@ -25,37 +25,43 @@ params = {   #'axes.labelsize': 30,
 }
 pylab.rcParams.update(params)
 
+# Length scaling and basedirectory
 chord = 0.5334;
 #chord = 21;
-basedir = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/TEST/";
-for i in range(0,6):
-    filename = basedir + "T" + str(i+1) + "/XY_NEW" + str(i+1) + ".out";
-    XY = genfromtxt(filename, delimiter = "\t")
-    figure(1);
-    plot(XY[:,0]*chord,XY[:,1]*chord,lw=3,c='b')
+basedir = "/home/adegenna/LagrangianIcingCode/Validations/Ice/Run405Rime/";
+# Import time history of ice accretion
+# for i in range(0,7):
+#     filename = basedir + "XY_NEW" + str(i+1) + ".out";
+#     XY = genfromtxt(filename, delimiter = "\t")
+#     figure(1);
+#     plot(XY[:,0]*chord,XY[:,1]*chord,lw=3,c='b')
+XY = genfromtxt("XY_NEW.out", delimiter = "\t");
+figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,lw=3,c='b');
+# Clean airfoil
 filename = basedir + "NACA0012.dat";
-XY = genfromtxt(basedir + "CLEAN/NACA0012.dat",delimiter="\t");
+XY = genfromtxt(filename,delimiter="\t");
 figure(1);
 plot(XY[:,0]*chord,XY[:,1]*chord,lw=3,c='k');
-#XY = genfromtxt("XY_NEW.out", delimiter="\t");
-#plot(XY[:,0],XY[:,1],lw=3,c='r');
+# Current iteration
+# XY = genfromtxt("XY_NEW.out", delimiter="\t");
+# plot(XY[:,0]*chord,XY[:,1]*chord,lw=3,c='r');
 axis('equal')
 plt.grid(b=True)
 plt.xlim([-0.05,0.2])
 #legend(['230 K','240 K','250 K','260 K','270 K','NACA0012'])
 # Compare to LEWICE results
 lewice = genfromtxt("/home/adegenna/LagrangianIcingCode/Validations/LewiceIceshapes/Run405.csv", delimiter = ",");
-plt.scatter(lewice[:,0]/21.0*chord,lewice[:,1]/21.0*chord,c='g');
+plt.scatter(lewice[:,0]/21.0*chord,lewice[:,1]/21.0*chord,c='g',s=50);
 #habashi = genfromtxt("/home/adegenna/LagrangianIcingCode/Validations/LewiceIceshapes/Habashi405.csv",delimiter=",");
 #plt.scatter(habashi[:,0]/21.0*chord,habashi[:,1]/21.0*chord,c='r');
 
 UPPER = genfromtxt("THERMO_SOLN_UPPER.out", delimiter = "\t");
 LOWER = genfromtxt("THERMO_SOLN_LOWER.out", delimiter = "\t");
-BETA = genfromtxt("BETA.out", delimiter = "\t");
+BETA = genfromtxt("BETATMP.out", delimiter = "\t");
 LWC = 0.55e-3; Uinf = 102.8; 
 figure(2);
-subplot(311); plot(UPPER[:,0],UPPER[:,1],c='b'); plot(LOWER[:,0],LOWER[:,1],c='r'); 
-subplot(312); plot(UPPER[:,0],UPPER[:,2],c='b'); plot(LOWER[:,0],LOWER[:,2],c='r');
-subplot(313); plot(UPPER[:,0],UPPER[:,3],c='b'); plot(LOWER[:,0],LOWER[:,3],c='r'); plot(BETA[:,0],LWC*Uinf*BETA[:,1],'--',c='k')
+subplot(311); plot(UPPER[:,0],UPPER[:,1],'b.-'); plot(LOWER[:,0],LOWER[:,1],'r.-'); plt.xlim([-0.1,0.1])
+subplot(312); plot(UPPER[:,0],UPPER[:,2],'b.-'); plot(LOWER[:,0],LOWER[:,2],'r.-'); plt.xlim([-0.1,0.1])
+subplot(313); plot(UPPER[:,0],UPPER[:,3],'b.-'); plot(LOWER[:,0],LOWER[:,3],'r.-'); plot(BETA[:,0],LWC*Uinf*BETA[:,1],'--',c='k'); plt.xlim([-0.1,0.1])
 
 show()
