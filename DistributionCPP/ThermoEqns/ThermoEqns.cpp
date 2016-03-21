@@ -45,8 +45,12 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
   mice_.resize(NPts_);
   for (int i=0; i<NPts_; i++)
     mice_[i] = 0.0;
-  this->interpUpperSurface(filenameCHCF,airfoil,"CHCF");
-  this->interpUpperSurface(filenameBETA,airfoil,"BETA");
+  // Interpolate CH,CF,BETA from files
+  interpUpperSurface(filenameCHCF,airfoil,"CHCF");
+  interpUpperSurface(filenameBETA,airfoil,"BETA");
+  // Compute static pressure from P3D grid reference
+  computePstat(p3d);
+  interpUpperSurface(" ",airfoil,"PSTAT");
   // Flip things if we are doing the lower surface
   if (strcmp(strSurf_,"LOWER")==0) {
     s_ = flipud(s_);
@@ -55,9 +59,6 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
     cF_ = flipud(cF_);
     beta_ = flipud(beta_);
   }
-  // Compute static pressure from P3D grid reference
-  computePstat(p3d);
-  interpUpperSurface(" ",airfoil,"PSTAT");
   // Initialize evaporating mass
   mevap_.resize(NPts_);
   for (int i=0; i<NPts_; i++)
@@ -746,7 +747,6 @@ void ThermoEqns::SolveIcingEqns() {
   // Initial guess for X and Y (hf and Ts)
   double dXthermo = (10.0e-3)/999;
   for (int i=0; i<Xthermo.size(); i++) {
-    //Xthermo[i] = i*dXthermo;
     Xthermo[i] = 1.e-3;
     Ythermo[i] = 0.0;
     Zthermo[i] = 0.0;
@@ -754,17 +754,23 @@ void ThermoEqns::SolveIcingEqns() {
   setHF(Xthermo);
   setTS(Ythermo);
   setMICE(Zthermo);
-  // Begin main iterative solver
+
+  // ***************************
+  // BEGIN ITERATIVE SOLVER
+  // ***************************
+
   double epsEnergy = 1.0e1;
   double tolEnergy = 1.0e-4;
-  for (int iterThermo = 0; iterThermo<2; iterThermo++) {
+  for (int iterThermo = 0; iterThermo<10; iterThermo++) {
     printf("ITER = %d\n\n",iterThermo+1);
     // Calculate evaporating mass
     if (iterThermo!=0)
       computeMevap();
-    //for (int i=0; i<NPts_; i++)
-    //  printf("%10f\t%10f\n",s_[i],mevap_[i]);
-    // MASS
+
+    // ***************************
+    // MASS BALANCE
+    // ***************************
+    
     printf("Solving mass equation..."); fflush(stdout);
     Xnew = integrateMassEqn(C_filmHeight);
     //Xnew = explicitSolver("MASS",Xthermo,1.0e1,1.0e-6);
@@ -784,7 +790,11 @@ void ThermoEqns::SolveIcingEqns() {
     if (Xthermo[1]==0.0)
       Zthermo[0] = beta_[0]*LWC_*Uinf_-mevap_[0];
     setMICE(Zthermo);
-    // ENERGY
+
+    // ***************************
+    // ENERGY BALANCE
+    // ***************************
+
     printf("Solving energy equation..."); fflush(stdout);
     Ynew = explicitSolver("ENERGY",Ythermo,epsEnergy,tolEnergy);
     for (int i=0; i<Ynew.size(); i++) {
@@ -795,7 +805,11 @@ void ThermoEqns::SolveIcingEqns() {
     //Ynew = NewtonKrylovIteration("ENERGY",Ythermo,0.06);
     Ythermo = Ynew;
     setTS(Ythermo);
+    
+    // ***************************
     // CONSTRAINTS
+    // ***************************
+    
     indWaterSize = 0;
     for (int i=0; i<XY.size(); i++) {
       XY[i] = Xthermo[i]*Ythermo[i];
@@ -812,21 +826,19 @@ void ThermoEqns::SolveIcingEqns() {
 	indIceSize++;
       }
     }
+    for (int i=0; i<NPts_; i++)
+      Ytmp[i] = Ythermo[i];
     // Ice cannot be warm
     if (indIceSize == 0)
       C_iceCold = true;
     else {
       printf("CONSTRAINT: Ice above freezing detected.\n");
-      // If we have warm ice, cool it down using epsIce
+      // If we have warm ice, cool it down using epsIce (or set Ytmp = 0)
       C_iceCold = false;
-      for (int i=0; i<indIce.size(); i++)
-	Zthermo[indIce[i]] = epsIce/Ythermo[indIce[i]];
-      // Correct for ice rate < 0
-      for (int i=0; i<Zthermo.size(); i++) {
-	if (Zthermo[i]<0)
-	  Zthermo[i] = 0.0;
+      for (int i=0; i<indIce.size(); i++) {
+        Ytmp[indIce[i]] = 0.0;
+	//Zthermo[indIce[i]] = epsIce/Ythermo[indIce[i]];
       }
-      setMICE(Zthermo);
     }
     // Water cannot be cold
     if (indWaterSize == 0)
@@ -835,8 +847,6 @@ void ThermoEqns::SolveIcingEqns() {
       printf("CONSTRAINT: Water below freezing detected.\n");
       // If we have freezing water, warm it up using epsWater
       C_waterWarm = false;
-      for (int i=0; i<NPts_; i++)
-	Ytmp[i] = Ythermo[i];
       for (int i=0; i<indWaterSize; i++)
 	Ytmp[indWater[i]] = 0.0;
       // Re-solve for ice profile
@@ -855,7 +865,16 @@ void ThermoEqns::SolveIcingEqns() {
     }
   }
 
-  // Output uncorrected soln
+  // Fix Zthermo if needed
+  for (int i=0; i<NPts_; i++) {
+    if (Xthermo[i] == 0.0)
+      Zthermo[i] = beta_[i]*LWC_*Uinf_ - mevap_[i];
+  }
+  setMICE(Zthermo);
+  // ***************************
+  // OUTPUT SOLUTION
+  // ***************************
+
   vector<double> sTMP = getS();
   FILE* outfileTMP;
   outfileTMP = fopen("UncorrectedSoln.out","w");
@@ -863,6 +882,10 @@ void ThermoEqns::SolveIcingEqns() {
     fprintf(outfileTMP,"%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\n",sTMP[i],Xthermo[i],Ythermo[i],Zthermo[i],cF_[i],cH_[i]);
   fclose(outfileTMP);
 
+  // ********************************
+  // CHECK FOR INCREMENTAL REFINEMENT
+  // ********************************
+  /***
   // Check to see if need refinement of ice profile for mixed glaze/rime conditions
   if ((C_filmHeight == false) || (C_waterWarm == false) || (C_iceCold == false)) {
     printf("Mixed glaze/rime conditions detected, refining ice profile...\n");
@@ -881,7 +904,7 @@ void ThermoEqns::SolveIcingEqns() {
       Yzero[i] = 0.0;
     vector<double> Zupper = SolveThermoForIceRate(Xthermo,Yzero);
     vector<double> Zlower = MIMP;
-    vector<double> Ztmp(NPts_);
+    vector<double> Ztmp = Zthermo;
     vector<double> Ytmp(NPts_);
     bool flag,flag1,flag2;
     int indSTMP;
@@ -958,7 +981,8 @@ void ThermoEqns::SolveIcingEqns() {
     setHF(Xthermo);
     
   }
-  
+  ***/
+
   // Mirror solution if we are doing the lower surface
   vector<double> sThermo = getS();
   if (strcmp(strSurf_,"LOWER")==0) {
@@ -967,6 +991,8 @@ void ThermoEqns::SolveIcingEqns() {
     Xthermo = flipud(Xthermo);
     Ythermo = flipud(Ythermo);
     Zthermo = flipud(Zthermo);
+    cF_     = flipud(cF_);
+    cH_     = flipud(cH_);
     s_ = sThermo;
     setHF(Xthermo);
     setTS(Ythermo);
@@ -990,7 +1016,11 @@ void ThermoEqns::SolveIcingEqns() {
       setMICE(Zthermo);
     }
   }
-  // Output everything to file
+
+  // ***************************
+  // OUTPUT FINAL SOLUTION
+  // ***************************
+
   FILE* outfile;
   const char* thermoFileName;
   if (strcmp(strSurf_,"UPPER")==0)
