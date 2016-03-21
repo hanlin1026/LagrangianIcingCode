@@ -244,7 +244,7 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
 	// If we are outside interpolation bounds, set equal to zero
 	pstat_[i] = 0.0;
       }
-    } 
+    }
   }
   
 
@@ -391,6 +391,8 @@ vector<double> ThermoEqns::energyBalance(vector<double>& Y) {
   vector<double> DF(x.size()-1);
   vector<double> D_flux(x.size()-2);
   vector<double> I_sources(x.size()-2);
+  // Calculate evaporating mass
+  computeMevap(Y);
   // Calculate body centered fluxes
   for (int i=0; i<NPts_; i++)
     F[i] = (0.5*cW_/muL_)*pow(x[i],2)*Y[i]*cF_[i];
@@ -444,13 +446,18 @@ void ThermoEqns::computePstat(PLOT3D& p3d) {
   pstat_.resize(NX);
   for (int i=0; i<NX; i++)
     pstat_[i] = P(i,11);
+  // Cut off wake
+  vector<double> ptmp(384);
+  for (int i=0; i<384; i++)
+    ptmp[i] = pstat_[i+64];
+  pstat_.clear();
+  pstat_ = ptmp;
 
 }
 
-void ThermoEqns::computeMevap() {
+void ThermoEqns::computeMevap(vector<double>& Y) {
   // Function to compute evaporating/sublimating mass
 
-  vector<double> Y = ts_;
   double Ts_tilda, Tinf_tilda, p_vp, p_vinf;
   double TINF_C = TINF_-273.15;
   double Hr = 0.5; // Relative humidity (between 0 and 1)
@@ -759,13 +766,11 @@ void ThermoEqns::SolveIcingEqns() {
   // BEGIN ITERATIVE SOLVER
   // ***************************
 
-  double epsEnergy = 1.0e1;
+  double epsEnergy = 2.0e1;
   double tolEnergy = 1.0e-4;
+  iterSolver_ = 0;
   for (int iterThermo = 0; iterThermo<10; iterThermo++) {
     printf("ITER = %d\n\n",iterThermo+1);
-    // Calculate evaporating mass
-    if (iterThermo!=0)
-      computeMevap();
 
     // ***************************
     // MASS BALANCE
@@ -813,7 +818,7 @@ void ThermoEqns::SolveIcingEqns() {
     indWaterSize = 0;
     for (int i=0; i<XY.size(); i++) {
       XY[i] = Xthermo[i]*Ythermo[i];
-      if (XY[i] < 1000*epsWater) {
+      if ((XY[i] < 0) && (Ythermo[i] < -0.001)) {
 	indWater.push_back(i);
 	indWaterSize++;
       }
@@ -863,6 +868,7 @@ void ThermoEqns::SolveIcingEqns() {
       printf("All compatibility relations satisfied.\n");
       break;
     }
+    iterSolver_ = iterThermo;
   }
 
   // Fix Zthermo if needed
@@ -871,6 +877,7 @@ void ThermoEqns::SolveIcingEqns() {
       Zthermo[i] = beta_[i]*LWC_*Uinf_ - mevap_[i];
   }
   setMICE(Zthermo);
+
   // ***************************
   // OUTPUT SOLUTION
   // ***************************
@@ -885,7 +892,7 @@ void ThermoEqns::SolveIcingEqns() {
   // ********************************
   // CHECK FOR INCREMENTAL REFINEMENT
   // ********************************
-  /***
+  /****
   // Check to see if need refinement of ice profile for mixed glaze/rime conditions
   if ((C_filmHeight == false) || (C_waterWarm == false) || (C_iceCold == false)) {
     printf("Mixed glaze/rime conditions detected, refining ice profile...\n");
@@ -894,7 +901,7 @@ void ThermoEqns::SolveIcingEqns() {
     vector<double> MIMP(NPts_);
     for (int i=0; i<NPts_; i++) {
       MIMP[i] = beta_[i]*LWC_*Uinf_;
-      massTotal[i] = MIMP[i] - Zthermo[i];
+      massTotal[i] = MIMP[i] - Zthermo[i] - mevap_[i];
     }
     vector<double> massSurplusCumSum = trapz(s_,massTotal);
     double massSurplus = massSurplusCumSum[NPts_-1];
@@ -905,7 +912,6 @@ void ThermoEqns::SolveIcingEqns() {
     vector<double> Zupper = SolveThermoForIceRate(Xthermo,Yzero);
     vector<double> Zlower = MIMP;
     vector<double> Ztmp = Zthermo;
-    vector<double> Ytmp(NPts_);
     bool flag,flag1,flag2;
     int indSTMP;
     if (massSurplus<0) {
@@ -921,7 +927,7 @@ void ThermoEqns::SolveIcingEqns() {
 	    Ztmp[j] = Zlower[j];
 	  }
 	  for (int j=0; j<NPts_; j++)
-	    massTotal[j] = MIMP[j] - Ztmp[j];
+	    massTotal[j] = MIMP[j] - Ztmp[j] - mevap_[i];
 	  massSurplusCumSum = trapz(s_,massTotal);
 	  massSurplus = massSurplusCumSum[NPts_-1];
 	  if (massSurplus>=0) {
@@ -953,8 +959,10 @@ void ThermoEqns::SolveIcingEqns() {
 	for (int i=0; i<indRAISE2.size(); i++)
 	  indRAISE.push_back(indRAISE2[i]);
       }
-      if (indRAISE1[0] == 1.0)
-	indRAISE.erase(indRAISE.begin());
+      if (flag1==true) {
+	if (indRAISE1[0] == 1.0)
+	  indRAISE.erase(indRAISE.begin());
+      }
       if ((flag1==true) || (flag2==true)) {
 	for (int i=0; i<indRAISE.size(); i++) {
 	  indSTMP = indRAISE[i];
@@ -965,7 +973,7 @@ void ThermoEqns::SolveIcingEqns() {
 	    Ytmp[j] = 0.0;
 	  }
 	  for (int j=0; j<NPts_; j++)
-	    massTotal[j] = MIMP[j] - Ztmp[j];
+	    massTotal[j] = MIMP[j] - Ztmp[j] - mevap_[i];
 	  massSurplusCumSum = trapz(s_,massTotal);
 	  massSurplus = massSurplusCumSum[NPts_-1];
 	  if (massSurplus<=0) {
@@ -981,7 +989,7 @@ void ThermoEqns::SolveIcingEqns() {
     setHF(Xthermo);
     
   }
-  ***/
+  ****/
 
   // Mirror solution if we are doing the lower surface
   vector<double> sThermo = getS();

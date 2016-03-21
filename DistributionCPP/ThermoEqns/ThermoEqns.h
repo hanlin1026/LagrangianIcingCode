@@ -25,7 +25,7 @@ class ThermoEqns {
   std::vector<double> integrateMassEqn(bool& C_filmHeight);
   std::vector<double> explicitSolver(const char* balance, std::vector<double>& y0, double eps, double tol);
   void SolveIcingEqns();
-  void computeMevap();
+  void computeMevap(std::vector<double>& Y);
   void computePstat(PLOT3D& p3d);
   // Set/get routines
   void setHF(std::vector<double>& hf);
@@ -61,7 +61,9 @@ class ThermoEqns {
   double cpAir_;
   // PLOT3D parameters (to assist in interpolation calculations)
   int indFirst_,indLast_; // First/last indices for where interpolation starts/ends for parameters taken from PLOT3D grid
-  std::vector<double> sP3D_; // S-coordinates of airfoil wrap in P3D variables 
+  std::vector<double> sP3D_; // S-coordinates of airfoil wrap in P3D variables
+  // Iteration of main solver
+  int iterSolver_;
 
 };
 
