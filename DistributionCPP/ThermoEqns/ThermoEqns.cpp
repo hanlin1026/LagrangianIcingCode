@@ -211,6 +211,10 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     for (int i=0; i<NPts_; i++) {
       if ((s_[i] >= s_orig[0]) && (s_[i] <= s_orig[NPts_orig-1]))
 	beta_[i] = gsl_spline_eval(splineBETA, s_[i], acc);
+      else if ((strcmp(strSurf_,"LOWER")==0) && (s_[i] > s_orig[NPts_orig-1]))
+	beta_[i] = beta_orig[NPts_orig-1];
+      else if ((strcmp(strSurf_,"UPPER")==0) && (s_[i] < s_orig[0]))
+	beta_[i] = beta_orig[0];
       else
 	beta_[i] = 0.0;
     }
@@ -464,7 +468,10 @@ void ThermoEqns::computeMevap(vector<double>& Y) {
   Tinf_tilda = 72.0 + 1.8*TINF_C;
   p_vinf = 3386.0*(0.0039 + (6.8096e-6)*pow(TINF_C,2) + (3.5579e-7)*pow(TINF_C,3));
   for (int i=0; i<NPts_; i++) {
-    Ts_tilda = 72.0 + 1.8*Y[i];
+    if (std::isnan(Y[i]))
+      Ts_tilda = 72.0;
+    else
+      Ts_tilda = 72.0 + 1.8*Y[i];
     p_vp = 3386.0*(0.0039 + (6.8096e-6)*pow(Ts_tilda,2) + (3.5579e-7)*pow(Ts_tilda,3));
     mevap_[i] = (0.7*cH_[i]/cpAir_)*(p_vp - Hr*p_vinf)/pstat_[i];
   }
@@ -771,6 +778,9 @@ void ThermoEqns::SolveIcingEqns() {
   iterSolver_ = 0;
   for (int iterThermo = 0; iterThermo<10; iterThermo++) {
     printf("ITER = %d\n\n",iterThermo+1);
+    //for (int i=0; i<NPts_; i++) {
+      //printf("%lf\t%lf\t%lf\t%lf\n",s_[i],mevap_[i],Ythermo[i],beta_[i]);
+      //}
 
     // ***************************
     // MASS BALANCE
@@ -872,7 +882,7 @@ void ThermoEqns::SolveIcingEqns() {
   }
 
   // Fix Zthermo if needed
-  for (int i=0; i<NPts_; i++) {
+  for (int i=1; i<NPts_; i++) {
     if (Xthermo[i] == 0.0)
       Zthermo[i] = beta_[i]*LWC_*Uinf_ - mevap_[i];
   }
