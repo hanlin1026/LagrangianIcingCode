@@ -365,6 +365,7 @@ vector<double> ThermoEqns::massBalance(vector<double>& x) {
     DF[i] = (1/muL_)*(xFACE[i]*cfFACE[i]);
     f[i] = 0.5*(F[i]+F[i+1]) - 0.5*std::abs(DF[i])*(x[i+1]-x[i]);
   }
+  f[NPts_-2] = 0.0;
   // Calculate error for internal cells
   double ds,mimp;
   for (int i=1; i<x.size()-1; i++) {
@@ -407,6 +408,7 @@ vector<double> ThermoEqns::energyBalance(vector<double>& Y) {
     DF[i] = (cW_/2.0/muL_)*cfFACE[i]*pow(xFACE[i],2);
     f[i] = 0.5*(F[i]+F[i+1]) - 0.5*std::abs(DF[i])*(Y[i+1]-Y[i]);
   }
+  f[NPts_-2] = 0.0;
   // Calculate error for internal cells
   double ds,mimp,RHS;
   double S_imp,S_ice,S_conv,S_evap,S_rad;
@@ -646,6 +648,7 @@ vector<double> ThermoEqns::SolveThermoForIceRate(vector<double>& X, vector<doubl
   DF = (cW_/2/muL_)*cfFACE*xFACE*xFACE;
   for (int i=0; i<NPts_-1; i++)
     f[i] = 0.5*(F[i]+F[i+1]) - 0.5*std::abs(DF[i])*(Y[i+1]-Y[i]);
+  f[NPts_-2] = 0.0;
   // Solve discretization for ice accretion rate
   double S_imp,S_conv,S_evap;
   for (int i=1; i<NPts_-1; i++) {
@@ -787,8 +790,8 @@ void ThermoEqns::SolveIcingEqns() {
     // ***************************
     
     printf("Solving mass equation..."); fflush(stdout);
-    Xnew = integrateMassEqn(C_filmHeight);
-    //Xnew = explicitSolver("MASS",Xthermo,1.0e1,1.0e-6);
+    //Xnew = integrateMassEqn(C_filmHeight);
+    Xnew = explicitSolver("MASS",Xthermo,1.0e1,1.0e-6);
     //Xnew = NewtonKrylovIteration("MASS",Xthermo,1.0e-5);
     printf("done.\n");
     Xthermo = Xnew;
@@ -796,6 +799,7 @@ void ThermoEqns::SolveIcingEqns() {
     // Constraint: check that conservation of mass is not violated
     if (C_filmHeight == false)
       printf("CONSTRAINT: Conservation of mass violated (negative film height)\n");
+    /**
     for (int i=1; i<Xthermo.size(); i++) {
       if (Xthermo[i]==0.0) {
 	mimp = beta_[i]*LWC_*Uinf_;
@@ -804,6 +808,7 @@ void ThermoEqns::SolveIcingEqns() {
     }
     if (Xthermo[1]==0.0)
       Zthermo[0] = beta_[0]*LWC_*Uinf_-mevap_[0];
+    ****/
     setMICE(Zthermo);
 
     // ***************************
@@ -880,14 +885,14 @@ void ThermoEqns::SolveIcingEqns() {
     }
     iterSolver_ = iterThermo;
   }
-
+  /****
   // Fix Zthermo if needed
   for (int i=1; i<NPts_; i++) {
     if (Xthermo[i] == 0.0)
       Zthermo[i] = beta_[i]*LWC_*Uinf_ - mevap_[i];
   }
   setMICE(Zthermo);
-
+  ****/
   // ***************************
   // OUTPUT SOLUTION
   // ***************************
