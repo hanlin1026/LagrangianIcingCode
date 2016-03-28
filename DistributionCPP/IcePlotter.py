@@ -57,7 +57,7 @@ plt.scatter(lewice[:,0]/21.0*chord,lewice[:,1]/21.0*chord,c='g',s=50);
 
 UPPER = genfromtxt("THERMO_SOLN_UPPER.out", delimiter = "\t");
 LOWER = genfromtxt("THERMO_SOLN_LOWER.out", delimiter = "\t");
-BETA = genfromtxt("BETA.out", delimiter = "\t");
+BETA = genfromtxt("BETATMP.out", delimiter = "\t");
 LWC = 0.55e-3; Uinf = 102.8; 
 figure(2);
 subplot(311); plot(UPPER[:,0],UPPER[:,1],'b.-'); plot(LOWER[:,0],LOWER[:,1],'r.-'); plt.xlim([-0.1,0.1])
