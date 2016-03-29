@@ -510,8 +510,8 @@ vector<double> ThermoEqns::trapz(vector<double>& X, vector<double>& Y) {
 vector<double> ThermoEqns::integrateMassEqn(bool& C_filmHeight) {
   // Integrate mass eqn with trapz
 
-  vector<double> Z(NPts_);
-  vector<double> X = s_;
+  vector<double> X(NPts_);
+  vector<double> S = s_;
   vector<double> I(NPts_);
   double mimp;
   C_filmHeight = true;
@@ -519,18 +519,21 @@ vector<double> ThermoEqns::integrateMassEqn(bool& C_filmHeight) {
     mimp = beta_[i]*LWC_*Uinf_;
     I[i] = mimp - mice_[i] - mevap_[i];
   }
-  vector<double> INT = trapz(X,I);
+  vector<double> INT = trapz(S,I);
+  // Check conservation of mass
   for (int i=0; i<NPts_; i++) {
     if ((INT[i] >= 0) && (cF_[i] != 0))
-      Z[i] = sqrt((2.0*muL_/rhoL_/cF_[i])*INT[i]);
+      X[i] = sqrt((2.0*muL_/rhoL_/cF_[i])*INT[i]);
     else {
-      // Set film height to zero
-      Z[i] = 0.0;
+      // Set film height to zero, and set mice to mimp-mevap
+      X[i] = 0.0;
+      mimp = beta_[i]*LWC_*Uinf_;
+      mice_[i] = std::max(mimp-mevap_[i],0.0);
       C_filmHeight = false;
     }
   }
 
-  return Z;
+  return X;
 }
 
 
@@ -635,6 +638,8 @@ vector<double> ThermoEqns::SolveThermoForIceRate(vector<double>& X, vector<doubl
   vector<double> cfFACE(NPts_-1);
   vector<double> DF(NPts_-1);
   vector<double> Z(NPts_);
+  // Recompute evaporating mass
+  computeMevap(Y);
   // Implementation using finite volume with Roe scheme calculation of fluxes
   // Calculate body centered fluxes
   F = (0.5*cW_/muL_)*X*X*Y*cF_;
@@ -662,6 +667,8 @@ vector<double> ThermoEqns::SolveThermoForIceRate(vector<double>& X, vector<doubl
   }
   Z[0] = Z[1];
   Z[NPts_-1] = Z[NPts_-2];
+  // Reset evaporating mass
+  computeMevap(ts_);
 
   return Z;
 }
@@ -808,16 +815,16 @@ void ThermoEqns::SolveIcingEqns() {
     // ***************************
     
     printf("Solving mass equation..."); fflush(stdout);
-    //Xnew = integrateMassEqn(C_filmHeight);
-    Xnew = explicitSolver("MASS",Xthermo,5.0e-1,1.0e-6);
+    Xnew = integrateMassEqn(C_filmHeight);
+    //Xnew = explicitSolver("MASS",Xthermo,5.0e-1,1.0e-6);
     //Xnew = NewtonKrylovIteration("MASS",Xthermo,1.0e-5);
-    C_filmHeight = true;
-    for (int i=0; i<NPts_; i++) {
-      if (Xnew[i] < 1.0e-9) {
-    	Xnew[i] = 0.0;
-    	C_filmHeight = false;
-      }
-    }
+    // C_filmHeight = true;
+    // for (int i=0; i<NPts_; i++) {
+    //   if (Xnew[i] < 1.0e-9) {
+    // 	Xnew[i] = 0.0;
+    // 	C_filmHeight = false;
+    //   }
+    // }
     printf("done.\n");
     Xthermo = Xnew;
     setHF(Xthermo);
