@@ -61,8 +61,13 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
   }
   // Initialize evaporating mass
   mevap_.resize(NPts_);
-  for (int i=0; i<NPts_; i++)
+  D_mevap_.resize(NPts_);
+  m_out_.resize(NPts_);
+  for (int i=0; i<NPts_; i++) {
     mevap_[i] = 0.0;
+    D_mevap_[i] = 0.0;
+    m_out_[i] = 0.0;
+  }
 
 }
 
@@ -465,7 +470,7 @@ void ThermoEqns::computeMevap(vector<double>& Y) {
 
   double Ts_tilda, Tinf_tilda, p_vp, p_vinf;
   double TINF_C = TINF_-273.15;
-  double Hr = 0.5; // Relative humidity (between 0 and 1)
+  double Hr = 1.0; // Relative humidity (between 0 and 1)
   Tinf_tilda = 72.0 + 1.8*TINF_C;
   p_vinf = 3386.0*(0.0039 + (6.8096e-6)*pow(TINF_C,2) + (3.5579e-7)*pow(TINF_C,3));
   for (int i=0; i<NPts_; i++) {
@@ -476,9 +481,25 @@ void ThermoEqns::computeMevap(vector<double>& Y) {
     p_vp = 3386.0*(0.0039 + (6.8096e-6)*pow(Ts_tilda,2) + (3.5579e-7)*pow(Ts_tilda,3));
     mevap_[i] = (0.7*cH_[i]/cpAir_)*(p_vp - Hr*p_vinf)/pstat_[i];
   }
-
 }
 
+void ThermoEqns::computeMevap(int& idx) {
+  // Function to compute m_evap and d(m_evap)/d(T_S) for a single point
+  // For use with LEWICEbalance
+
+  double Ts_tilda, Tinf_tilda, p_vp, p_vinf, D_Tstilda, D_pvp;
+  double TINF_C = TINF_-273.15;
+  double Hr = 1.0; // Relative humidity (between 0 and 1)
+  Tinf_tilda = 72.0 + 1.8*TINF_C;
+  p_vinf = 3386.0*(0.0039 + (6.8096e-6)*pow(TINF_C,2) + (3.5579e-7)*pow(TINF_C,3));
+  Ts_tilda = 72.0 + 1.8*Y[i];
+  p_vp = 3386.0*(0.0039 + (6.8096e-6)*pow(Ts_tilda,2) + (3.5579e-7)*pow(Ts_tilda,3));
+  mevap_[idx] = (0.7*cH_[idx]/cpAir_)*(p_vp - Hr*p_vinf)/pstat_[idx];
+  D_Tstilda = 1.8;
+  D_pvp = 3386.0*(2.0*(6.8096e-6)*Ts_tilda*D_Tstilda + 3.0*(3.5579e-7)*(Ts_tilda^2)*D_Tstilda);
+  D_mevap_[idx] = -0.5*(Levap_+Lsub_)*(0.7*cH_[idx]/cpAir_)/pstat_[idx]*D_pvp;
+
+}
 
 vector<double> ThermoEqns::testBalance(vector<double>& x) {
   // Test function RHS
@@ -764,6 +785,63 @@ vector<double> ThermoEqns::explicitSolver(const char* balance, vector<double>& y
   printf("Explicit solver converged after %d iterations... ",iter);
 
   return Y;
+}
+
+void ThermoEqns::LEWICEformulation(int& idx) {
+  // Subroutine to solve steady-state mass/energy as LEWICE does
+  // Finite-volume, marching, 1st order upwinding
+
+  // Declarations/allocations
+  double S_kin, S_conv, S_evap, S_sens;
+  double D_sens;
+  double m_imp = beta_[idx]*LWC_*Uinf_;
+  // Initial guesses
+  double m_out = 0.0;
+  double T_S   = 0.0;
+  double Nf    = 0.5;
+  // Initial parameters
+  if (idx == 1) {
+    m_in = 0.0;
+    T_in = 0.0;
+  }
+  else {
+    m_in = m_out_[idx-1];
+    T_in = ts_[idx-1];
+  }
+
+  // ***************************
+  // BEGIN MARCHING SOLVER
+  // ***************************
+
+  double D_TS = 1.0;
+  eps_T = 1.0e-4;
+  T_mp = 0.0;
+  while (D_TS > 1.0e-10) {
+    // Calculate evaporation
+    computeMevap(idx);
+    // Calculate source terms (which are not phase dependent)
+    S_kin  = m_imp*(0.5*pow(Uinf_,2));
+    S_conv = cH_[idx]*(TINF_ - T_S);
+    S_evap = -0.5*(Levap_ + Lsub_)*mevap_[idx];
+    // Calculate phase dependent source terms
+    if (Nf <= 0.0) {
+      // No ice
+      S_sens = (m_in*T_in+m_imp*TINF_)*cW_ - (m_imp+m_in)*cW_*T_S;
+      D_sens = -(m_imp+m_in)*cW_;
+    }
+    else if ((Nf > 0.0) && (Nf < 1.0)) {
+      // Mixed (glaze)
+      
+    }
+    else if (Nf >= 1.0) {
+      // Rime
+
+    }
+
+
+
+
+  }
 }
 
 

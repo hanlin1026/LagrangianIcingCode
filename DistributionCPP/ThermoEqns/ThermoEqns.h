@@ -24,8 +24,10 @@ class ThermoEqns {
   std::vector<double> SolveThermoForIceRate(std::vector<double>& X, std::vector<double>& Y);
   std::vector<double> integrateMassEqn(bool& C_filmHeight);
   std::vector<double> explicitSolver(const char* balance, std::vector<double>& y0, double eps, double tol);
+  void LEWICEformulation();
   void SolveIcingEqns();
   void computeMevap(std::vector<double>& Y);
+  void computeMevap(int& idx);
   void computePstat(PLOT3D& p3d);
   // Set/get routines
   void setHF(std::vector<double>& hf);
@@ -49,6 +51,8 @@ class ThermoEqns {
   std::vector<double> ts_;
   std::vector<double> mice_;
   std::vector<double> mevap_;
+  std::vector<double> m_out_;
+  std::vector<double> D_mevap_;
   std::vector<double> pstat_;
   // Auxiliary parameters
   std::vector<double> cF_;
