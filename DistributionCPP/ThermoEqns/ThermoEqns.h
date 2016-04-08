@@ -24,7 +24,7 @@ class ThermoEqns {
   std::vector<double> SolveThermoForIceRate(std::vector<double>& X, std::vector<double>& Y);
   std::vector<double> integrateMassEqn(bool& C_filmHeight);
   std::vector<double> explicitSolver(const char* balance, std::vector<double>& y0, double eps, double tol);
-  void LEWICEformulation();
+  void LEWICEformulation(int& idx);
   void SolveIcingEqns();
   void computeMevap(std::vector<double>& Y);
   void computeMevap(int& idx);

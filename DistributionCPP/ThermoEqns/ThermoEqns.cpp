@@ -492,11 +492,11 @@ void ThermoEqns::computeMevap(int& idx) {
   double Hr = 1.0; // Relative humidity (between 0 and 1)
   Tinf_tilda = 72.0 + 1.8*TINF_C;
   p_vinf = 3386.0*(0.0039 + (6.8096e-6)*pow(TINF_C,2) + (3.5579e-7)*pow(TINF_C,3));
-  Ts_tilda = 72.0 + 1.8*Y[i];
+  Ts_tilda = 72.0 + 1.8*ts_[idx];
   p_vp = 3386.0*(0.0039 + (6.8096e-6)*pow(Ts_tilda,2) + (3.5579e-7)*pow(Ts_tilda,3));
   mevap_[idx] = (0.7*cH_[idx]/cpAir_)*(p_vp - Hr*p_vinf)/pstat_[idx];
   D_Tstilda = 1.8;
-  D_pvp = 3386.0*(2.0*(6.8096e-6)*Ts_tilda*D_Tstilda + 3.0*(3.5579e-7)*(Ts_tilda^2)*D_Tstilda);
+  D_pvp = 3386.0*(2.0*(6.8096e-6)*Ts_tilda*D_Tstilda + 3.0*(3.5579e-7)*(pow(Ts_tilda,2))*D_Tstilda);
   D_mevap_[idx] = -0.5*(Levap_+Lsub_)*(0.7*cH_[idx]/cpAir_)/pstat_[idx]*D_pvp;
 
 }
@@ -793,8 +793,12 @@ void ThermoEqns::LEWICEformulation(int& idx) {
 
   // Declarations/allocations
   double S_kin, S_conv, S_evap, S_sens;
-  double D_sens;
+  double D_sens, D_kin, D_conv, DEDT;
+  double T_new;
   double m_imp = beta_[idx]*LWC_*Uinf_;
+  double m_ice, m_in, T_in;
+  double E_dot;
+  double rhoICE = 916.7;
   // Initial guesses
   double m_out = 0.0;
   double T_S   = 0.0;
@@ -814,9 +818,14 @@ void ThermoEqns::LEWICEformulation(int& idx) {
   // ***************************
 
   double D_TS = 1.0;
-  eps_T = 1.0e-4;
-  T_mp = 0.0;
+  double eps_T = 1.0e-4;
+  double T_mp = 0.0;
   while (D_TS > 1.0e-10) {
+    
+    // ***************************
+    // ENERGY
+    // ***************************
+
     // Calculate evaporation
     computeMevap(idx);
     // Calculate source terms (which are not phase dependent)
@@ -831,17 +840,37 @@ void ThermoEqns::LEWICEformulation(int& idx) {
     }
     else if ((Nf > 0.0) && (Nf < 1.0)) {
       // Mixed (glaze)
-      
+      S_sens = (m_imp+m_in)*((cICE_*T_mp*(1.0-rhoICE/rhoL_) + cICE_*eps_T + Lfus_ - cW_*T_mp)*((T_mp+eps_T-T_S)/eps_T)) + cW_*(m_in*T_in+m_imp*TINF_);
+      D_sens = (m_imp+m_in)*(cICE_*T_mp*(1.0-rhoICE/rhoL_) + cICE_*eps_T + Lfus_ - cW_*T_mp)*(-1.0/eps_T);
     }
     else if (Nf >= 1.0) {
       // Rime
-
+      S_sens = (m_imp+m_in)*(cICE_*T_mp*(1.0-rhoICE/rhoL_) + cICE_*(T_mp+eps_T-T_S) + Lfus_ - cW_*T_mp) + (m_in*T_in+m_imp*TINF_)*cW_;
+      D_sens = -(m_imp+m_in)*cICE_;
     }
-
-
-
-
+    // Calculate RHS of 0 = E_dot
+    E_dot = S_kin+S_conv+S_evap+S_sens;
+    // Calculate dE/dT_S (derivative of energy balance w.r.t. T_S)
+    D_kin  = 0.0;
+    D_conv = -cH_[idx];
+    DEDT = D_kin+D_conv+D_mevap_[idx]+D_sens;
+    // Update guess
+    T_new = T_S - E_dot/DEDT;
+    D_TS = std::abs(T_S-T_new);
+    Nf = (T_mp+eps_T-T_S)/eps_T;
+    if (Nf < 0)
+      Nf = 0;
+    else if (Nf > 1)
+      Nf = 1;
   }
+
+  // ***************************
+  // MASS
+  // ***************************
+  
+  m_ice = Nf*(m_imp + m_in - mevap_[idx]);
+  m_out = m_in + m_imp - mevap_[idx] - m_ice;
+  
 }
 
 
