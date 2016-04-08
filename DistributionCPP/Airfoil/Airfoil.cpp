@@ -259,16 +259,54 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
       indAIRFOIL.push_back(i);
     }
   }
-  // Displace each grid point along its normal vector
+  // Calculate ice growth
   double rhoICE = 917.0;
-  double xNEW,yNEW,dH;
+  double xNEW,yNEW,dH,dH_old,dH_tmp,ip,theta;
+  vector<double> DH(indAIRFOIL.size());
+  double ds = sTHERMO[1]-sTHERMO[0];
   for (int i=0; i<indAIRFOIL.size(); i++) {
     dH = mice[indTHERMO[i]]*DT/rhoICE;
-    xNEW = panelX_(indAIRFOIL[i]) + dH*normal_(indAIRFOIL[i],0);
-    yNEW = panelY_(indAIRFOIL[i]) + dH*normal_(indAIRFOIL[i],1);
+    DH[i] = dH;
+  }
+  // Correction for area oblation
+  vector<double> DH_area(indAIRFOIL.size());
+  DH_area[0] = DH[0];
+  dH_old = 0.0;
+  for (int i=1; i<indAIRFOIL.size(); i++) {
+    ip = normal_(indAIRFOIL[i],0)*normal_(indAIRFOIL[i]-1,0) + normal_(indAIRFOIL[i],1)*normal_(indAIRFOIL[i]-1,1);
+    theta = acos(ip);
+    DH_area[i] = DH[i]*2*ds/(2*ds + DH[i-1]*sin(theta));
+  }
+  // Smoothing (moving average), displace grid points
+  vector<double> DH_smooth(indAIRFOIL.size());
+  double smooth = 4.0;
+  double NX_smooth,NY_smooth;
+  int startIND = (int) smooth/2;
+  int endIND   = indAIRFOIL.size() - startIND;
+  for (int i=0; i<indAIRFOIL.size(); i++) {
+    DH_smooth[i] = 0.0;
+    NX_smooth = 0.0;
+    NY_smooth = 0.0;
+    if ((i > startIND) && (i < endIND)) {
+      for (int j=0; j<smooth+1; j++) {
+	DH_smooth[i] += DH_area[i+j-startIND]/(smooth+1);
+	NX_smooth += normal_(indAIRFOIL[i]+j-startIND,0)/(smooth+1);
+	NY_smooth += normal_(indAIRFOIL[i]+j-startIND,1)/(smooth+1);
+      }
+    }
+    else{
+      DH_smooth[i] = DH_area[i];
+      NX_smooth = normal_(indAIRFOIL[i],0);
+      NY_smooth = normal_(indAIRFOIL[i],1);
+    }
+    dH = DH_smooth[i];
+    // Displace each grid point along its normal vector
+    xNEW = panelX_(indAIRFOIL[i]) + dH*NX_smooth;
+    yNEW = panelY_(indAIRFOIL[i]) + dH*NY_smooth;
     panelX_(indAIRFOIL[i]) = xNEW;
     panelY_(indAIRFOIL[i]) = yNEW;
   }
+
 
 }
 

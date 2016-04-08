@@ -826,7 +826,7 @@ void ThermoEqns::LEWICEformulation(int& idx) {
   double eps_T = 1.0e-4;
   double T_mp = 0.0;
   int iter = 1;
-  int flagMass = 1;
+  int flagMass = 0;
   int flagTotal = 0;
   while (flagTotal == 0) {
     
@@ -836,8 +836,12 @@ void ThermoEqns::LEWICEformulation(int& idx) {
 
     // Calculate evaporation
     computeMevap(T_S,idx);
-    if (flagMass == 1)
+    if (flagMass == 1) {
       mevap_[idx] = 0;
+      D_mevap_[idx] = 0;
+    }
+    if (mevap_[idx] == 0)
+      D_mevap_[idx] = 0;
     // Calculate source terms (which are not phase dependent)
     S_kin  = m_imp*(0.5*pow(Uinf_,2));
     S_conv = cH_[idx]*(Tinf - T_S);
@@ -888,7 +892,7 @@ void ThermoEqns::LEWICEformulation(int& idx) {
     if ((D_TS < 1.0e-10) && (flagMass == 0))
       flagTotal = 1;
 
-    printf("ITER = %d\tTS = %lf\tNF = %lf\tDTS = %lf\n",iter,T_S,Nf,D_TS);
+    printf("ITER = %d\tTS = %lf\tDTS = %lf\n",iter,T_S,D_TS);
     iter++;
   }
 
@@ -905,6 +909,19 @@ void ThermoEqns::SolveLEWICEformulation() {
   for (int i=0; i<NPts_; i++) {
     LEWICEformulation(i);
   }
+
+  // Mirror solution if we are doing the lower surface
+  vector<double> sThermo = getS();
+  if (strcmp(strSurf_,"LOWER")==0) {
+    s_ = flipud(s_);
+    s_ = -1*s_;
+    m_out_ = flipud(m_out_);
+    ts_    = flipud(ts_);
+    mice_  = flipud(mice_);
+    cF_     = flipud(cF_);
+    cH_     = flipud(cH_);
+  }  
+
   // Output to file
   FILE* outfile;
   const char* thermoFileName;

@@ -35,8 +35,9 @@ basedir = "/home/adegenna/LagrangianIcingCode/Validations/Ice/Run405Rime/";
 #     XY = genfromtxt(filename, delimiter = "\t")
 #     figure(1);
 #     plot(XY[:,0]*chord,XY[:,1]*chord,lw=3,c='b')
-XY = genfromtxt("XY_NEW.out", delimiter = "\t");
+XY = genfromtxt("XY_OLD_NEW.out", delimiter = "\t");
 figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'b.-');
+figure(1); plot(XY[:,2]*chord,XY[:,3]*chord,'b.-');
 # Clean airfoil
 filename = basedir + "NACA0012.dat";
 XY = genfromtxt(filename,delimiter="\t");
