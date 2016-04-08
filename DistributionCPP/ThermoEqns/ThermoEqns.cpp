@@ -59,14 +59,18 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
     cF_ = flipud(cF_);
     beta_ = flipud(beta_);
   }
-  // Initialize evaporating mass
+  // Initialize some variables
   mevap_.resize(NPts_);
   D_mevap_.resize(NPts_);
   m_out_.resize(NPts_);
+  ts_.resize(NPts_);
+  mice_.resize(NPts_);
   for (int i=0; i<NPts_; i++) {
     mevap_[i] = 0.0;
     D_mevap_[i] = 0.0;
     m_out_[i] = 0.0;
+    ts_[i] = 0.0;
+    mice_[i] = 0.0;
   }
 
 }
@@ -472,7 +476,7 @@ void ThermoEqns::computeMevap(vector<double>& Y) {
   double TINF_C = TINF_-273.15;
   double Hr = 1.0; // Relative humidity (between 0 and 1)
   Tinf_tilda = 72.0 + 1.8*TINF_C;
-  p_vinf = 3386.0*(0.0039 + (6.8096e-6)*pow(TINF_C,2) + (3.5579e-7)*pow(TINF_C,3));
+  p_vinf = 3386.0*(0.0039 + (6.8096e-6)*pow(Tinf_tilda,2) + (3.5579e-7)*pow(Tinf_tilda,3));
   for (int i=0; i<NPts_; i++) {
     if (std::isnan(Y[i]))
       Ts_tilda = 72.0;
@@ -483,7 +487,7 @@ void ThermoEqns::computeMevap(vector<double>& Y) {
   }
 }
 
-void ThermoEqns::computeMevap(int& idx) {
+void ThermoEqns::computeMevap(double& TS, int& idx) {
   // Function to compute m_evap and d(m_evap)/d(T_S) for a single point
   // For use with LEWICEbalance
 
@@ -491,8 +495,8 @@ void ThermoEqns::computeMevap(int& idx) {
   double TINF_C = TINF_-273.15;
   double Hr = 1.0; // Relative humidity (between 0 and 1)
   Tinf_tilda = 72.0 + 1.8*TINF_C;
-  p_vinf = 3386.0*(0.0039 + (6.8096e-6)*pow(TINF_C,2) + (3.5579e-7)*pow(TINF_C,3));
-  Ts_tilda = 72.0 + 1.8*ts_[idx];
+  p_vinf = 3386.0*(0.0039 + (6.8096e-6)*pow(Tinf_tilda,2) + (3.5579e-7)*pow(Tinf_tilda,3));
+  Ts_tilda = 72.0 + 1.8*TS;
   p_vp = 3386.0*(0.0039 + (6.8096e-6)*pow(Ts_tilda,2) + (3.5579e-7)*pow(Ts_tilda,3));
   mevap_[idx] = (0.7*cH_[idx]/cpAir_)*(p_vp - Hr*p_vinf)/pstat_[idx];
   D_Tstilda = 1.8;
@@ -799,12 +803,13 @@ void ThermoEqns::LEWICEformulation(int& idx) {
   double m_ice, m_in, T_in;
   double E_dot;
   double rhoICE = 916.7;
+  double Tinf = TINF_-273.15; // Celsius
   // Initial guesses
   double m_out = 0.0;
   double T_S   = 0.0;
   double Nf    = 0.5;
   // Initial parameters
-  if (idx == 1) {
+  if (idx == 0) {
     m_in = 0.0;
     T_in = 0.0;
   }
@@ -820,32 +825,37 @@ void ThermoEqns::LEWICEformulation(int& idx) {
   double D_TS = 1.0;
   double eps_T = 1.0e-4;
   double T_mp = 0.0;
-  while (D_TS > 1.0e-10) {
+  int iter = 1;
+  int flagMass = 1;
+  int flagTotal = 0;
+  while (flagTotal == 0) {
     
     // ***************************
     // ENERGY
     // ***************************
 
     // Calculate evaporation
-    computeMevap(idx);
+    computeMevap(T_S,idx);
+    if (flagMass == 1)
+      mevap_[idx] = 0;
     // Calculate source terms (which are not phase dependent)
     S_kin  = m_imp*(0.5*pow(Uinf_,2));
-    S_conv = cH_[idx]*(TINF_ - T_S);
+    S_conv = cH_[idx]*(Tinf - T_S);
     S_evap = -0.5*(Levap_ + Lsub_)*mevap_[idx];
     // Calculate phase dependent source terms
     if (Nf <= 0.0) {
       // No ice
-      S_sens = (m_in*T_in+m_imp*TINF_)*cW_ - (m_imp+m_in)*cW_*T_S;
+      S_sens = (m_in*T_in+m_imp*Tinf)*cW_ - (m_imp+m_in)*cW_*T_S;
       D_sens = -(m_imp+m_in)*cW_;
     }
     else if ((Nf > 0.0) && (Nf < 1.0)) {
       // Mixed (glaze)
-      S_sens = (m_imp+m_in)*((cICE_*T_mp*(1.0-rhoICE/rhoL_) + cICE_*eps_T + Lfus_ - cW_*T_mp)*((T_mp+eps_T-T_S)/eps_T)) + cW_*(m_in*T_in+m_imp*TINF_);
+      S_sens = (m_imp+m_in)*((cICE_*T_mp*(1.0-rhoICE/rhoL_) + cICE_*eps_T + Lfus_ - cW_*T_mp)*((T_mp+eps_T-T_S)/eps_T)) + cW_*(m_in*T_in+m_imp*Tinf);
       D_sens = (m_imp+m_in)*(cICE_*T_mp*(1.0-rhoICE/rhoL_) + cICE_*eps_T + Lfus_ - cW_*T_mp)*(-1.0/eps_T);
     }
     else if (Nf >= 1.0) {
       // Rime
-      S_sens = (m_imp+m_in)*(cICE_*T_mp*(1.0-rhoICE/rhoL_) + cICE_*(T_mp+eps_T-T_S) + Lfus_ - cW_*T_mp) + (m_in*T_in+m_imp*TINF_)*cW_;
+      S_sens = (m_imp+m_in)*(cICE_*T_mp*(1.0-rhoICE/rhoL_) + cICE_*(T_mp+eps_T-T_S) + Lfus_ - cW_*T_mp) + (m_in*T_in+m_imp*Tinf)*cW_;
       D_sens = -(m_imp+m_in)*cICE_;
     }
     // Calculate RHS of 0 = E_dot
@@ -857,20 +867,56 @@ void ThermoEqns::LEWICEformulation(int& idx) {
     // Update guess
     T_new = T_S - E_dot/DEDT;
     D_TS = std::abs(T_S-T_new);
+    T_S = T_new;
     Nf = (T_mp+eps_T-T_S)/eps_T;
     if (Nf < 0)
       Nf = 0;
     else if (Nf > 1)
       Nf = 1;
+
+    // ***************************
+    // MASS
+    // ***************************
+  
+    m_ice = Nf*(m_imp + m_in - mevap_[idx]);
+    m_out = m_in + m_imp - mevap_[idx] - m_ice;
+    if (m_out < 0)
+      flagMass = 1;
+    else
+      flagMass = 0;
+
+    if ((D_TS < 1.0e-10) && (flagMass == 0))
+      flagTotal = 1;
+
+    printf("ITER = %d\tTS = %lf\tNF = %lf\tDTS = %lf\n",iter,T_S,Nf,D_TS);
+    iter++;
   }
 
-  // ***************************
-  // MASS
-  // ***************************
+  // Set final solution
+  ts_[idx] = T_S;
+  m_out_[idx] = m_out;
+  mice_[idx] = m_ice;
   
-  m_ice = Nf*(m_imp + m_in - mevap_[idx]);
-  m_out = m_in + m_imp - mevap_[idx] - m_ice;
-  
+}
+
+void ThermoEqns::SolveLEWICEformulation() {
+  // Solve LEWICEbalance over entire airfoil
+
+  for (int i=0; i<NPts_; i++) {
+    LEWICEformulation(i);
+  }
+  // Output to file
+  FILE* outfile;
+  const char* thermoFileName;
+  if (strcmp(strSurf_,"UPPER")==0)
+    thermoFileName = "THERMO_SOLN_UPPER.out";
+  else if (strcmp(strSurf_,"LOWER")==0)
+    thermoFileName = "THERMO_SOLN_LOWER.out";
+  outfile = fopen(thermoFileName,"w");
+  for (int i=0; i<NPts_; i++)
+    fprintf(outfile,"%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\n",s_[i],m_out_[i],ts_[i],mice_[i],mevap_[i],cF_[i],cH_[i]);
+  fclose(outfile);
+
 }
 
 

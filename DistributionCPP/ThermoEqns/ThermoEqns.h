@@ -25,9 +25,10 @@ class ThermoEqns {
   std::vector<double> integrateMassEqn(bool& C_filmHeight);
   std::vector<double> explicitSolver(const char* balance, std::vector<double>& y0, double eps, double tol);
   void LEWICEformulation(int& idx);
+  void SolveLEWICEformulation();
   void SolveIcingEqns();
   void computeMevap(std::vector<double>& Y);
-  void computeMevap(int& idx);
+  void computeMevap(double& TS,int& idx);
   void computePstat(PLOT3D& p3d);
   // Set/get routines
   void setHF(std::vector<double>& hf);

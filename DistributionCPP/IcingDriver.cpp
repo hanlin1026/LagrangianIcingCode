@@ -158,12 +158,12 @@ int main(int argc, const char *argv[]) {
   // Solve upper surface
   printf("SOLVING UPPER SURFACE...\n\n");
   ThermoEqns thermoUPPER = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid,cloud,p3d,"UPPER");
-  thermoUPPER.SolveIcingEqns();
+  thermoUPPER.SolveLEWICEformulation();
   printf("...DONE\n\n");
   // Solve lower surface
   printf("SOLVING LOWER SURFACE...\n\n");
   ThermoEqns thermoLOWER = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid,cloud,p3d,"LOWER");
-  thermoLOWER.SolveIcingEqns();
+  thermoLOWER.SolveLEWICEformulation();
   printf("...DONE\n\n");
   // Get old grid XY coordinates
   vector<double> XOLD = airfoil.getX();
