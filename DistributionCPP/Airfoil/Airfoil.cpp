@@ -245,9 +245,10 @@ void Airfoil::correctJagged(int id1, int id2, int id3, int id4) {
   double A = 0.5*((panelX_(id3)-panelX_(id1))*(panelY_(id2)-panelY_(id4)) + (panelX_(id4)-panelX_(id2))*(panelY_(id3)-panelY_(id1)));
   double B = (panelX_(id3)-panelX_(id1))*(panelY_(id2)-panelY_(id4)) + (panelX_(id4)-panelX_(id2))*(panelY_(id3)-panelY_(id1));
   double G = pow(sqrt(4*pow(B,6)+pow(B,4))-pow(B,2),0.3333);
+  double r;
   if (A != 0) {
-    r = (1./3./sqrt(2.))*sqrt(-6.*pow(2.,0.3333)*pow(B,2)/G + (3.*pow(2.,0.6667))*G + 2.) + ...
-      0.5*sqrt(4.*pow(2.,0.3333)*pow(B,2.)/(3*G) - 2./3.*pow(2.,0.6667)*G + ...
+    r = (1./3./sqrt(2.))*sqrt(-6.*pow(2.,0.3333)*pow(B,2)/G + (3.*pow(2.,0.6667))*G + 2.) + 
+      0.5*sqrt(4.*pow(2.,0.3333)*pow(B,2.)/(3*G) - 2./3.*pow(2.,0.6667)*G + 
       8.*sqrt(2)/9./sqrt(-6.*pow(2.,0.3333)*pow(B,2)/G + 3*pow(2.,0.6667)*G + 2.) + 8./9.) - 2./3.;
   }
   else
@@ -313,10 +314,10 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
 
   vector<double> indAIRFOIL;
   vector<double> indTHERMO;
-  // Interpolate s-coordinates from thermo onto airfoil grid
   double minimum;
   int ind;
   double s_min,s_max;
+  // Interpolate s-coordinates from thermo onto airfoil grid
   if (strcmp(strSurf,"UPPER")==0) {
     s_min = 0.0;
     s_max = 0.4;
@@ -389,13 +390,16 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
   // Apply jaggedness correction
   double JAG = 0.0;
   double tolJAG = 60.0;
-  for (int i=0; i<indAIRFOIL.size(); i++) {
-    JAG = computeJaggednessCriterion(id1,id2,id3,id4);
+  int iter = 0;
+  int id = 0;
+  while (iter<indAIRFOIL.size()-3) {
+    id = indAIRFOIL[iter];
+    JAG = computeJaggednessCriterion(id,id+1,id+2,id+3);
     if (JAG > tolJAG) {
-      correctJagged(id1,id2,id3,id4);
+      correctJagged(id,id+1,id+2,id+3);
+      iter += 3;
     }
   }
-
 
 }
 

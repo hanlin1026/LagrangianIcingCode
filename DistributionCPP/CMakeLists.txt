@@ -24,7 +24,7 @@ add_library( IcingLib
 add_executable( IcingDriver IcingDriver.cpp )
 target_link_libraries( IcingDriver 
                        IcingLib
-                       /usr/lib/libgsl.a 
+                       /usr/lib/x86_64-linux-gnu/libgsl.a 
 		       /usr/lib/SparseLib++/1.7/lib/libmv.a
 		       /usr/lib/SparseLib++/1.7/lib/libsparse.a
 		       /usr/lib/SparseLib++/1.7/lib/libspblas.a )
