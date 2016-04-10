@@ -17,7 +17,9 @@ class Airfoil {
     void appendFilm(double sCoord, double mass);
     void calcCollectionEfficiency(double fluxFreeStream,double dS);
     void calcStagnationPt(PLOT3D& grid);
-    // Method for updating grid based on thermodynamic ice calculation
+    // Methods for updating grid based on thermodynamic ice calculation
+    double computeJaggednessCriterion(int id1, int i2, int id3, int id4);
+    void correctJagged(int id1, int id2, int id3, int id4);
     void growIce(std::vector<double>& sTHERMO, std::vector<double>& mice, double DT, double chord, const char* strSurf);
     // Set/get methods
     std::vector<double> getBetaBins();

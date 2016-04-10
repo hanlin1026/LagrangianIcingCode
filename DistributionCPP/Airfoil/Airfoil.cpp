@@ -228,6 +228,86 @@ void Airfoil::calcStagnationPt(PLOT3D& grid) {
 
 }
 
+void Airfoil::correctJagged(int id1, int id2, int id3, int id4) {
+  // Function to correct jaggedness of 4 points by using an
+  // area-preserving trapezoid
+
+  // Calculate rotation of the p1-p4 line segment
+  double segX = panelX_(id4)-panelX_(id1);
+  double segY = panelY_(id4)-panelY_(id1);
+  double d3 = sqrt(pow(segX,2) + pow(segY,2));
+  segX = segX/d3;
+  segY = segY/d3;
+  double theta = atan2(segY,segX);
+  // Calculations for area-preserving trapezoid
+  double d1 = sqrt(pow(panelX_(id2)-panelX_(id1),2) + pow(panelY_(id2)-panelY_(id1),2));
+  double d2 = sqrt(pow(panelX_(id3)-panelX_(id2),2) + pow(panelY_(id3)-panelY_(id2),2));
+  double A = 0.5*((panelX_(id3)-panelX_(id1))*(panelY_(id2)-panelY_(id4)) + (panelX_(id4)-panelX_(id2))*(panelY_(id3)-panelY_(id1)));
+  double B = (panelX_(id3)-panelX_(id1))*(panelY_(id2)-panelY_(id4)) + (panelX_(id4)-panelX_(id2))*(panelY_(id3)-panelY_(id1));
+  double G = pow(sqrt(4*pow(B,6)+pow(B,4))-pow(B,2),0.3333);
+  if (A != 0) {
+    r = (1./3./sqrt(2.))*sqrt(-6.*pow(2.,0.3333)*pow(B,2)/G + (3.*pow(2.,0.6667))*G + 2.) + ...
+      0.5*sqrt(4.*pow(2.,0.3333)*pow(B,2.)/(3*G) - 2./3.*pow(2.,0.6667)*G + ...
+      8.*sqrt(2)/9./sqrt(-6.*pow(2.,0.3333)*pow(B,2)/G + 3*pow(2.,0.6667)*G + 2.) + 8./9.) - 2./3.;
+  }
+  else
+    r = 0;
+  double d = d3*r;
+  double alpha = acos(0.5*(d3-d)/d);
+  if (A < 0)
+    alpha = -alpha;
+  vector<double> px_n(4);
+  vector<double> py_n(4);
+  px_n[0] = 0.0; px_n[1] = 0.5*(d3-d);   px_n[2] = 0.5*(d3-d)+d; px_n[3] = panelX_[id1];
+  py_n[0] = 0.0; py_n[1] = d*sin(alpha); py_n[2] = d*sin(alpha); py_n[3] = panelY_[id4]-panelY_[id1];
+  for (int i=0; i<4; i++)
+    py_n[i] += panelY_[id1];
+  // Coordinate rotation according to p1-p4 line segment
+  vector<double> pxT_n(4);
+  vector<double> pyT_n(4);
+  for (int i=0; i<4; i++) {
+    pxT_n[i] = cos(theta)*px_n[i] - sin(theta)*py_n[i];
+    pyT_n[i] = sin(theta)*px_n[i] + cos(theta)*py_n[i];
+  }
+  // Update panels
+  panelX_[id1] = pxT_n[0]; panelX_[id2] = pxT_n[1]; panelX_[id3] = px_n[2]; panelX_[id4] = px_n[3];
+  panelY_[id1] = pyT_n[0]; panelY_[id2] = pyT_n[1]; panelY_[id3] = py_n[2]; panelY_[id4] = py_n[3];
+
+}
+
+double Airfoil::computeJaggednessCriterion(int id1, int id2, int id3, int id4) {
+  // Compute jaggedness criterion
+
+  // Compute line segment vectors connecting points
+  double dx12 = panelX_[id2] - panelX_[id1];
+  double dy12 = panelY_[id2] - panelY_[id1];
+  double norm12 = sqrt(pow(dx12,2) + pow(dy12,2));
+  dx12 = dx12/norm12; dy12 = dy12/norm12;
+  double dx23 = panelX_[id3] - panelX_[id2];
+  double dy23 = panelY_[id3] - panelY_[id2];
+  double norm23 = sqrt(pow(dx23,2) + pow(dx23,2));
+  dx23 = dx23/norm23; dy23 = dy23/norm23;
+  double dx34 = panelX_[id4] - panelX_[id3];
+  double dy34 = panelY_[id4] - panelY_[id3];
+  double norm34 = sqrt(pow(dx34,2) + pow(dx34,2));
+  dx34 = dx34/norm34; dy34 = dy34/norm34;
+  // Compute inner product
+  double ip1 = dx12*dx23 + dy12*dy23;
+  double ip2 = dx23*dx34 + dy23*dy34;
+  // Compute cross product (l12 x l23)
+  double cp1 = dx12*dy23 - dy12*dx23;
+  double cp2 = dx23*dy34 - dy23*dx34;
+  // Compute signed turning angle
+  double alpha23 = atan2(cp1,ip1);
+  double alpha34 = atan2(cp2,ip2);
+  // Compute jaggedness criterion
+  double JAG = std::abs(alpha23 - alpha34)*180.0/M_PI;
+
+  return JAG;
+
+}
+
+
 void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, double chord, const char* strSurf) {
   // Function to update XY grid coordinates based on ice growth rate for DT time interval
 
@@ -305,6 +385,15 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
     yNEW = panelY_(indAIRFOIL[i]) + dH*NY_smooth;
     panelX_(indAIRFOIL[i]) = xNEW;
     panelY_(indAIRFOIL[i]) = yNEW;
+  }
+  // Apply jaggedness correction
+  double JAG = 0.0;
+  double tolJAG = 60.0;
+  for (int i=0; i<indAIRFOIL.size(); i++) {
+    JAG = computeJaggednessCriterion(id1,id2,id3,id4);
+    if (JAG > tolJAG) {
+      correctJagged(id1,id2,id3,id4);
+    }
   }
 
 
