@@ -891,8 +891,6 @@ void ThermoEqns::LEWICEformulation(int& idx) {
 
     if ((D_TS < 1.0e-10) && (flagMass == 0))
       flagTotal = 1;
-
-    printf("ITER = %d\tTS = %lf\tDTS = %lf\n",iter,T_S,D_TS);
     iter++;
   }
 

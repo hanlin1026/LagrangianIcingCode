@@ -20,6 +20,9 @@ class Airfoil {
     // Methods for updating grid based on thermodynamic ice calculation
     double computeJaggednessCriterion(int id1, int i2, int id3, int id4);
     void correctJagged(int id1, int id2, int id3, int id4);
+    std::vector<double> tridiagSolve(std::vector<std::vector<double>>& A, std::vector<double>& r);
+    std::vector<std::vector<double>> LaplacianMatrix(int N, double eps);
+    std::vector<double> movingAverage(std::vector<double>& X, double smooth);
     void growIce(std::vector<double>& sTHERMO, std::vector<double>& mice, double DT, double chord, const char* strSurf);
     // Set/get methods
     std::vector<double> getBetaBins();

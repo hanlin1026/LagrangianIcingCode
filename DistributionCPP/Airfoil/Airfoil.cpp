@@ -252,7 +252,8 @@ void Airfoil::correctJagged(int id1, int id2, int id3, int id4) {
       8.*sqrt(2)/9./sqrt(-6.*pow(2.,0.3333)*pow(B,2)/G + 3*pow(2.,0.6667)*G + 2.) + 8./9.) - 2./3.;
   }
   else
-    r = 0;
+    r = 0.3333;
+  printf("R = %lf\n",r);
   double d = d3*r;
   double alpha = acos(0.5*(d3-d)/d);
   if (A < 0)
@@ -286,11 +287,11 @@ double Airfoil::computeJaggednessCriterion(int id1, int id2, int id3, int id4) {
   dx12 = dx12/norm12; dy12 = dy12/norm12;
   double dx23 = panelX_[id3] - panelX_[id2];
   double dy23 = panelY_[id3] - panelY_[id2];
-  double norm23 = sqrt(pow(dx23,2) + pow(dx23,2));
+  double norm23 = sqrt(pow(dx23,2) + pow(dy23,2));
   dx23 = dx23/norm23; dy23 = dy23/norm23;
   double dx34 = panelX_[id4] - panelX_[id3];
   double dy34 = panelY_[id4] - panelY_[id3];
-  double norm34 = sqrt(pow(dx34,2) + pow(dx34,2));
+  double norm34 = sqrt(pow(dx34,2) + pow(dy34,2));
   dx34 = dx34/norm34; dy34 = dy34/norm34;
   // Compute inner product
   double ip1 = dx12*dx23 + dy12*dy23;
@@ -319,12 +320,12 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
   double s_min,s_max;
   // Interpolate s-coordinates from thermo onto airfoil grid
   if (strcmp(strSurf,"UPPER")==0) {
-    s_min = 0.0;
+    s_min = -1.0e-3;
     s_max = 0.4;
   }
   else if (strcmp(strSurf,"LOWER")==0) {
     s_min = -0.4;
-    s_max = 0.0;
+    s_max = 1.0e-3;
   }
   vector<double> tmp1(sTHERMO.size());
   vector<double> tmp2(sTHERMO.size());
@@ -349,6 +350,8 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
     dH = mice[indTHERMO[i]]*DT/rhoICE;
     DH[i] = dH;
   }
+  if (strcmp(strSurf,"UPPER")==0)
+    DH[0] = mice[0]*DT/rhoICE;
   // Correction for area oblation
   vector<double> DH_area(indAIRFOIL.size());
   DH_area[0] = DH[0];
@@ -356,49 +359,49 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
   for (int i=1; i<indAIRFOIL.size(); i++) {
     ip = normal_(indAIRFOIL[i],0)*normal_(indAIRFOIL[i]-1,0) + normal_(indAIRFOIL[i],1)*normal_(indAIRFOIL[i]-1,1);
     theta = acos(ip);
-    DH_area[i] = DH[i]*2*ds/(2*ds + DH[i-1]*sin(theta));
+    if (std::abs(theta) > M_PI/2.0)
+      DH_area[i] = DH[i];
+    else
+      DH_area[i] = DH[i]*2*ds/(2*ds + DH[i-1]*sin(theta));
   }
-  // Smoothing (moving average), displace grid points
-  vector<double> DH_smooth(indAIRFOIL.size());
-  double smooth = 4.0;
-  double NX_smooth,NY_smooth;
-  int startIND = (int) smooth/2;
-  int endIND   = indAIRFOIL.size() - startIND;
+  // Moving average smoothing
+  vector<double> DH_new = movingAverage(DH_area,4.0);
+  DH_area = DH_new;
+  // Intermediate vector computation
+  int NL = indAIRFOIL.size();
+  vector<double> normalX(NL);
+  vector<double> normalY(NL);
+  for (int i=0; i<NL; i++) {
+    normalX[i] = normal_(indAIRFOIL[i],0);
+    normalY[i] = normal_(indAIRFOIL[i],1);
+  }
+  // Implicit Laplacian smoothing
+  vector<vector<double> > LAPL_DH(NL,vector<double>(NL));
+  vector<vector<double> > LAPL_NX(NL,vector<double>(NL));
+  vector<vector<double> > LAPL_NY(NL,vector<double>(NL));
+  double eps = 0.0;
+  // Compute Laplacian matrix
+  LAPL_DH = LaplacianMatrix(NL,eps);
+  LAPL_NX = LaplacianMatrix(NL,eps);
+  LAPL_NY = LaplacianMatrix(NL,eps);
+  // Solve for Laplacian-smoothed quantities
+  vector<double> DH_smooth(NL);
+  vector<double> NX_smooth(NL);
+  vector<double> NY_smooth(NL);
+  DH_smooth = tridiagSolve(LAPL_DH,DH_area);
+  NX_smooth = tridiagSolve(LAPL_NX,normalX);
+  NY_smooth = tridiagSolve(LAPL_NY,normalY);
+
+  // Displace each grid point along its normal vector
+  double NX,NY;
   for (int i=0; i<indAIRFOIL.size(); i++) {
-    DH_smooth[i] = 0.0;
-    NX_smooth = 0.0;
-    NY_smooth = 0.0;
-    if ((i > startIND) && (i < endIND)) {
-      for (int j=0; j<smooth+1; j++) {
-	DH_smooth[i] += DH_area[i+j-startIND]/(smooth+1);
-	NX_smooth += normal_(indAIRFOIL[i]+j-startIND,0)/(smooth+1);
-	NY_smooth += normal_(indAIRFOIL[i]+j-startIND,1)/(smooth+1);
-      }
-    }
-    else{
-      DH_smooth[i] = DH_area[i];
-      NX_smooth = normal_(indAIRFOIL[i],0);
-      NY_smooth = normal_(indAIRFOIL[i],1);
-    }
     dH = DH_smooth[i];
-    // Displace each grid point along its normal vector
-    xNEW = panelX_(indAIRFOIL[i]) + dH*NX_smooth;
-    yNEW = panelY_(indAIRFOIL[i]) + dH*NY_smooth;
+    NX = NX_smooth[i];
+    NY = NY_smooth[i];
+    xNEW = panelX_(indAIRFOIL[i]) + dH*NX;
+    yNEW = panelY_(indAIRFOIL[i]) + dH*NY;
     panelX_(indAIRFOIL[i]) = xNEW;
     panelY_(indAIRFOIL[i]) = yNEW;
-  }
-  // Apply jaggedness correction
-  double JAG = 0.0;
-  double tolJAG = 60.0;
-  int iter = 0;
-  int id = 0;
-  while (iter<indAIRFOIL.size()-3) {
-    id = indAIRFOIL[iter];
-    JAG = computeJaggednessCriterion(id,id+1,id+2,id+3);
-    if (JAG > tolJAG) {
-      correctJagged(id,id+1,id+2,id+3);
-      iter += 3;
-    }
   }
 
 }
@@ -437,4 +440,90 @@ void Airfoil::setStagPt(double sLoc) {
 
 double Airfoil::getStagPt() {
   return stagPt_;
+}
+
+
+
+vector<double> Airfoil::tridiagSolve(vector<vector<double>>& A, vector<double>& r) {
+  // Tridiagonal matrix solver; solves A*x = r
+
+  int N = r.size();
+  // Get band-diagonal components of matrix A
+  vector<double> a(N);
+  vector<double> b(N);
+  vector<double> c(N);
+  a[0]   = 0; b[0]   = A[0][0];     c[0]   = 0;
+  a[N-1] = 0; b[N-1] = A[N-1][N-1]; c[N-1] = 0;
+  for (int i=1; i<N-1; i++) {
+    a[i] = A[i][i-1];
+    b[i] = A[i][i];
+    c[i] = A[i][i+1];
+  }
+  // Main algorithm
+  vector<double> x(N);
+  double bet;
+  vector<double> gam(N);
+  // Decomposition and forward substitution
+  bet = b[0];
+  x[0] = r[0]/bet;
+  for (int i=1; i<N; i++) {
+    gam[i] = c[i-1]/bet;
+    bet = b[i] - a[i]*gam[i];
+    x[i] = (r[i] - a[i]*x[i-1])/bet;
+  }
+  // Backsubstitution
+  for (int i=N-2; i>-1; i--) {
+    x[i] -= gam[i+1]*x[i+1];
+  }
+
+  return x;
+
+} 
+
+
+vector<vector<double> > Airfoil::LaplacianMatrix(int N, double eps) {
+  // Subroutine to compute a Laplacian matrix
+
+  vector<vector<double> > LAPL(N,vector<double>(N));
+  // Compute Laplacian matrix
+  for (int i=0; i<N; i++) {
+    for (int j=0; j<N; j++) {
+      LAPL[i][j] = 0.0;
+    }
+  }
+  LAPL[0][0] = 1 + 2*eps;
+  LAPL[0][1] = -eps;
+  LAPL[N-1][N-1] = 1 + 2*eps;
+  LAPL[N-1][N-2] = -eps;
+  for (int i=1; i<N-1; i++) {
+    LAPL[i][i-1] = -eps;
+    LAPL[i][i]   = 1 + 2*eps;
+    LAPL[i][i+1] = -eps;
+  }
+
+  return LAPL;
+
+} 
+
+
+vector<double> Airfoil::movingAverage(vector<double>& X, double smooth) {
+  // Subroutine to perform a moving average
+
+  int N = X.size();
+  vector<double> X_smooth(N);
+  double NX_smooth,NY_smooth;
+  int startIND = (int) smooth/2;
+  int endIND   = N - startIND;
+  for (int i=0; i<N; i++) {
+    X_smooth[i] = 0.0;
+    if ((i > startIND) && (i < endIND)) {
+      for (int j=0; j<smooth+1; j++) {
+  	X_smooth[i] += X[i+j-startIND]/(smooth+1);
+      }
+    }
+    else
+      X_smooth[i] = X[i];
+  }
+
+  return X_smooth;
 }

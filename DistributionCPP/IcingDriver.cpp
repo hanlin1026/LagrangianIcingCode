@@ -97,7 +97,7 @@ int main(int argc, const char *argv[]) {
   // *******************************************************
   // DROPLET ADVECTION MODULE
   // *******************************************************
-  
+  /**
   while ((totalImpinge < particles) && (iter < maxiter)) {
     cloud.calcDtandImpinge(airfoil,p3d);
     cloud.transportSLD(p3d);
@@ -147,7 +147,7 @@ int main(int argc, const char *argv[]) {
     fprintf(outfileBETA,"%lf\t%lf\n",BetaBins[i],Beta[i]*.74/.83);
   fclose(outfileDROP);
   fclose(outfileBETA);
-  
+  **/
   // *******************************************************
   // THERMO EQUATIONS
   // *******************************************************
