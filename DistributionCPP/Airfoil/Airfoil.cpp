@@ -23,8 +23,15 @@ Airfoil::Airfoil(std::vector<double>& X, std::vector<double>& Y) {
     panelY_(i) = Y[i] + 0.5*ds_y;
     tangent_(i,0) = ds_x/sqrt( pow(ds_x,2) + pow(ds_y,2) );
     tangent_(i,1) = ds_y/sqrt( pow(ds_x,2) + pow(ds_y,2) );
-    normal_(i,0) = -tangent_(i,1);
-    normal_(i,1) = tangent_(i,0);
+    //normal_(i,0) = -tangent_(i,1);
+    //normal_(i,1) = tangent_(i,0);
+  }
+  // 3-point moving average normal vectors
+  normal_(0,0) = -tangent_(0,1); normal_(0,1) = tangent_(0,0);
+  normal_(gridPts-2,0) = -tangent_(gridPts-2,1); normal_(gridPts-2,1) = tangent_(gridPts-2,0);
+  for (int i=1; i<gridPts-3; i++) {
+    normal_(i,0) = -(tangent_(i-1,1)+tangent_(i,1)+tangent_(i+1,1))/3.0;
+    normal_(i,1) = (tangent_(i-1,0)+tangent_(i,0)+tangent_(i+1,0))/3.0;
   }
   // Set quadtree search object bounds
   double minX, minY, maxX, maxY;
@@ -318,14 +325,14 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
   double minimum;
   int ind;
   double s_min,s_max;
-  // Interpolate s-coordinates from thermo onto airfoil grid
+  // Match s-coordinates of airfoil to those from finely-resolved thermo calculation
   if (strcmp(strSurf,"UPPER")==0) {
-    s_min = -1.0e-3;
+    s_min = 0.0;
     s_max = 0.4;
   }
   else if (strcmp(strSurf,"LOWER")==0) {
     s_min = -0.4;
-    s_max = 1.0e-3;
+    s_max = 0.0;
   }
   vector<double> tmp1(sTHERMO.size());
   vector<double> tmp2(sTHERMO.size());
@@ -350,24 +357,12 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
     dH = mice[indTHERMO[i]]*DT/rhoICE;
     DH[i] = dH;
   }
-  if (strcmp(strSurf,"UPPER")==0)
-    DH[0] = mice[0]*DT/rhoICE;
-  // Correction for area oblation
-  vector<double> DH_area(indAIRFOIL.size());
-  DH_area[0] = DH[0];
-  dH_old = 0.0;
-  for (int i=1; i<indAIRFOIL.size(); i++) {
-    ip = normal_(indAIRFOIL[i],0)*normal_(indAIRFOIL[i]-1,0) + normal_(indAIRFOIL[i],1)*normal_(indAIRFOIL[i]-1,1);
-    theta = acos(ip);
-    if (std::abs(theta) > M_PI/2.0)
-      DH_area[i] = DH[i];
-    else
-      DH_area[i] = DH[i]*2*ds/(2*ds + DH[i-1]*sin(theta));
-  }
   // Moving average smoothing
-  vector<double> DH_new = movingAverage(DH_area,4.0);
-  DH_area = DH_new;
-  // Intermediate vector computation
+  // vector<double> DH_new = movingAverage(DH,4.0);
+  // DH = DH_new;
+
+  // Laplacian smooth normal vectors
+  double eps = 0.0;
   int NL = indAIRFOIL.size();
   vector<double> normalX(NL);
   vector<double> normalY(NL);
@@ -375,27 +370,44 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
     normalX[i] = normal_(indAIRFOIL[i],0);
     normalY[i] = normal_(indAIRFOIL[i],1);
   }
-  // Implicit Laplacian smoothing
-  vector<vector<double> > LAPL_DH(NL,vector<double>(NL));
   vector<vector<double> > LAPL_NX(NL,vector<double>(NL));
   vector<vector<double> > LAPL_NY(NL,vector<double>(NL));
-  double eps = 0.0;
-  // Compute Laplacian matrix
-  LAPL_DH = LaplacianMatrix(NL,eps);
-  LAPL_NX = LaplacianMatrix(NL,eps);
-  LAPL_NY = LaplacianMatrix(NL,eps);
-  // Solve for Laplacian-smoothed quantities
-  vector<double> DH_smooth(NL);
   vector<double> NX_smooth(NL);
   vector<double> NY_smooth(NL);
-  DH_smooth = tridiagSolve(LAPL_DH,DH_area);
+  LAPL_NX = LaplacianMatrix(NL,eps);
+  LAPL_NY = LaplacianMatrix(NL,eps);
   NX_smooth = tridiagSolve(LAPL_NX,normalX);
   NY_smooth = tridiagSolve(LAPL_NY,normalY);
 
+  // Correction for area oblation
+  vector<double> DH_area(NL);
+  DH_area[0] = DH[0]; DH_area[1] = DH[0]; DH_area[2] = DH[0];
+  dH_old = 0.0;
+  for (int i=1; i<NL; i++) {
+    sCoord = panelS_(indAIRFOIL[i]) - stagPt_;
+    ip = normal_(indAIRFOIL[i],0)*normal_(indAIRFOIL[i]-1,0) + normal_(indAIRFOIL[i],1)*normal_(indAIRFOIL[i]-1,1);
+    //ip = NX_smooth[i]*NX_smooth[i-1] + NY_smooth[i]*NY_smooth[i-1];
+    theta = acos(ip);
+    //DH_area[i] = DH[i]*2*ds/(2*ds + DH[i-1]*sin(theta));
+    DH_area[i] = DH[i]*2*ds/(2*ds + DH_area[i-1]*sin(theta));
+    //DH_area[i] = DH[i];
+  }
+
+  // Implicit Laplacian smoothing
+  eps = 0.5;
+  vector<vector<double> > LAPL_DH(NL,vector<double>(NL));
+  LAPL_DH = LaplacianMatrix(NL,eps);
+  vector<double> DH_smooth(NL);
+  DH_smooth = tridiagSolve(LAPL_DH,DH_area);
   // Displace each grid point along its normal vector
   double NX,NY;
-  for (int i=0; i<indAIRFOIL.size(); i++) {
-    dH = DH_smooth[i];
+  for (int i=0; i<NL; i++) {
+    if ( (strcmp(strSurf,"UPPER")==0) && (i < 2) )
+      dH = DH_smooth[2];
+    else if ( (strcmp(strSurf,"LOWER")==0) && (i > NL-3) )
+      dH = DH_smooth[NL-3];
+    else
+      dH = DH_smooth[i];
     NX = NX_smooth[i];
     NY = NY_smooth[i];
     xNEW = panelX_(indAIRFOIL[i]) + dH*NX;

@@ -29,8 +29,8 @@ int main(int argc, const char *argv[]) {
   }
   // Specify initialization files
   const char *inFileName = argv[1];
-  const char *meshFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/TEST/T1/MESH.P3D";
-  const char *solnFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/TEST/T1/q103.0.40E+01.bin";
+  const char *meshFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/MESH.P3D";
+  const char *solnFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/q103.0.40E+01.bin";
   // Read in initialization scalars from input file
   FluidScalars scalarsFluid;
   ParcelScalars scalarsParcel;
@@ -153,8 +153,8 @@ int main(int argc, const char *argv[]) {
   // *******************************************************
   
   // Initialize thermo eqns solver
-  const char *filenameCHCF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/TEST/T1/heatflux";
-  const char *filenameBETA = "/home/adegenna/LagrangianIcingCode/DistributionCPP/BETA.out";
+  const char *filenameCHCF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/heatflux";
+  const char *filenameBETA = "/home/adegenna/LagrangianIcingCode/DistributionCPP/BETATMP.out";
   // Solve upper surface
   printf("SOLVING UPPER SURFACE...\n\n");
   ThermoEqns thermoUPPER = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid,cloud,p3d,"UPPER");
@@ -171,10 +171,12 @@ int main(int argc, const char *argv[]) {
   // Update grid (grow ice)
   double DT = 60.0*1;
   printf("GROWING ICE FOR DT = %lf SECONDS...\n\n",DT);
-  vector<double> sTHERMO = thermoUPPER.getS();
+  vector<double> sTHERMO = thermoUPPER.getS(); 
+  sTHERMO[0] = 0.0;
   vector<double> mice = thermoUPPER.getMICE();
   airfoil.growIce(sTHERMO,mice,DT,chord,"UPPER");
   sTHERMO = thermoLOWER.getS();
+  sTHERMO[sTHERMO.size()-1] = 0.0;
   mice = thermoLOWER.getMICE();
   airfoil.growIce(sTHERMO,mice,DT,chord,"LOWER");
   printf("...DONE\n\n");

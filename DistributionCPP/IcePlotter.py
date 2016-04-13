@@ -46,9 +46,9 @@ plot(XY[:,0]*chord,XY[:,1]*chord,lw=3,c='k');
 # Current iteration
 # XY = genfromtxt("XY_NEW.out", delimiter="\t");
 # plot(XY[:,0]*chord,XY[:,1]*chord,lw=3,c='r');
+plt.xlim([-0.05,0.2])
 axis('equal')
 plt.grid(b=True)
-plt.xlim([-0.05,0.2])
 #legend(['230 K','240 K','250 K','260 K','270 K','NACA0012'])
 # Compare to LEWICE results
 lewice = genfromtxt("/home/adegenna/LagrangianIcingCode/Validations/LewiceIceshapes/Run405.csv", delimiter = ",");
