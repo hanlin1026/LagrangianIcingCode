@@ -936,6 +936,41 @@ void ThermoEqns::SolveLEWICEformulation() {
 
 }
 
+void ThermoEqns::integralBL_LEWICE() {
+  // Function to approximate CH from integral boundary layer approximations
+
+  // *******************************
+  // CRITICAL REYNOLDS NUMBER
+  // *******************************
+
+  // LEWICE empirical correlation for critical Reynolds number
+  vector<double> Rec(NPts_);
+  double RecLIM = 600.0;
+  double RecCorr;
+  for (int i=0; i<NPts_; i++) {
+    RecCorr = 3834.2 - (1.9846e5)*s_[i] + (3.2812e6)*pow(s_[i],2) - (6.9994e6)*pow(s_[i],3);
+    Rec[i] = std::max(RecCorr,RecLIM);
+  }
+  Rec[0] = 1.0e22;
+  
+  // *******************************
+  // ROUGHNESS REYNOLDS NUMBER
+  // *******************************
+
+  // LEWICE empirical correlation for surface roughness
+  double ks  = 0.55e-3;
+  double Nf  = 1.0;
+  double xks = 0.5*sqrt(0.15 + 0.3/Nf);
+  ks         = xks*ks;
+  // Aerodynamic parameters
+  double k_air  = 0.0243;         // Thermal conductivity of air at 0 C
+  double mu_air = 1.725e-5;       // Viscosity of air at 0 C
+  double nu_air = mu_air/rhoINF_; // Kinematic viscosity
+  // Flow derivatives
+  
+
+  
+}
 
 
 void ThermoEqns::SolveIcingEqns() {
