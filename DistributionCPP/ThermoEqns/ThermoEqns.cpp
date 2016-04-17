@@ -854,12 +854,14 @@ void ThermoEqns::LEWICEformulation(int& idx) {
     }
     else if ((Nf > 0.0) && (Nf < 1.0)) {
       // Mixed (glaze)
-      S_sens = (m_imp+m_in)*((cICE_*T_mp*(1.0-rhoICE/rhoL_) + cICE_*eps_T + Lfus_ - cW_*T_mp)*((T_mp+eps_T-T_S)/eps_T)) + cW_*(m_in*T_in+m_imp*Tinf);
+      S_sens = (m_imp+m_in)*((cICE_*T_mp*(1.0-rhoICE/rhoL_) + cICE_*eps_T + Lfus_ - cW_*T_mp)*((T_mp+eps_T-T_S)/eps_T))
+	+ cW_*( m_in*T_in + m_imp*Tinf );
       D_sens = (m_imp+m_in)*(cICE_*T_mp*(1.0-rhoICE/rhoL_) + cICE_*eps_T + Lfus_ - cW_*T_mp)*(-1.0/eps_T);
     }
     else if (Nf >= 1.0) {
       // Rime
-      S_sens = (m_imp+m_in)*(cICE_*T_mp*(1.0-rhoICE/rhoL_) + cICE_*(T_mp+eps_T-T_S) + Lfus_ - cW_*T_mp) + (m_in*T_in+m_imp*Tinf)*cW_;
+      S_sens = (m_imp+m_in)*(cICE_*T_mp*(1.0-rhoICE/rhoL_) + cICE_*(T_mp+eps_T-T_S) + Lfus_ - cW_*T_mp) 
+	+ cW_*( m_in*T_in + m_imp*Tinf );
       D_sens = -(m_imp+m_in)*cICE_;
     }
     // Calculate RHS of 0 = E_dot
