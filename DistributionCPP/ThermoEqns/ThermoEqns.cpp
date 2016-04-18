@@ -80,7 +80,7 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
 
   MatrixXd data; VectorXd s; 
   VectorXd beta;
-  VectorXd ch; VectorXd cf; VectorXd Ubound;
+  VectorXd ch; VectorXd cf; VectorXd Te;
   int indFirst, indLast, indMinCF;
   double stagPt;
   // Determine if we are doing the upper or lower airfoil surface (w.r.t. stagPt)
@@ -94,20 +94,22 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     s_max = 0.0;
   }
 
-  // CH,CF,UBOUND
+  // CH,CF,TeSTATIC
   if (strcmp(parameter,"CHCF") == 0) {
     // Import (s,ch,cf,Ubound)
     data   = this->readCHCF(filename);
     s      = data.col(0)*chord_;
     ch     = data.col(1);
     cf     = data.col(2);
-    Ubound = data.col(3);
+    Te     = data.col(3);
     // Scale CH
+    double Ttot;
     for (int i=0; i<ch.size(); i++) {
       if (cf(i)<0)
         cf(i) = 1.0e-3;
       //ch(i) = rhoINF_*(1003)*Uinf_*0.5*cf(i); // Reynolds Analogy
-      ch(i) = -1.0*rhoINF_*pow(pINF_/rhoINF_,1.5)/(273.15-TINF_)*ch(i);
+      Ttot = Te[i]*(1.0 + 0.2*pow(0.3205,2));
+      ch(i) = -1.0*rhoINF_*pow(pINF_/rhoINF_,1.5)/(273.15-Ttot)*ch(i);
     }
     // Set stagPt at s=0
     stagPt = airfoil.getStagPt();
@@ -160,34 +162,34 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     vector<double> s_orig(NPts_orig);
     vector<double> ch_orig(NPts_orig);
     vector<double> cf_orig(NPts_orig);
-    vector<double> Ubound_orig(NPts_orig);
+    vector<double> Te_orig(NPts_orig);
     vector<double> beta_orig(NPts_orig);
     for (int i=0; i<NPts_orig; i++) {
       s_orig[i]       = s(indFirst+i);
       ch_orig[i]      = ch(indFirst+i);
       cf_orig[i]      = cf(indFirst+i);
-      Ubound_orig[i]  = Ubound(indFirst+i);
+      Te_orig[i]      = Te(indFirst+i);
     }
     gsl_interp_accel *acc = gsl_interp_accel_alloc();
     cH_.resize(NPts_);
     cF_.resize(NPts_);
-    Ubound_.resize(NPts_);
+    Te_.resize(NPts_);
     gsl_spline *splineCH     = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
     gsl_spline *splineCF     = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
-    gsl_spline *splineUbound = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
+    gsl_spline *splineTe     = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
     gsl_spline_init(splineCH,     &s_orig[0], &ch_orig[0],     NPts_orig);
     gsl_spline_init(splineCF,     &s_orig[0], &cf_orig[0],     NPts_orig);
-    gsl_spline_init(splineUbound, &s_orig[0], &Ubound_orig[0], NPts_orig);
+    gsl_spline_init(splineTe, &s_orig[0], &Te_orig[0], NPts_orig);
     for (int i=0; i<NPts_; i++) {
       if ((s_[i] >= s_orig[0]) && (s_[i] <= s_orig[NPts_orig-1])) { 
 	cH_[i]     = gsl_spline_eval(splineCH, s_[i], acc);
         cF_[i]     = (0.5*rhoINF_*pow(Uinf_,2))*gsl_spline_eval(splineCF, s_[i], acc);
-	Ubound_[i] = gsl_spline_eval(splineUbound, s_[i], acc);
+	Te_[i] = gsl_spline_eval(splineTe, s_[i], acc);
       }
       else {
 	cH_[i]     = 0.0;
         cF_[i]     = 0.0;
-	Ubound_[i] = 0.0;
+	Te_[i]     = 0.0;
       }
     }
   }
@@ -277,7 +279,7 @@ ThermoEqns::~ThermoEqns() {
 }
 
 MatrixXd ThermoEqns::readCHCF(const char* filenameCHCF) {
-  // Function to read in skin friction coefficient from file
+  // Function to read in S,CH,CF,Te_static
 
   // Initialize file stream
   FILE* filept = fopen(filenameCHCF,"r");
@@ -290,12 +292,12 @@ MatrixXd ThermoEqns::readCHCF(const char* filenameCHCF) {
       sizeCHCF++;
   }
   rewind(filept);
-  // Resize cF matrix
-  MatrixXd s_cH_cF(sizeCHCF,3);
-  double a,b,d;
+  // Resize data matrix
+  MatrixXd s_cH_cF(sizeCHCF,4);
+  double a,b,d,e;
   for (int i=0; i<sizeCHCF; i++) {
-    fscanf(filept,"%le %le %le",&a,&b,&d);
-    s_cH_cF(i,0) = a; s_cH_cF(i,1) = b; s_cH_cF(i,2) = d;
+    fscanf(filept,"%le %le %le %le",&a,&b,&d,&e);
+    s_cH_cF(i,0) = a; s_cH_cF(i,1) = b; s_cH_cF(i,2) = d; s_cH_cF(i,3) = e;
   }
   // Close file streams
   fclose(filept);
@@ -852,7 +854,8 @@ void ThermoEqns::LEWICEformulation(int& idx) {
       D_mevap_[idx] = 0;
     // Calculate source terms (which are not phase dependent)
     S_kin  = m_imp*(0.5*pow(Uinf_,2));
-    S_conv = cH_[idx]*(Tinf - T_S);
+    //S_conv = cH_[idx]*(Tinf - T_S);
+    S_conv = cH_[idx]*(-273.15 + Te_[idx]);
     S_evap = -0.5*(Levap_ + Lsub_)*mevap_[idx];
     // Calculate phase dependent source terms
     if (Nf <= 0.0) {
@@ -914,6 +917,9 @@ void ThermoEqns::LEWICEformulation(int& idx) {
 void ThermoEqns::SolveLEWICEformulation() {
   // Solve LEWICEbalance over entire airfoil
 
+  // Reset cH to values computed using integral B.L. calculations
+  //integralBL_LEWICE();
+  // Solve LEWICE thermodynamic formulation
   for (int i=0; i<NPts_; i++) {
     LEWICEformulation(i);
   }
@@ -978,6 +984,7 @@ void ThermoEqns::integralBL_LEWICE() {
   vector<double> U(NPts_);
   vector<double> DU(NPts_);
   vector<double> D2U(NPts_);
+  double ds = s_[1]-s_[0];
   U = movingAverage(Ubound_,6);
   DU[0] = (U[1]-U[0])/ds; DU[NPts_-1] = (U[NPts_-1]-U[NPts_-2])/ds;
   for (int i=1; i<NPts_-1; i++) {
@@ -995,13 +1002,14 @@ void ThermoEqns::integralBL_LEWICE() {
   double Gk0,Gk1,Gk2,Gk3;
   double Sk0,Sk1,Sk2,Sk3;
   double Uk0,Uk1,Uk2,Uk3;
+  double k1,k2,k3,k4;
   vector<double> gam(NPts_);
   vector<double> kgam(NPts_);
   double h = 1.0*ds;
   // Create interpolation table for Gamma = g(K)
   for (int i=0; i<NPts_; i++) {
     gam[i]  = -12.0 + 24.0/(NPts_-1)*i;
-    kgam[i] = pow((37.0/315.0 - gam[i]/945.0 - pow(gam[i],2))/9072.0,2)*gam[i];
+    kgam[i] = pow((37.0/315.0 - gam[i]/945.0 - pow(gam[i],2)/9072.0),2)*gam[i];
   }
   gsl_interp_accel *acc  = gsl_interp_accel_alloc();
   gsl_spline *splineGAM  = gsl_spline_alloc(gsl_interp_linear, NPts_);
@@ -1011,12 +1019,12 @@ void ThermoEqns::integralBL_LEWICE() {
   gsl_spline_init(splineU, &s_[0], &U[0], NPts_);
   // Solve for shape factors Z, K, and Gamma (Runge-Kutta integration)
   for (int i=0; i<NPts_-1; i++) {
-    Gk0 = G[i]; Sk0 = S[i]; Uk0 = gsl_spline_eval(splineU, Sk0, acc);
+    Gk0 = G[i]; Sk0 = s_[i]; Uk0 = gsl_spline_eval(splineU, Sk0, acc);
 
-    k1 = dZ_ds(Gk0,Uk0); Gk1 = Gk0 + h/2*k1; Sk1 = Sk0 + h/2; Uk1 = gsl_spline_eval(splineU,Sk1,acc);
-    k2 = dZ_ds(Gk1,Uk1); Gk2 = Gk0 + h/2*k2; Sk2 = Sk0 + h/2; Uk2 = gsl_spline_eval(splineU,Sk2,acc);
-    k3 = dZ_ds(Gk2,Uk2); Gk3 = Gk0 + h*k3;   Sk3 = Sk0 + h;   Uk3 = gsl_spline_eval(splineU,Sk3,acc);
-    k4 = dZ_ds(Gk3,Uk3);
+    k1 = dZ_dS(Gk0,Uk0); Gk1 = Gk0 + h/2*k1; Sk1 = Sk0 + h/2; Uk1 = gsl_spline_eval(splineU,Sk1,acc);
+    k2 = dZ_dS(Gk1,Uk1); Gk2 = Gk0 + h/2*k2; Sk2 = Sk0 + h/2; Uk2 = gsl_spline_eval(splineU,Sk2,acc);
+    k3 = dZ_dS(Gk2,Uk2); Gk3 = Gk0 + h*k3;   Sk3 = Sk0 + h;   Uk3 = gsl_spline_eval(splineU,Sk3,acc);
+    k4 = dZ_dS(Gk3,Uk3);
 
     Z[i+1] = Z[i] + h/6*(k1 + 2*k2 + 2*k3 + k4);
     K[i+1] = Z[i+1]*DU[i+1];
@@ -1031,7 +1039,7 @@ void ThermoEqns::integralBL_LEWICE() {
   vector<double> d(NPts_);
   for (int i=0; i<NPts_; i++) {
     if (DU[i] > 0)
-      d[i] = sqrt(nu*G[i]/DU[i]);
+      d[i] = sqrt(nu_air*G[i]/DU[i]);
     else if ((DU[i] == 0) && (i > 2))
       d[i] = d[i-1] + (d[i-1]-d[i-2]);
     else
@@ -1039,10 +1047,12 @@ void ThermoEqns::integralBL_LEWICE() {
   }
   // Calculate velocity profile at height of roughness element
   vector<double> Rek(NPts_);
+  vector<double> Uk(NPts_);
+  double n;
   for (int i=0; i<NPts_; i++) {
-    n  = std::min( ks/d[i], 1.0 );
-    Uk = U[i]*(2*n - 2*pow(n,3) + pow(n,4)) + 1.0/6.0*G[i]*n*pow(1-n,3);
-    Rek[i] = Uk*ks/nu;
+    n      = std::min( ks/d[i], 1.0 );
+    Uk[i]  = U[i]*(2*n - 2*pow(n,3) + pow(n,4)) + 1.0/6.0*G[i]*n*pow(1-n,3);
+    Rek[i] = Uk[i]*ks/nu_air;
   }
   // Calculate laminar --> turbulent transition point
   int idxT;
@@ -1056,10 +1066,61 @@ void ThermoEqns::integralBL_LEWICE() {
   // *******************************
   // HEAT TRANSFER
   // *******************************
+
+  cH_.resize(NPts_);
+  double Pr = cpAir_*mu_air/k_air;
+  // Laminar
+  vector<double> I_A(NPts_);
+  vector<double> A(NPts_);
+  vector<double> B(NPts_);
+  double chL,dT;
+  for (int i=0; i<NPts_; i++) {
+    I_A[i] = pow(U[i]/Uinf_,1.87)/chord_;
+    B[i]   = 46.72/pow(U[i]/Uinf_,2.87);
+  }
+  A = trapz(s_,I_A);
+  for (int i=0; i<NPts_; i++) {
+    dT = sqrt((nu_air*chord_/Uinf_)*B[i]*A[i]);
+    chL = 2*k_air/dT;
+    if (i < idxT)
+      cH_[i] = chL;
+  }
+  if (idxT > 6) {
+    for (int i=0; i<5; i++) {
+      cH_[i] = cH_[5];
+    }
+  }
+  // Turbulent
+  double Rekt, Beta, cf;
+  for (int i=idxT; i<NPts_; i++) {
+    Rekt   = ks*Uk[i]/nu_air;
+    Beta   = 0.52*pow(Rekt,0.45)*pow(Pr,0.8);
+    cf     = cF_[i]/(0.5*rhoINF_*pow(Uinf_,2)); // cF_ is actually shear stress, so rescale
+    cH_[i] = 0.5*rhoINF_*cpAir_*cf*U[i]/(0.9 + sqrt(cf/2)*Beta);
+  }
   
 }
 
-vector<double> Airfoil::movingAverage(vector<double>& X, double smooth) {
+double ThermoEqns::dZ_dS(double G, double V) {
+  // Subroutine needed for LEWICE integral B.L. calculation
+
+  double A = 37.0/315.0 - G/945.0 - pow(G,2)/9072.0;
+  double B = 2.0 - 116.0/315.0*G + (2.0/945.0 + 1.0/120.0)*pow(G,2) + 2.0/9072.0*pow(G,3);
+  double F = 2*A*B;
+  // Calculate dZ/ds
+  double eps = 0.1;
+  double sgnV = 1.0;
+  if (V<0)
+    sgnV = -1.0;
+  if (std::abs(V) < eps)
+    V = eps*sgnV;
+  double DZ = F/V;
+
+  return DZ;
+
+}
+
+vector<double> ThermoEqns::movingAverage(vector<double>& X, double smooth) {
   // Subroutine to perform a moving average
 
   int N = X.size();

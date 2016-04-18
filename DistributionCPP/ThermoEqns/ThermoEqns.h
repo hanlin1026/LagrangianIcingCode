@@ -28,6 +28,7 @@ class ThermoEqns {
   void LEWICEformulation(int& idx);
   void SolveLEWICEformulation();
   void integralBL_LEWICE();
+  double dZ_dS(double G, double V);
   void SolveIcingEqns();
   void computeMevap(std::vector<double>& Y);
   void computeMevap(double& TS,int& idx);
@@ -60,6 +61,7 @@ class ThermoEqns {
   // Auxiliary parameters
   std::vector<double> cF_;
   std::vector<double> cH_;
+  std::vector<double> Te_;
   std::vector<double> Ubound_;
   std::vector<double> beta_;
   double rhoL_, muL_, LWC_, Uinf_;
