@@ -80,7 +80,7 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
 
   MatrixXd data; VectorXd s; 
   VectorXd beta;
-  VectorXd ch; VectorXd cf;
+  VectorXd ch; VectorXd cf; VectorXd Ubound;
   int indFirst, indLast, indMinCF;
   double stagPt;
   // Determine if we are doing the upper or lower airfoil surface (w.r.t. stagPt)
@@ -94,13 +94,14 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     s_max = 0.0;
   }
 
-  // CHCF
+  // CH,CF,UBOUND
   if (strcmp(parameter,"CHCF") == 0) {
-    // Import (s,ch,cf)
-    data = this->readCHCF(filename);
-    s = data.col(0)*chord_;
-    ch = data.col(1);
-    cf = data.col(2);
+    // Import (s,ch,cf,Ubound)
+    data   = this->readCHCF(filename);
+    s      = data.col(0)*chord_;
+    ch     = data.col(1);
+    cf     = data.col(2);
+    Ubound = data.col(3);
     // Scale CH
     for (int i=0; i<ch.size(); i++) {
       if (cf(i)<0)
@@ -126,21 +127,21 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     minCF = min(SFirstABS,indFirst);
     minCF = min(SLastABS,indLast);
     // Compensate for slight misalignment of stagPt by finding where cF is approx 0
-    for (int i=0; i<CFtmp.size(); i++) {
-      if (strcmp(strSurf_,"UPPER")==0)
-    	CFtmp[i] = cf(indFirst+i-5);
-      else if (strcmp(strSurf_,"LOWER")==0)
-    	CFtmp[i] = cf(indLast+i-5);
-    }
-    minCF = min(CFtmp,indMinCF);
-    if (strcmp(strSurf_,"UPPER")==0) {
-      indFirst += indMinCF-5;
-      stagPt = s(indFirst);
-    }
-    else if (strcmp(strSurf_,"LOWER")==0) {
-      indLast += indMinCF-5;
-      stagPt = s(indLast);
-    }
+    // for (int i=0; i<CFtmp.size(); i++) {
+    //   if (strcmp(strSurf_,"UPPER")==0)
+    // 	CFtmp[i] = cf(indFirst+i-5);
+    //   else if (strcmp(strSurf_,"LOWER")==0)
+    // 	CFtmp[i] = cf(indLast+i-5);
+    // }
+    // minCF = min(CFtmp,indMinCF);
+    // if (strcmp(strSurf_,"UPPER")==0) {
+    //   indFirst += indMinCF-5;
+    //   stagPt = s(indFirst);
+    // }
+    // else if (strcmp(strSurf_,"LOWER")==0) {
+    //   indLast += indMinCF-5;
+    //   stagPt = s(indLast);
+    // }
     // Center s-coords about the stagnation point
     sP3D_.resize(s.size());
     for (int i=0; i<s.size(); i++) {
@@ -159,27 +160,34 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     vector<double> s_orig(NPts_orig);
     vector<double> ch_orig(NPts_orig);
     vector<double> cf_orig(NPts_orig);
+    vector<double> Ubound_orig(NPts_orig);
     vector<double> beta_orig(NPts_orig);
     for (int i=0; i<NPts_orig; i++) {
-      s_orig[i] = s(indFirst+i);
-      ch_orig[i] = ch(indFirst+i);
-      cf_orig[i] = cf(indFirst+i);
+      s_orig[i]       = s(indFirst+i);
+      ch_orig[i]      = ch(indFirst+i);
+      cf_orig[i]      = cf(indFirst+i);
+      Ubound_orig[i]  = Ubound(indFirst+i);
     }
     gsl_interp_accel *acc = gsl_interp_accel_alloc();
     cH_.resize(NPts_);
     cF_.resize(NPts_);
-    gsl_spline *splineCH = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
-    gsl_spline *splineCF = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
-    gsl_spline_init(splineCH, &s_orig[0], &ch_orig[0], NPts_orig);
-    gsl_spline_init(splineCF, &s_orig[0], &cf_orig[0], NPts_orig);
+    Ubound_.resize(NPts_);
+    gsl_spline *splineCH     = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
+    gsl_spline *splineCF     = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
+    gsl_spline *splineUbound = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
+    gsl_spline_init(splineCH,     &s_orig[0], &ch_orig[0],     NPts_orig);
+    gsl_spline_init(splineCF,     &s_orig[0], &cf_orig[0],     NPts_orig);
+    gsl_spline_init(splineUbound, &s_orig[0], &Ubound_orig[0], NPts_orig);
     for (int i=0; i<NPts_; i++) {
       if ((s_[i] >= s_orig[0]) && (s_[i] <= s_orig[NPts_orig-1])) { 
-	cH_[i] = gsl_spline_eval(splineCH, s_[i], acc);
-        cF_[i] = (0.5*rhoINF_*pow(Uinf_,2))*gsl_spline_eval(splineCF, s_[i], acc);
+	cH_[i]     = gsl_spline_eval(splineCH, s_[i], acc);
+        cF_[i]     = (0.5*rhoINF_*pow(Uinf_,2))*gsl_spline_eval(splineCF, s_[i], acc);
+	Ubound_[i] = gsl_spline_eval(splineUbound, s_[i], acc);
       }
       else {
-	cH_[i] = 0.0;
-        cF_[i] = 0.0;
+	cH_[i]     = 0.0;
+        cF_[i]     = 0.0;
+	Ubound_[i] = 0.0;
       }
     }
   }
@@ -200,7 +208,7 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     vector<double> BETAtmp(11);
     for (int i=0; i<s.size(); i++) {
       SFirst[i] = s(i) - s_min;
-      SLast[i] = s(i) - s_max;
+      SLast[i]  = s(i) - s_max;
     }
     SFirstABS = abs(SFirst);
     SLastABS = abs(SLast);
@@ -967,11 +975,111 @@ void ThermoEqns::integralBL_LEWICE() {
   double mu_air = 1.725e-5;       // Viscosity of air at 0 C
   double nu_air = mu_air/rhoINF_; // Kinematic viscosity
   // Flow derivatives
-  
+  vector<double> U(NPts_);
+  vector<double> DU(NPts_);
+  vector<double> D2U(NPts_);
+  U = movingAverage(Ubound_,6);
+  DU[0] = (U[1]-U[0])/ds; DU[NPts_-1] = (U[NPts_-1]-U[NPts_-2])/ds;
+  for (int i=1; i<NPts_-1; i++) {
+    DU[i]  = std::max( (U[i+1]-U[i-1])/(2*ds), 0.0 );
+    if (DU[i] == 0.0)
+      D2U[i] = 0.0;
+    else
+      D2U[i] = ( U[i+1] - 2*U[i] + U[i-1] )/pow(ds,2);
+  }
+  D2U[0] = D2U[1]; D2U[NPts_-1] = D2U[NPts_-2];
+  // Allocation for shape factors Z, K, and Gamma
+  vector<double> Z(NPts_); Z[0] = 0.0;
+  vector<double> G(NPts_); G[0] = 0.0;
+  vector<double> K(NPts_); K[0] = 0.0;
+  double Gk0,Gk1,Gk2,Gk3;
+  double Sk0,Sk1,Sk2,Sk3;
+  double Uk0,Uk1,Uk2,Uk3;
+  vector<double> gam(NPts_);
+  vector<double> kgam(NPts_);
+  double h = 1.0*ds;
+  // Create interpolation table for Gamma = g(K)
+  for (int i=0; i<NPts_; i++) {
+    gam[i]  = -12.0 + 24.0/(NPts_-1)*i;
+    kgam[i] = pow((37.0/315.0 - gam[i]/945.0 - pow(gam[i],2))/9072.0,2)*gam[i];
+  }
+  gsl_interp_accel *acc  = gsl_interp_accel_alloc();
+  gsl_spline *splineGAM  = gsl_spline_alloc(gsl_interp_linear, NPts_);
+  gsl_spline_init(splineGAM, &kgam[0], &gam[0], NPts_);
+  // Create interpolation table for U = u(S)
+  gsl_spline *splineU = gsl_spline_alloc(gsl_interp_linear, NPts_);
+  gsl_spline_init(splineU, &s_[0], &U[0], NPts_);
+  // Solve for shape factors Z, K, and Gamma (Runge-Kutta integration)
+  for (int i=0; i<NPts_-1; i++) {
+    Gk0 = G[i]; Sk0 = S[i]; Uk0 = gsl_spline_eval(splineU, Sk0, acc);
 
+    k1 = dZ_ds(Gk0,Uk0); Gk1 = Gk0 + h/2*k1; Sk1 = Sk0 + h/2; Uk1 = gsl_spline_eval(splineU,Sk1,acc);
+    k2 = dZ_ds(Gk1,Uk1); Gk2 = Gk0 + h/2*k2; Sk2 = Sk0 + h/2; Uk2 = gsl_spline_eval(splineU,Sk2,acc);
+    k3 = dZ_ds(Gk2,Uk2); Gk3 = Gk0 + h*k3;   Sk3 = Sk0 + h;   Uk3 = gsl_spline_eval(splineU,Sk3,acc);
+    k4 = dZ_ds(Gk3,Uk3);
+
+    Z[i+1] = Z[i] + h/6*(k1 + 2*k2 + 2*k3 + k4);
+    K[i+1] = Z[i+1]*DU[i+1];
+    if ( (K[i+1] > kgam[0]) && (K[i+1] < kgam[NPts_-1]) )
+      G[i+1] = gsl_spline_eval(splineGAM,K[i+1],acc);
+    else if (K[i+1] < kgam[0])
+      G[i+1] = -12.0;
+    else if (K[i+1] > kgam[NPts_-1])
+      G[i+1] = 12.0;
+  }
+  // Calculate displacement thickness of boundary layer
+  vector<double> d(NPts_);
+  for (int i=0; i<NPts_; i++) {
+    if (DU[i] > 0)
+      d[i] = sqrt(nu*G[i]/DU[i]);
+    else if ((DU[i] == 0) && (i > 2))
+      d[i] = d[i-1] + (d[i-1]-d[i-2]);
+    else
+      d[i] = 0.0;
+  }
+  // Calculate velocity profile at height of roughness element
+  vector<double> Rek(NPts_);
+  for (int i=0; i<NPts_; i++) {
+    n  = std::min( ks/d[i], 1.0 );
+    Uk = U[i]*(2*n - 2*pow(n,3) + pow(n,4)) + 1.0/6.0*G[i]*n*pow(1-n,3);
+    Rek[i] = Uk*ks/nu;
+  }
+  // Calculate laminar --> turbulent transition point
+  int idxT;
+  for (int i=0; i<NPts_; i++) {
+    if (Rek[i] > Rec[i]) {
+      idxT = i;
+      break;
+    }
+  }
+
+  // *******************************
+  // HEAT TRANSFER
+  // *******************************
   
 }
 
+vector<double> Airfoil::movingAverage(vector<double>& X, double smooth) {
+  // Subroutine to perform a moving average
+
+  int N = X.size();
+  vector<double> X_smooth(N);
+  double NX_smooth,NY_smooth;
+  int startIND = (int) smooth/2;
+  int endIND   = N - startIND;
+  for (int i=0; i<N; i++) {
+    X_smooth[i] = 0.0;
+    if ((i > startIND) && (i < endIND)) {
+      for (int j=0; j<smooth+1; j++) {
+  	X_smooth[i] += X[i+j-startIND]/(smooth+1);
+      }
+    }
+    else
+      X_smooth[i] = X[i];
+  }
+
+  return X_smooth;
+}
 
 void ThermoEqns::SolveIcingEqns() {
   // Main subroutine to iteratively solve mass/energy equations

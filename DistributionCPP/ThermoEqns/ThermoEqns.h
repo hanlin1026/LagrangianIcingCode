@@ -24,8 +24,10 @@ class ThermoEqns {
   std::vector<double> SolveThermoForIceRate(std::vector<double>& X, std::vector<double>& Y);
   std::vector<double> integrateMassEqn(bool& C_filmHeight);
   std::vector<double> explicitSolver(const char* balance, std::vector<double>& y0, double eps, double tol);
+  std::vector<double> movingAverage(std::vector<double>& X, double smooth);
   void LEWICEformulation(int& idx);
   void SolveLEWICEformulation();
+  void integralBL_LEWICE();
   void SolveIcingEqns();
   void computeMevap(std::vector<double>& Y);
   void computeMevap(double& TS,int& idx);
@@ -58,6 +60,7 @@ class ThermoEqns {
   // Auxiliary parameters
   std::vector<double> cF_;
   std::vector<double> cH_;
+  std::vector<double> Ubound_;
   std::vector<double> beta_;
   double rhoL_, muL_, LWC_, Uinf_;
   double Td_, cW_, ud_, cICE_, Lfus_, Levap_, Lsub_;
