@@ -1,5 +1,13 @@
-// Input parameters for droplet advection
-
+// **********************************
+// GRID/FLOW SOLUTION FILES
+// **********************************
+gridfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/MESH.P3D
+solnfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/q103.0.40E+01.bin
+heatfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/heatflux
+betafile = /home/adegenna/LagrangianIcingCode/DistributionCPP/BETATMP.out
+// **********************************
+// DROPLET ADVECTION PARAMETERS
+// **********************************
 pinf	    R		     Tinf		rhol
 0.90760e5   287.058	     256.15		1000.0
 particles   Rmean	     Tmean
@@ -11,7 +19,7 @@ maxiter	    RefreshRate	     calcImpLimits
 Splashing   TrackSplash
 1	    0
 // **********************************
-// Input parameters for thermo module
+// THERMO PARAMETERS
 // **********************************
 NPts        Uinf             LWC                Td		chord
 1000	    100		     0.55e-3		256.15		0.5334

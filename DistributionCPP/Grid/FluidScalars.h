@@ -2,6 +2,11 @@
 #define __FLUIDSCALARS_H__
 
 struct FluidScalars {
+  // Filenames for grid/flow solution
+  std::string gridfile_;
+  std::string solnfile_;
+  std::string heatfile_;
+  std::string betafile_;
   // Scalars needed for the Grid class
   double pinf_;
   double R_;

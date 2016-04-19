@@ -29,14 +29,19 @@ int main(int argc, const char *argv[]) {
   }
   // Specify initialization files
   const char *inFileName = argv[1];
-  const char *meshFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/MESH.P3D";
-  const char *solnFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/q103.0.40E+01.bin";
+  //const char *meshFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/MESH.P3D";
+  //const char *solnFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/q103.0.40E+01.bin";
   // Read in initialization scalars from input file
   FluidScalars scalarsFluid;
   ParcelScalars scalarsParcel;
   readInputParams(scalarsFluid,scalarsParcel,inFileName);
-  double chord = scalarsFluid.chord_;
+  // Read in grid/flow solution files
+  const char *meshFileName = scalarsFluid.gridfile_.c_str();
+  const char *solnFileName = scalarsFluid.solnfile_.c_str();
+  const char *filenameCHCF = scalarsFluid.heatfile_.c_str();
+  const char *filenameBETA = scalarsFluid.betafile_.c_str();
   // Initialize plot3D object, read in basic problem data
+  double chord = scalarsFluid.chord_;
   PLOT3D p3d = PLOT3D(meshFileName, solnFileName, &scalarsFluid);
   double dY;
   if (scalarsFluid.calcImpingementLimits_ == 1) { 
@@ -153,8 +158,8 @@ int main(int argc, const char *argv[]) {
   // *******************************************************
   
   // Initialize thermo eqns solver
-  const char *filenameCHCF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/heatflux";
-  const char *filenameBETA = "/home/adegenna/LagrangianIcingCode/DistributionCPP/BETATMP.out";
+  //const char *filenameCHCF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/heatflux";
+  //const char *filenameBETA = "/home/adegenna/LagrangianIcingCode/DistributionCPP/BETATMP.out";
   // Solve upper surface
   printf("SOLVING UPPER SURFACE...\n\n");
   ThermoEqns thermoUPPER = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid,cloud,p3d,"UPPER");
@@ -168,17 +173,19 @@ int main(int argc, const char *argv[]) {
   // Get old grid XY coordinates
   vector<double> XOLD = airfoil.getX();
   vector<double> YOLD = airfoil.getY();
+  // Concatenate upper/lower surface ice growth rates
+  vector<double> sUP        = thermoUPPER.getS(); sUP[0] = 0.0;
+  vector<double> miceUP     = thermoUPPER.getMICE();
+  vector<double> sLOW       = thermoLOWER.getS(); sLOW[sLOW.size()-1] = 0.0;
+  vector<double> miceLOW    = thermoLOWER.getMICE();
+  miceLOW.insert( miceLOW.end(), miceUP.begin(), miceUP.end() );
+  sLOW.insert( sLOW.end(), sUP.begin(), sUP.end() );
+  vector<double> mice = miceLOW;
+  vector<double> s    = sLOW; 
   // Update grid (grow ice)
-  double DT = 60.0*7.0;
+  double DT = 60.0*1.0;
   printf("GROWING ICE FOR DT = %lf SECONDS...\n\n",DT);
-  vector<double> sTHERMO = thermoUPPER.getS(); 
-  sTHERMO[0] = 0.0;
-  vector<double> mice = thermoUPPER.getMICE();
-  airfoil.growIce(sTHERMO,mice,DT,chord,"UPPER");
-  sTHERMO = thermoLOWER.getS();
-  sTHERMO[sTHERMO.size()-1] = 0.0;
-  mice = thermoLOWER.getMICE();
-  airfoil.growIce(sTHERMO,mice,DT,chord,"LOWER");
+  airfoil.growIce(s,mice,DT,chord,"ENTIRE");
   printf("...DONE\n\n");
   // Output new grid coordinates to file
   vector<double> XNEW = airfoil.getX();

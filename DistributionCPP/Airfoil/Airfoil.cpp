@@ -325,6 +325,7 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
   double minimum;
   int ind;
   double s_min,s_max;
+
   // Match s-coordinates of airfoil to those from finely-resolved thermo calculation
   if (strcmp(strSurf,"UPPER")==0) {
     s_min = 0.0;
@@ -333,6 +334,10 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
   else if (strcmp(strSurf,"LOWER")==0) {
     s_min = -0.4;
     s_max = 0.0;
+  }
+  else if (strcmp(strSurf,"ENTIRE")==0) {
+    s_min = -0.4;
+    s_max = 0.4;
   }
   vector<double> tmp1(sTHERMO.size());
   vector<double> tmp2(sTHERMO.size());
@@ -348,6 +353,7 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
       indAIRFOIL.push_back(i);
     }
   }
+
   // Calculate ice growth
   double rhoICE = 917.0;
   double xNEW,yNEW,dH,dH_old,dH_tmp,ip,theta;
@@ -394,7 +400,7 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
   }
 
   // Implicit Laplacian smoothing
-  eps = 4.0;
+  eps = 1.0;
   vector<vector<double> > LAPL_DH(NL,vector<double>(NL));
   LAPL_DH = LaplacianMatrix(NL,eps);
   vector<double> DH_smooth(NL);

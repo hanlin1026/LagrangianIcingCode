@@ -3,20 +3,55 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
+#include <string.h>
+#include <istream>
 #include "readInputParams.h"
 
 void readInputParams(FluidScalars& PROPS, ParcelScalars& PARCEL, const char *inFileName) {
   // Function to read in simulation parameters from specified input
   // file and return them in a property struct
+  
+  // **********************************
+  // INITIALIZE INPUT FILE STREAM
+  // **********************************
 
-  // Initialize input file stream
   std::string line = "";
   std::ifstream inFile;
   inFile.open(inFileName);
+
+  // **********************************
+  // GRID/FLOW SOLUTION FILENAMES
+  // **********************************
+
   // Scan through headers
   for (int i=0; i<3; i++) {
     std::getline(inFile,line);
   }
+  // Get names of files
+  std::getline(inFile,line,'/'); inFile.putback('/');
+  std::getline(inFile,line,'\n');
+  PROPS.gridfile_.assign(line);
+  printf("GRID: %s\n",PROPS.gridfile_.c_str());
+  std::getline(inFile,line,'/'); inFile.putback('/');
+  std::getline(inFile,line,'\n');
+  PROPS.solnfile_.assign(line);
+  printf("SOLN: %s\n",PROPS.solnfile_.c_str());
+  std::getline(inFile,line,'/'); inFile.putback('/');
+  std::getline(inFile,line,'\n');
+  PROPS.heatfile_.assign(line);
+  printf("HEAT: %s\n",PROPS.heatfile_.c_str());
+  std::getline(inFile,line,'/'); inFile.putback('/');
+  std::getline(inFile,line,'\n');
+  PROPS.betafile_.assign(line);
+  printf("BETA: %s\n",PROPS.betafile_.c_str());
+
+  // **********************************
+  // DROPLET ADVECTION PARAMETERS
+  // **********************************
+  
+  // Scan through headers
+  for (int i=0; i<4; i++)
+    std::getline(inFile,line);
   // Physical parameters (pinf,R,Tinf,rhol)
   inFile >> PROPS.pinf_;
   inFile >> PROPS.R_;
@@ -52,12 +87,13 @@ void readInputParams(FluidScalars& PROPS, ParcelScalars& PARCEL, const char *inF
   PROPS.rhoinf_ = PROPS.pinf_/PROPS.R_/PROPS.Tinf_;
   PROPS.Ubar_ = sqrt(1.4*PROPS.pinf_/PROPS.rhoinf_);
 
-  // Thermo module parameters
-  std::getline(inFile,line);
-  std::getline(inFile,line);
-  std::getline(inFile,line);
-  std::getline(inFile,line);
-  std::getline(inFile,line);
+  // **********************************
+  // THERMO PARAMETERS
+  // **********************************
+  
+  // Read through headers
+  for (int i=0; i<5; i++)
+    std::getline(inFile,line);
   // First line (NPts,Uinf,LWC,Td)
   double tmp;
   inFile >> tmp;
