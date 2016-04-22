@@ -9,5 +9,4 @@
 
 void readInputParams(FluidScalars& PROPS, ParcelScalars& PARCEL, const char *inFileName);
 
-
 #endif

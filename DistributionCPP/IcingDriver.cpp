@@ -13,6 +13,7 @@
 #include "InputData/readInputParams.h"
 #include "Cloud/calcImpingementLimits.h"
 #include "ThermoEqns/ThermoEqns.h"
+#include "AutoGridGen/autoGridGen.h"
 #include <iterator>
 #include <findAll.h>
 
@@ -21,6 +22,7 @@
 // *******************************************************
 
 int main(int argc, const char *argv[]) {
+  
   // Check that user has specified an input filepath
   if (argc < 2) {
     // Tell the user how to run the program
@@ -29,8 +31,6 @@ int main(int argc, const char *argv[]) {
   }
   // Specify initialization files
   const char *inFileName = argv[1];
-  //const char *meshFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/MESH.P3D";
-  //const char *solnFileName = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/q103.0.40E+01.bin";
   // Read in initialization scalars from input file
   FluidScalars scalarsFluid;
   ParcelScalars scalarsParcel;
@@ -40,6 +40,7 @@ int main(int argc, const char *argv[]) {
   const char *solnFileName = scalarsFluid.solnfile_.c_str();
   const char *filenameCHCF = scalarsFluid.heatfile_.c_str();
   const char *filenameBETA = scalarsFluid.betafile_.c_str();
+  const char *outFileName  = scalarsFluid.outfile_.c_str();
   // Initialize plot3D object, read in basic problem data
   double chord = scalarsFluid.chord_;
   PLOT3D p3d = PLOT3D(meshFileName, solnFileName, &scalarsFluid);
@@ -98,11 +99,11 @@ int main(int argc, const char *argv[]) {
   int refreshRate = scalarsParcel.refreshRate_;
   int particles = scalarsParcel.particles_;
   printf("maxiter = %d\n",maxiter);
-
+  
   // *******************************************************
   // DROPLET ADVECTION MODULE
   // *******************************************************
-  /**
+  
   while ((totalImpinge < particles) && (iter < maxiter)) {
     cloud.calcDtandImpinge(airfoil,p3d);
     cloud.transportSLD(p3d);
@@ -152,14 +153,11 @@ int main(int argc, const char *argv[]) {
     fprintf(outfileBETA,"%lf\t%lf\n",BetaBins[i],Beta[i]*.74/.83);
   fclose(outfileDROP);
   fclose(outfileBETA);
-  **/
+  
   // *******************************************************
   // THERMO EQUATIONS
   // *******************************************************
   
-  // Initialize thermo eqns solver
-  //const char *filenameCHCF = "/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/heatflux";
-  //const char *filenameBETA = "/home/adegenna/LagrangianIcingCode/DistributionCPP/BETATMP.out";
   // Solve upper surface
   printf("SOLVING UPPER SURFACE...\n\n");
   ThermoEqns thermoUPPER = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid,cloud,p3d,"UPPER");
@@ -199,5 +197,12 @@ int main(int argc, const char *argv[]) {
   }
   fclose(outfileXYOLDNEW);
   fclose(outfileXYNEW);
+  
+  // *******************************************************
+  // NEW GRID GENERATION
+  // *******************************************************
+
+  // Generate input files for GAIR/HYPERG mesh generation
+  autoGridGen("XY_NEW.out",outFileName);
   
 }

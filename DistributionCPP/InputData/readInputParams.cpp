@@ -44,6 +44,10 @@ void readInputParams(FluidScalars& PROPS, ParcelScalars& PARCEL, const char *inF
   std::getline(inFile,line,'\n');
   PROPS.betafile_.assign(line);
   printf("BETA: %s\n",PROPS.betafile_.c_str());
+  std::getline(inFile,line,'/'); inFile.putback('/');
+  std::getline(inFile,line,'\n');
+  PROPS.outfile_.assign(line);
+  printf("OUT: %s\n",PROPS.outfile_.c_str());
 
   // **********************************
   // DROPLET ADVECTION PARAMETERS

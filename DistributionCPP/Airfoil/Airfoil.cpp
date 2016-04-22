@@ -400,7 +400,7 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
   }
 
   // Implicit Laplacian smoothing
-  eps = 1.0;
+  eps = 5.0;
   vector<vector<double> > LAPL_DH(NL,vector<double>(NL));
   LAPL_DH = LaplacianMatrix(NL,eps);
   vector<double> DH_smooth(NL);

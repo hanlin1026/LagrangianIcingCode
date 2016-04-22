@@ -1,10 +1,11 @@
 // **********************************
 // GRID/FLOW SOLUTION FILES
 // **********************************
-gridfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/MESH.P3D
-solnfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/q103.0.40E+01.bin
-heatfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/NACA0012/heatflux
-betafile = /home/adegenna/LagrangianIcingCode/DistributionCPP/BETATMP.out
+gridfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/TEST/T6/MESH.P3D
+solnfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/TEST/T6/q103.0.40E+01.bin
+heatfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/TEST/T6/heatflux
+betafile = /home/adegenna/LagrangianIcingCode/DistributionCPP/BETA.out
+outfile  = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/TEST/T7
 // **********************************
 // DROPLET ADVECTION PARAMETERS
 // **********************************

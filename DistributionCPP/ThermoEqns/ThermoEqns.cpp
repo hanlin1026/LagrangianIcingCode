@@ -494,6 +494,7 @@ void ThermoEqns::computeMevap(vector<double>& Y) {
       Ts_tilda = 72.0 + 1.8*Y[i];
     p_vp = 3386.0*(0.0039 + (6.8096e-6)*pow(Ts_tilda,2) + (3.5579e-7)*pow(Ts_tilda,3));
     mevap_[i] = (0.7*cH_[i]/cpAir_)*(p_vp - Hr*p_vinf)/pstat_[i];
+    mevap_[i] = std::max(mevap_[i],0.0);
   }
 }
 
@@ -509,6 +510,7 @@ void ThermoEqns::computeMevap(double& TS, int& idx) {
   Ts_tilda = 72.0 + 1.8*TS;
   p_vp = 3386.0*(0.0039 + (6.8096e-6)*pow(Ts_tilda,2) + (3.5579e-7)*pow(Ts_tilda,3));
   mevap_[idx] = (0.7*cH_[idx]/cpAir_)*(p_vp - Hr*p_vinf)/pstat_[idx];
+  mevap_[idx] = std::max(mevap_[idx],0.0);
   D_Tstilda = 1.8;
   D_pvp = 3386.0*(2.0*(6.8096e-6)*Ts_tilda*D_Tstilda + 3.0*(3.5579e-7)*(pow(Ts_tilda,2))*D_Tstilda);
   D_mevap_[idx] = -0.5*(Levap_+Lsub_)*(0.7*cH_[idx]/cpAir_)/pstat_[idx]*D_pvp;
@@ -902,7 +904,7 @@ void ThermoEqns::LEWICEformulation(int& idx) {
     else
       flagMass = 0;
 
-    if ((D_TS < 1.0e-10) && (flagMass == 0))
+    if ((D_TS < 1.0e-10) && (flagMass == 0) || (iter > 25))
       flagTotal = 1;
     iter++;
   }

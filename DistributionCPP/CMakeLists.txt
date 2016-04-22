@@ -17,6 +17,7 @@ add_library( IcingLib
   Cloud/calcImpingementLimits.cpp
   Airfoil/Airfoil.cpp
   InputData/readInputParams.cpp
+  AutoGridGen/autoGridGen.cpp
   ThermoEqns/ThermoEqns.cpp
   findAll.cpp )
 

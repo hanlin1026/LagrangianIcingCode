@@ -7,6 +7,7 @@ struct FluidScalars {
   std::string solnfile_;
   std::string heatfile_;
   std::string betafile_;
+  std::string outfile_;
   // Scalars needed for the Grid class
   double pinf_;
   double R_;
