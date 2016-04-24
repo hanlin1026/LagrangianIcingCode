@@ -100,11 +100,12 @@ void readInputParams(FluidScalars& PROPS, ParcelScalars& PARCEL, const char *inF
     std::getline(inFile,line);
   // First line (NPts,Uinf,LWC,Td)
   double tmp;
-  inFile >> tmp;
-  inFile >> tmp;
-  inFile >> tmp;
+  inFile >> PROPS.NPts_;
+  inFile >> PROPS.Uinf_;
+  inFile >> PROPS.LWC_;
   inFile >> PROPS.Td_;
   inFile >> PROPS.chord_;
+  inFile >> PROPS.mach_;
   // Close file stream
   inFile.close();
 

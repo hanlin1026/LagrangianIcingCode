@@ -17,30 +17,30 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
   // Constructor to read in input files and initialize thermo eqns
 
   strSurf_ = strSurf;
-  NPts_ = 1000;
   // Set rhoL_,muL_
   muL_ = 1.787e-3;
-  // Set LWC_,Uinf_
-  LWC_ = 0.55e-3;
-  Uinf_ = 102.8;
   cpAir_ = 1003.0;
   State state = cloud.getState();
   Td_ = fluid.Td_-273.15;
   // ASSUMPTION: set values of some parameters at certain temperature/pressure
   cW_ = 4217.6;     // J/(kg C) at T = 0 C and P = 100 kPa
   //cW_ = 4393.0;      // J/(kg C) at T = -20 C and P = 100 kPa
-  ud_ = 102.8;
   cICE_ = 2093.0;   // J/(kg C) at T = 0 C       
   //cICE_ = 1943.0;    // J/(kg C) at T = -20 C
   Lfus_ = 334774.0; // J/kg
   // Read in values of fluid parameters
-  TINF_ = Td_+273.15; // K
-  rhoL_ = fluid.rhol_;
-  pINF_ = fluid.pinf_;
+  NPts_   = fluid.NPts_;
+  LWC_    = fluid.LWC_;
+  Uinf_   = fluid.Uinf_;
+  ud_     = Uinf_; // Could reset this to be local velocity if desired
+  TINF_   = Td_+273.15; // K
+  rhoL_   = fluid.rhol_;
+  pINF_   = fluid.pinf_;
   rhoINF_ = pINF_/(287.058*TINF_);
-  chord_ = fluid.chord_;
-  Levap_ = (2500.8 - 2.36*(TINF_-273.15) + 0.0016*pow((TINF_-273.15),2) - 0.00006*pow((TINF_-273.15),3))*1000;
-  Lsub_  = (2834.1 - 0.29*(TINF_-273.15) - 0.0040*pow((TINF_-273.15),2))*1000;
+  chord_  = fluid.chord_;
+  Levap_  = (2500.8 - 2.36*(TINF_-273.15) + 0.0016*pow((TINF_-273.15),2) - 0.00006*pow((TINF_-273.15),3))*1000.0;
+  Lsub_   = (2834.1 - 0.29*(TINF_-273.15) - 0.0040*pow((TINF_-273.15),2))*1000.0;
+  mach_   = fluid.mach_;
   // Initial guess for ice accretion
   mice_.resize(NPts_);
   for (int i=0; i<NPts_; i++)
@@ -49,8 +49,8 @@ ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfo
   interpUpperSurface(filenameCHCF,airfoil,"CHCF");
   interpUpperSurface(filenameBETA,airfoil,"BETA");
   // Compute static pressure from P3D grid reference
-  computePstat(p3d);
-  interpUpperSurface(" ",airfoil,"PSTAT");
+  //computePstat(p3d);
+  //interpUpperSurface(" ",airfoil,"PSTAT");
   // Flip things if we are doing the lower surface
   if (strcmp(strSurf_,"LOWER")==0) {
     s_ = flipud(s_);
@@ -80,7 +80,7 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
 
   MatrixXd data; VectorXd s; 
   VectorXd beta;
-  VectorXd ch; VectorXd cf; VectorXd Te;
+  VectorXd ch; VectorXd cf; VectorXd Te; VectorXd pstat; VectorXd Ubound;
   int indFirst, indLast, indMinCF;
   double stagPt;
   // Determine if we are doing the upper or lower airfoil surface (w.r.t. stagPt)
@@ -94,7 +94,8 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     s_max = 0.0;
   }
 
-  // CH,CF,TeSTATIC
+  // CH,CF,Tedge,Ubound
+  double aINF = sqrt(1.4*287.058*TINF_);
   if (strcmp(parameter,"CHCF") == 0) {
     // Import (s,ch,cf,Ubound)
     data   = this->readCHCF(filename);
@@ -102,14 +103,17 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     ch     = data.col(1);
     cf     = data.col(2);
     Te     = data.col(3);
+    pstat  = data.col(4);
+    Ubound = data.col(5);
     // Scale CH
     double Ttot;
     for (int i=0; i<ch.size(); i++) {
       if (cf(i)<0)
         cf(i) = 1.0e-3;
       //ch(i) = rhoINF_*(1003)*Uinf_*0.5*cf(i); // Reynolds Analogy
-      Ttot = Te[i]*(1.0 + 0.2*pow(0.3205,2));
-      ch(i) = -1.0*rhoINF_*pow(pINF_/rhoINF_,1.5)/(273.15-Ttot)*ch(i);
+      //Ttot = Te[i]*(1.0 + 0.2*pow(mach_,2));
+      //Ttot  = TINF_*(1.0 + 0.2*pow(mach_,2));
+      ch(i) = -1.0*rhoINF_*pow(pINF_/rhoINF_,1.5)/(273.15-Te[i])*ch(i);
     }
     // Set stagPt at s=0
     stagPt = airfoil.getStagPt();
@@ -163,33 +167,47 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     vector<double> ch_orig(NPts_orig);
     vector<double> cf_orig(NPts_orig);
     vector<double> Te_orig(NPts_orig);
+    vector<double> pstat_orig(NPts_orig);
+    vector<double> Ubound_orig(NPts_orig);
     vector<double> beta_orig(NPts_orig);
     for (int i=0; i<NPts_orig; i++) {
       s_orig[i]       = s(indFirst+i);
       ch_orig[i]      = ch(indFirst+i);
       cf_orig[i]      = cf(indFirst+i);
       Te_orig[i]      = Te(indFirst+i);
+      pstat_orig[i]   = pstat(indFirst+i);
+      Ubound_orig[i]  = Ubound(indFirst+i);
     }
     gsl_interp_accel *acc = gsl_interp_accel_alloc();
     cH_.resize(NPts_);
     cF_.resize(NPts_);
     Te_.resize(NPts_);
+    pstat_.resize(NPts_);
+    Ubound_.resize(NPts_);
     gsl_spline *splineCH     = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
     gsl_spline *splineCF     = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
     gsl_spline *splineTe     = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
+    gsl_spline *splinePstat  = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
+    gsl_spline *splineUbound = gsl_spline_alloc(gsl_interp_linear, NPts_orig);
     gsl_spline_init(splineCH,     &s_orig[0], &ch_orig[0],     NPts_orig);
     gsl_spline_init(splineCF,     &s_orig[0], &cf_orig[0],     NPts_orig);
-    gsl_spline_init(splineTe, &s_orig[0], &Te_orig[0], NPts_orig);
+    gsl_spline_init(splineTe,     &s_orig[0], &Te_orig[0],     NPts_orig);
+    gsl_spline_init(splinePstat,  &s_orig[0], &pstat_orig[0],  NPts_orig);
+    gsl_spline_init(splineUbound, &s_orig[0], &Ubound_orig[0], NPts_orig);
     for (int i=0; i<NPts_; i++) {
       if ((s_[i] >= s_orig[0]) && (s_[i] <= s_orig[NPts_orig-1])) { 
 	cH_[i]     = gsl_spline_eval(splineCH, s_[i], acc);
         cF_[i]     = (0.5*rhoINF_*pow(Uinf_,2))*gsl_spline_eval(splineCF, s_[i], acc);
-	Te_[i] = gsl_spline_eval(splineTe, s_[i], acc);
+	Te_[i]     = gsl_spline_eval(splineTe,    s_[i], acc);
+	pstat_[i]  = pINF_*gsl_spline_eval(splinePstat, s_[i], acc); 
+	Ubound_[i] = aINF*rhoINF_*gsl_spline_eval(splineUbound, s_[i], acc); 
       }
       else {
 	cH_[i]     = 0.0;
         cF_[i]     = 0.0;
 	Te_[i]     = 0.0;
+	pstat_[i]  = 0.0;
+	Ubound_[i] = 0.0;
       }
     }
   }
@@ -279,7 +297,7 @@ ThermoEqns::~ThermoEqns() {
 }
 
 MatrixXd ThermoEqns::readCHCF(const char* filenameCHCF) {
-  // Function to read in S,CH,CF,Te_static
+  // Function to read in S,CH,CF,Tedge,Pedge
 
   // Initialize file stream
   FILE* filept = fopen(filenameCHCF,"r");
@@ -293,11 +311,11 @@ MatrixXd ThermoEqns::readCHCF(const char* filenameCHCF) {
   }
   rewind(filept);
   // Resize data matrix
-  MatrixXd s_cH_cF(sizeCHCF,4);
-  double a,b,d,e;
+  MatrixXd s_cH_cF(sizeCHCF,5);
+  double a,b,d,e,f;
   for (int i=0; i<sizeCHCF; i++) {
-    fscanf(filept,"%le %le %le %le",&a,&b,&d,&e);
-    s_cH_cF(i,0) = a; s_cH_cF(i,1) = b; s_cH_cF(i,2) = d; s_cH_cF(i,3) = e;
+    fscanf(filept,"%le %le %le %le %le",&a,&b,&d,&e,&f);
+    s_cH_cF(i,0) = a; s_cH_cF(i,1) = b; s_cH_cF(i,2) = d; s_cH_cF(i,3) = e; s_cH_cF(i,4) = f;
   }
   // Close file streams
   fclose(filept);
@@ -484,7 +502,7 @@ void ThermoEqns::computeMevap(vector<double>& Y) {
 
   double Ts_tilda, Tinf_tilda, p_vp, p_vinf;
   double TINF_C = TINF_-273.15;
-  double Hr = 1.0; // Relative humidity (between 0 and 1)
+  double Hr = 0.0; // Relative humidity (between 0 and 1)
   Tinf_tilda = 72.0 + 1.8*TINF_C;
   p_vinf = 3386.0*(0.0039 + (6.8096e-6)*pow(Tinf_tilda,2) + (3.5579e-7)*pow(Tinf_tilda,3));
   for (int i=0; i<NPts_; i++) {
@@ -504,7 +522,7 @@ void ThermoEqns::computeMevap(double& TS, int& idx) {
 
   double Ts_tilda, Tinf_tilda, p_vp, p_vinf, D_Tstilda, D_pvp;
   double TINF_C = TINF_-273.15;
-  double Hr = 1.0; // Relative humidity (between 0 and 1)
+  double Hr = 0.0; // Relative humidity (between 0 and 1)
   Tinf_tilda = 72.0 + 1.8*TINF_C;
   p_vinf = 3386.0*(0.0039 + (6.8096e-6)*pow(Tinf_tilda,2) + (3.5579e-7)*pow(Tinf_tilda,3));
   Ts_tilda = 72.0 + 1.8*TS;
@@ -815,7 +833,8 @@ void ThermoEqns::LEWICEformulation(int& idx) {
   double m_ice, m_in, T_in;
   double E_dot;
   double rhoICE = 916.7;
-  double Tinf = TINF_-273.15; // Celsius
+  double Tinf = TINF_-273.15;    // Celsius
+  double Trec = Te_[idx]-273.15; // Celsius
   // Initial guesses
   double m_out = 0.0;
   double T_S   = 0.0;
@@ -857,7 +876,7 @@ void ThermoEqns::LEWICEformulation(int& idx) {
     // Calculate source terms (which are not phase dependent)
     S_kin  = m_imp*(0.5*pow(Uinf_,2));
     //S_conv = cH_[idx]*(Tinf - T_S);
-    S_conv = cH_[idx]*(-273.15 + Te_[idx]);
+    S_conv = cH_[idx]*(Trec - T_S);
     S_evap = -0.5*(Levap_ + Lsub_)*mevap_[idx];
     // Calculate phase dependent source terms
     if (Nf <= 0.0) {
@@ -921,6 +940,7 @@ void ThermoEqns::SolveLEWICEformulation() {
 
   // Reset cH to values computed using integral B.L. calculations
   //integralBL_LEWICE();
+
   // Solve LEWICE thermodynamic formulation
   for (int i=0; i<NPts_; i++) {
     LEWICEformulation(i);
@@ -1075,15 +1095,18 @@ void ThermoEqns::integralBL_LEWICE() {
   vector<double> I_A(NPts_);
   vector<double> A(NPts_);
   vector<double> B(NPts_);
-  double chL,dT;
+  vector<double> C(NPts_);
+  double chL,dT,dT_stag;
   for (int i=0; i<NPts_; i++) {
     I_A[i] = pow(U[i]/Uinf_,1.87)/chord_;
     B[i]   = 46.72/pow(U[i]/Uinf_,2.87);
+    C[i]   = 16.28/std::abs(chord_/Uinf_*DU[i]);
   }
   A = trapz(s_,I_A);
   for (int i=0; i<NPts_; i++) {
-    dT = sqrt((nu_air*chord_/Uinf_)*B[i]*A[i]);
-    chL = 2*k_air/dT;
+    dT      = sqrt((nu_air*chord_/Uinf_)*B[i]*A[i]);
+    dT_stag = sqrt((nu_air*chord_/Uinf_)*C[i]);
+    chL = 2*k_air/(dT+dT_stag);
     if (i < idxT)
       cH_[i] = chL;
   }

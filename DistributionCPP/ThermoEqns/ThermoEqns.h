@@ -69,6 +69,7 @@ class ThermoEqns {
   double rhoINF_, pINF_, TINF_;
   double chord_;
   double cpAir_;
+  double mach_;
   // PLOT3D parameters (to assist in interpolation calculations)
   int indFirst_,indLast_; // First/last indices for where interpolation starts/ends for parameters taken from PLOT3D grid
   std::vector<double> sP3D_; // S-coordinates of airfoil wrap in P3D variables

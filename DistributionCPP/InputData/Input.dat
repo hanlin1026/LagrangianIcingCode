@@ -1,20 +1,20 @@
 // **********************************
 // GRID/FLOW SOLUTION FILES
 // **********************************
-gridfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/TEST/T6/MESH.P3D
-solnfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/TEST/T6/q103.0.40E+01.bin
-heatfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/TEST/T6/heatflux
+gridfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T1/MESH.P3D
+solnfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T1/q103.0.40E+01.bin
+heatfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T1/heatflux
 betafile = /home/adegenna/LagrangianIcingCode/DistributionCPP/BETA.out
-outfile  = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/TEST/T7
+outfile  = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T2
 // **********************************
 // DROPLET ADVECTION PARAMETERS
 // **********************************
 pinf	    R		     Tinf		rhol
-0.90760e5   287.058	     256.15		1000.0
+0.90760e5   287.058	     256.49		1000.0
 particles   Rmean	     Tmean
-5000	    20.0e-6	     256.15
+5000	    20.0e-6	     256.49
 Xmin	    Xmax	     Ymin		Ymax
--4.0	    -4.0	     -0.5		-0.40
+-4.0	    -4.0	     -0.6		-0.30
 maxiter	    RefreshRate	     calcImpLimits
 1000	    999	     	     1
 Splashing   TrackSplash
@@ -22,8 +22,15 @@ Splashing   TrackSplash
 // **********************************
 // THERMO PARAMETERS
 // **********************************
-NPts        Uinf             LWC                Td		chord
-1000	    100		     0.55e-3		256.15		0.5334
+NPts        Uinf             LWC                Td		chord		mach
+1000	    102.8	     0.55e-3		256.49		0.5334		0.3205
+
+
+
+
+
+
+// Other possible thermo parameters (hard-coded at present)
 cW          ud               cICE               Lfus
 4217.6	    100		     2093.0		334774.0
 TINF	    muL

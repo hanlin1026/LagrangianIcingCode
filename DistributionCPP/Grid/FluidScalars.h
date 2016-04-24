@@ -28,6 +28,9 @@ struct FluidScalars {
 
   // Scalars needed for thermodynamics module
   double Td_;
+  double NPts_;
+  double Uinf_;
+  double LWC_;
 
 };
 
