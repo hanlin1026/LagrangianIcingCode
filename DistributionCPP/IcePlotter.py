@@ -41,6 +41,16 @@ XY = genfromtxt("./Grid/RUN404/T1/XY_NEW.out", delimiter = "\t");
 figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'b',linewidth=3);
 XY = genfromtxt("./Grid/RUN404/T2/XY_NEW.out", delimiter = "\t");
 figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'b',linewidth=3);
+
+XY = genfromtxt("./Grid/RUN308/T1/XY_NEW.out", delimiter = "\t");
+figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'r',linewidth=3);
+XY = genfromtxt("./Grid/RUN308/T2/XY_NEW.out", delimiter = "\t");
+figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'r',linewidth=3);
+XY = genfromtxt("./Grid/RUN308/T3/XY_NEW.out", delimiter = "\t");
+figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'r',linewidth=3);
+
+#XY = genfromtxt("./Grid/RUN404/T2/XY_NEW.out", delimiter = "\t");
+#figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'b',linewidth=3);
 # XY = genfromtxt("./Grid/TEST/T3/XY_NEW.out", delimiter = "\t");
 # figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'b',linewidth=3);
 # XY = genfromtxt("./Grid/TEST/T4/XY_NEW.out", delimiter = "\t");
@@ -66,7 +76,7 @@ plt.grid(b=True)
 #legend(['230 K','240 K','250 K','260 K','270 K','NACA0012'])
 # Compare to LEWICE results
 lewice = genfromtxt("/home/adegenna/LagrangianIcingCode/Validations/LewiceIceshapes/Run405.csv", delimiter = ",");
-plt.scatter(lewice[:,0]/21.0*chord,lewice[:,1]/21.0*chord,c='g',s=50);
+plt.scatter(lewice[:,0]/21.0*chord,lewice[:,1]/21.0*chord,c='b',s=50);
 #habashi = genfromtxt("/home/adegenna/LagrangianIcingCode/Validations/LewiceIceshapes/Habashi405.csv",delimiter=",");
 #plt.scatter(habashi[:,0]/21.0*chord,habashi[:,1]/21.0*chord,c='r');
 

@@ -311,11 +311,12 @@ MatrixXd ThermoEqns::readCHCF(const char* filenameCHCF) {
   }
   rewind(filept);
   // Resize data matrix
-  MatrixXd s_cH_cF(sizeCHCF,5);
-  double a,b,d,e,f;
+  MatrixXd s_cH_cF(sizeCHCF,6);
+  double a,b,d,e,f,g;
   for (int i=0; i<sizeCHCF; i++) {
-    fscanf(filept,"%le %le %le %le %le",&a,&b,&d,&e,&f);
-    s_cH_cF(i,0) = a; s_cH_cF(i,1) = b; s_cH_cF(i,2) = d; s_cH_cF(i,3) = e; s_cH_cF(i,4) = f;
+    fscanf(filept,"%le %le %le %le %le %le",&a,&b,&d,&e,&f,&g);
+    s_cH_cF(i,0) = a; s_cH_cF(i,1) = b; s_cH_cF(i,2) = d; 
+    s_cH_cF(i,3) = e; s_cH_cF(i,4) = f; s_cH_cF(i,5) = g; 
   }
   // Close file streams
   fclose(filept);

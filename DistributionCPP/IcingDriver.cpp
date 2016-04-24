@@ -146,7 +146,7 @@ int main(int argc, const char *argv[]) {
   FILE* outfileDROP;
   FILE* outfileBETA;
   outfileDROP = fopen("DropletXY.out","w");
-  outfileBETA = fopen("BETA.out","w");
+  outfileBETA = fopen(filenameBETA,"w");
   for (int i=0; i<x.size(); i++)
     fprintf(outfileDROP,"%lf\t%lf\n",x[i],y[i]);
   for (int i=0; i<Beta.size(); i++) 
@@ -165,6 +165,7 @@ int main(int argc, const char *argv[]) {
   printf("...DONE\n\n");
   // Solve lower surface
   printf("SOLVING LOWER SURFACE...\n\n");
+  printf("%s\n",filenameCHCF);
   ThermoEqns thermoLOWER = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid,cloud,p3d,"LOWER");
   thermoLOWER.SolveLEWICEformulation();
   printf("...DONE\n\n");
