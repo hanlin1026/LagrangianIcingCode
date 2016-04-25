@@ -23,6 +23,7 @@ class Airfoil {
     std::vector<double> tridiagSolve(std::vector<std::vector<double>>& A, std::vector<double>& r);
     std::vector<std::vector<double>> LaplacianMatrix(int N, double eps);
     std::vector<double> movingAverage(std::vector<double>& X, double smooth);
+    std::vector<double> movingAverage(Eigen::VectorXd& X, double smooth);
     void growIce(std::vector<double>& sTHERMO, std::vector<double>& mice, double DT, double chord, const char* strSurf);
     // Set/get methods
     std::vector<double> getBetaBins();

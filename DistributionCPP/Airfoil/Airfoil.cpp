@@ -389,18 +389,21 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
   vector<double> DH_area(NL);
   DH_area[0] = DH[0]; DH_area[1] = DH[0]; DH_area[2] = DH[0];
   dH_old = 0.0;
+  double A_old,A_tri;
   for (int i=1; i<NL; i++) {
     sCoord = panelS_(indAIRFOIL[i]) - stagPt_;
     ip = normal_(indAIRFOIL[i],0)*normal_(indAIRFOIL[i]-1,0) + normal_(indAIRFOIL[i],1)*normal_(indAIRFOIL[i]-1,1);
     //ip = NX_smooth[i]*NX_smooth[i-1] + NY_smooth[i]*NY_smooth[i-1];
-    theta = acos(ip);
-    //DH_area[i] = DH[i]*2*ds/(2*ds + DH[i-1]*sin(theta));
-    //DH_area[i] = DH[i]*2*ds/(2*ds + DH_area[i-1]*sin(theta));
+    theta      = acos(ip);
+    //DH_area[i] = DH[i]*ds/(ds + 0.5*DH[i-1]*sin(theta));
+    //A_old      = DH[i]*ds;
+    //A_tri      = 0.5*DH[i]*DH[i+1]*sin(theta);
+    //DH_area[i] = (A_old/(A_old+A_tri))*DH[i];
     DH_area[i] = DH[i];
   }
 
   // Implicit Laplacian smoothing
-  eps = 5.0;
+  eps = 20.0;
   vector<vector<double> > LAPL_DH(NL,vector<double>(NL));
   LAPL_DH = LaplacianMatrix(NL,eps);
   vector<double> DH_smooth(NL);
@@ -420,6 +423,15 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
     yNEW = panelY_(indAIRFOIL[i]) + dH*NY;
     panelX_(indAIRFOIL[i]) = xNEW;
     panelY_(indAIRFOIL[i]) = yNEW;
+  }
+
+  // Moving average smoothing (light smoothing to remove
+  // high-frequency kinks; doesn't really change shape otherwise)
+  vector<double> x_new = movingAverage(panelX_,4.0);
+  vector<double> y_new = movingAverage(panelY_,4.0);
+  for (int i=0; i<NL; i++) {
+    panelX_(i) = x_new[i];
+    panelY_(i) = y_new[i];
   }
 
 }
@@ -541,6 +553,28 @@ vector<double> Airfoil::movingAverage(vector<double>& X, double smooth) {
     }
     else
       X_smooth[i] = X[i];
+  }
+
+  return X_smooth;
+}
+
+vector<double> Airfoil::movingAverage(Eigen::VectorXd& X, double smooth) {
+  // Subroutine to perform a moving average
+
+  int N = X.size();
+  vector<double> X_smooth(N);
+  double NX_smooth,NY_smooth;
+  int startIND = (int) smooth/2;
+  int endIND   = N - startIND;
+  for (int i=0; i<N; i++) {
+    X_smooth[i] = 0.0;
+    if ((i > startIND) && (i < endIND)) {
+      for (int j=0; j<smooth+1; j++) {
+  	X_smooth[i] += X(i+j-startIND)/(smooth+1);
+      }
+    }
+    else
+      X_smooth[i] = X(i);
   }
 
   return X_smooth;

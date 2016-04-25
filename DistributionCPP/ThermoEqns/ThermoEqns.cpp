@@ -105,16 +105,6 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     Te     = data.col(3);
     pstat  = data.col(4);
     Ubound = data.col(5);
-    // Scale CH
-    double Ttot;
-    for (int i=0; i<ch.size(); i++) {
-      if (cf(i)<0)
-        cf(i) = 1.0e-3;
-      //ch(i) = rhoINF_*(1003)*Uinf_*0.5*cf(i); // Reynolds Analogy
-      //Ttot = Te[i]*(1.0 + 0.2*pow(mach_,2));
-      //Ttot  = TINF_*(1.0 + 0.2*pow(mach_,2));
-      ch(i) = -1.0*rhoINF_*pow(pINF_/rhoINF_,1.5)/(273.15-Te[i])*ch(i);
-    }
     // Set stagPt at s=0
     stagPt = airfoil.getStagPt();
     // Find relevant segment of ch/cf for interpolation
@@ -194,13 +184,19 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     gsl_spline_init(splineTe,     &s_orig[0], &Te_orig[0],     NPts_orig);
     gsl_spline_init(splinePstat,  &s_orig[0], &pstat_orig[0],  NPts_orig);
     gsl_spline_init(splineUbound, &s_orig[0], &Ubound_orig[0], NPts_orig);
+    // Interpolate values and scale appropriately
+    double Trec;
+    double rec = pow(0.9,0.3333); // Turbulent recovery factor (Pr = 0.9)
     for (int i=0; i<NPts_; i++) {
       if ((s_[i] >= s_orig[0]) && (s_[i] <= s_orig[NPts_orig-1])) { 
 	cH_[i]     = gsl_spline_eval(splineCH, s_[i], acc);
         cF_[i]     = (0.5*rhoINF_*pow(Uinf_,2))*gsl_spline_eval(splineCF, s_[i], acc);
 	Te_[i]     = gsl_spline_eval(splineTe,    s_[i], acc);
 	pstat_[i]  = pINF_*gsl_spline_eval(splinePstat, s_[i], acc); 
-	Ubound_[i] = aINF*rhoINF_*gsl_spline_eval(splineUbound, s_[i], acc); 
+	Ubound_[i] = sqrt(pINF_*rhoINF_)*gsl_spline_eval(splineUbound, s_[i], acc);
+	// Calculate cH based on Ubound (velocity at boundary layer edge)
+	Trec       = Te_[i] + rec*pow(Ubound_[i],2.0)/2.0/cpAir_;
+	cH_[i]     = cH_[i]*rhoINF_*pow(pINF_/rhoINF_,1.5)/(Trec-273.15);
       }
       else {
 	cH_[i]     = 0.0;
@@ -834,8 +830,10 @@ void ThermoEqns::LEWICEformulation(int& idx) {
   double m_ice, m_in, T_in;
   double E_dot;
   double rhoICE = 916.7;
-  double Tinf = TINF_-273.15;    // Celsius
-  double Trec = Te_[idx]-273.15; // Celsius
+  double Tinf  = TINF_-273.15;    // Celsius
+  double rec   = pow(0.9,0.3333); // Turbulent recovery factor (Pr = 0.9)
+  double Trec  = Te_[idx] + rec*pow(Ubound_[idx],2.0)/2.0/cpAir_ - 273.15; // Celsius
+  double Tstat = Te_[idx] - 273.15; // Celsius
   // Initial guesses
   double m_out = 0.0;
   double T_S   = 0.0;
@@ -932,7 +930,7 @@ void ThermoEqns::LEWICEformulation(int& idx) {
   // Set final solution
   ts_[idx] = T_S;
   m_out_[idx] = m_out;
-  mice_[idx] = m_ice;
+  mice_[idx] = std::max(m_ice,0.0);
   
 }
 
