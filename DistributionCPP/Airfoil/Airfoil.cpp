@@ -325,7 +325,7 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
   double minimum;
   int ind;
   double s_min,s_max;
-
+  
   // Match s-coordinates of airfoil to those from finely-resolved thermo calculation
   if (strcmp(strSurf,"UPPER")==0) {
     s_min = 0.0;
@@ -396,14 +396,11 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
     //ip = NX_smooth[i]*NX_smooth[i-1] + NY_smooth[i]*NY_smooth[i-1];
     theta      = acos(ip);
     //DH_area[i] = DH[i]*ds/(ds + 0.5*DH[i-1]*sin(theta));
-    //A_old      = DH[i]*ds;
-    //A_tri      = 0.5*DH[i]*DH[i+1]*sin(theta);
-    //DH_area[i] = (A_old/(A_old+A_tri))*DH[i];
     DH_area[i] = DH[i];
   }
 
   // Implicit Laplacian smoothing
-  eps = 20.0;
+  eps = 5.0;
   vector<vector<double> > LAPL_DH(NL,vector<double>(NL));
   LAPL_DH = LaplacianMatrix(NL,eps);
   vector<double> DH_smooth(NL);
@@ -417,6 +414,7 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
       dH = DH_smooth[NL-3];
     else
       dH = DH_smooth[i];
+    dH = std::max(dH,0.0);
     NX = NX_smooth[i];
     NY = NY_smooth[i];
     xNEW = panelX_(indAIRFOIL[i]) + dH*NX;

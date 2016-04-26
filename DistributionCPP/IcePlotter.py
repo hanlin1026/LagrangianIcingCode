@@ -44,20 +44,27 @@ basedir = "/home/adegenna/LagrangianIcingCode/Validations/Ice/Run405Rime/";
 # XY = genfromtxt("./Grid/RUN404/T2/XY_NEW.out", delimiter = "\t");
 # figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'b',linewidth=3);
 
-XY = genfromtxt("./Grid/RUN308/T1/XY_NEW.out", delimiter = "\t");
-figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'r',linewidth=3);
-XY = genfromtxt("./Grid/RUN308/T2/XY_NEW.out", delimiter = "\t");
-figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'r',linewidth=3);
-XY = genfromtxt("./Grid/RUN308/T3/XY_NEW.out", delimiter = "\t");
-figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'r',linewidth=3);
+# XY = genfromtxt("./Grid/RUN308/T1/XY_NEW.out", delimiter = "\t");
+# figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'r',linewidth=3);
+# XY = genfromtxt("./Grid/RUN308/T2/XY_NEW.out", delimiter = "\t");
+# figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'r',linewidth=3);
+# XY = genfromtxt("./Grid/RUN308/T3/XY_NEW.out", delimiter = "\t");
+# figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'r',linewidth=3);
 
-XY = genfromtxt("./Grid/RUN404/T1new/XY_NEW.out", delimiter = "\t");
+XY = genfromtxt("./Grid/RUN404/T1/XY_NEW.out", delimiter = "\t");
 figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'g',linewidth=3);
-# XY = genfromtxt("./Grid/RUN404/T2new/XY_NEW.out", delimiter = "\t");
+# XY = genfromtxt("./Grid/RUN404/T2/XY_NEW.out", delimiter = "\t");
 # figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'g',linewidth=3);
-# XY = genfromtxt("./Grid/RUN404/T3new/XY_NEW.out", delimiter = "\t");
+# XY = genfromtxt("./Grid/RUN404/T3/XY_NEW.out", delimiter = "\t");
 # figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'g',linewidth=3);
-
+# XY = genfromtxt("./Grid/RUN404/T4/XY_NEW.out", delimiter = "\t");
+# figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'g',linewidth=3);
+# XY = genfromtxt("./Grid/RUN404/T5/XY_NEW.out", delimiter = "\t");
+# figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'g',linewidth=3);
+# XY = genfromtxt("./Grid/RUN404/T6new/XY_NEW.out", delimiter = "\t");
+# figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'g',linewidth=3);
+# XY = genfromtxt("./Grid/RUN404/T7new/XY_NEW.out", delimiter = "\t");
+# figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'g',linewidth=3);
 
 # Clean airfoil
 filename = basedir + "NACA0012.dat";

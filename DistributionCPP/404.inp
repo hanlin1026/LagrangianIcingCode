@@ -5,7 +5,7 @@ gridfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T0/MES
 solnfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T0/q103.0.40E+01.bin
 heatfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T0/heatflux
 betafile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T0/BETA.out
-outfile  = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T1new
+outfile  = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T1
 // **********************************
 // DROPLET ADVECTION PARAMETERS
 // **********************************
