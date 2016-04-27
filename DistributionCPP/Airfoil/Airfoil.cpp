@@ -10,17 +10,20 @@ Airfoil::Airfoil(std::vector<double>& X, std::vector<double>& Y) {
   // Constructor: takes grid points X,Y
   
   // Set panel center points, tangent/normal vectors
-  int gridPts = X.size();
+  int gridPts  = X.size();
+  int Npanels_ = gridPts-1;
   panelX_.resize(gridPts-1);
   panelY_.resize(gridPts-1);
   tangent_.resize(gridPts-1,2);
   normal_.resize(gridPts-1,2);
+  DS_.resize(gridPts-1);
   double ds_x, ds_y;
   for (int i=0; i<gridPts-1; i++) {
-    ds_x = X[i+1]-X[i];
-    ds_y = Y[i+1]-Y[i];
-    panelX_(i) = X[i] + 0.5*ds_x;
-    panelY_(i) = Y[i] + 0.5*ds_y;
+    ds_x          = X[i+1]-X[i];
+    ds_y          = Y[i+1]-Y[i];
+    DS_[i]        = sqrt(pow(ds_x,2) + pow(ds_y,2));
+    panelX_(i)    = X[i] + 0.5*ds_x;
+    panelY_(i)    = Y[i] + 0.5*ds_y;
     tangent_(i,0) = ds_x/sqrt( pow(ds_x,2) + pow(ds_y,2) );
     tangent_(i,1) = ds_y/sqrt( pow(ds_x,2) + pow(ds_y,2) );
     //normal_(i,0) = -tangent_(i,1);
@@ -358,7 +361,6 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
   double rhoICE = 917.0;
   double xNEW,yNEW,dH,dH_old,dH_tmp,ip,theta;
   vector<double> DH(indAIRFOIL.size());
-  double ds = sTHERMO[1]-sTHERMO[0];
   for (int i=0; i<indAIRFOIL.size(); i++) {
     dH = mice[indTHERMO[i]]*DT/rhoICE;
     DH[i] = dH;
@@ -389,10 +391,12 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
   vector<double> DH_area(NL);
   DH_area[0] = DH[0]; DH_area[1] = DH[0]; DH_area[2] = DH[0];
   dH_old = 0.0;
-  double A_old,A_tri;
+  double A_old,A_tri,ds;
   for (int i=1; i<NL; i++) {
-    sCoord = panelS_(indAIRFOIL[i]) - stagPt_;
-    ip = normal_(indAIRFOIL[i],0)*normal_(indAIRFOIL[i]-1,0) + normal_(indAIRFOIL[i],1)*normal_(indAIRFOIL[i]-1,1);
+    ds         = DS_[indAIRFOIL[i]];
+    sCoord     = panelS_(indAIRFOIL[i]) - stagPt_;
+    ip         = normal_(indAIRFOIL[i],0)*normal_(indAIRFOIL[i]-1,0) 
+               + normal_(indAIRFOIL[i],1)*normal_(indAIRFOIL[i]-1,1);
     theta      = acos(ip);
     DH_area[i] = DH[i]*ds/(ds + 0.5*DH_area[i-1]*sin(theta));
     //DH_area[i] = DH[i];

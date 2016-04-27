@@ -8,7 +8,7 @@
 #include "autoGridGen.h"
 
 void autoGridGen(const char* XYfile, const char *outDir) {
-  // Function to read in airfoil XY coordinates and call GAIR/HYPERG grid generator
+  // Function to read in airfoil XY coordinates and collect/write GAIR/HYPERG/FLO103 input files
   
   // **********************************
   // INITIALIZE INPUT/OUTPUT FILE STREAMS
@@ -19,15 +19,13 @@ void autoGridGen(const char* XYfile, const char *outDir) {
   std::ifstream inFile;
   std::ifstream header1; std::ifstream header2;
   std::ofstream outFile;
-  // Move XY coordinates to outDir
-  char buf[256]; strcpy(buf,"cp "); strcat(buf,XYfile); strcat(buf," "); strcat(buf,outDir); 
+  // Get input files for GAIR/HYPERG/FLO103 from outDir (horn.d)
+  char buf[256]; 
+  strcpy(buf,"cp "); strcat(buf,outDir); strcat(buf,"/horn.d "); strcat(buf,"./");
   std::system(buf);
-  // Open I/O files
-  char outname[256]; char inname[256];
-  strcpy(outname,outDir);     strcpy(inname,outDir); strcat(inname,"/");
-  strcat(outname,"/fort.30"); strcat(inname,XYfile);
-  inFile.open(inname);
-  outFile.open(outname);
+  // Open filestreams used for GAIR/HYPERG (fort.30, XYfile)
+  inFile.open(XYfile);
+  outFile.open("fort.30");
 
   // **********************************
   // INPUT NEW GRID COORDINATES
@@ -68,22 +66,5 @@ void autoGridGen(const char* XYfile, const char *outDir) {
   // Close file streams
   inFile.close(); outFile.close();
   header1.close(); header2.close();
-  
-  // **********************************
-  // RUN GAIR/HYPERG
-  // **********************************
-
-  // Commands
-  const char* GAIR   = "~/Mesh2D/GAIR/gair";
-  const char* HYPERG = "~/Mesh2D/HYPERG/hyperg";
-  // Copy input files to current directory from outDir
-  strcpy(buf,"cp "); strcat(buf,outDir); strcat(buf,"/fort.30 ./");
-  std::system(buf);
-  // Run GAIR/HYPERG
-  std::system(GAIR);
-  std::system(HYPERG);
-  // Move mesh files to outDir
-  strcpy(buf,"mv "); strcat(buf,"./fort.* "); strcat(buf,outDir); std::system(buf);
-  strcpy(buf,"mv "); strcat(buf,"./MESH.* "); strcat(buf,outDir); std::system(buf);
   
 }

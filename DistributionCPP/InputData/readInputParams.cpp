@@ -23,31 +23,31 @@ void readInputParams(FluidScalars& PROPS, ParcelScalars& PARCEL, const char *inF
   // GRID/FLOW SOLUTION FILENAMES
   // **********************************
 
-  // Scan through headers
-  for (int i=0; i<3; i++) {
-    std::getline(inFile,line);
-  }
-  // Get names of files
-  std::getline(inFile,line,'/'); inFile.putback('/');
-  std::getline(inFile,line,'\n');
-  PROPS.gridfile_.assign(line);
-  printf("GRID: %s\n",PROPS.gridfile_.c_str());
-  std::getline(inFile,line,'/'); inFile.putback('/');
-  std::getline(inFile,line,'\n');
-  PROPS.solnfile_.assign(line);
-  printf("SOLN: %s\n",PROPS.solnfile_.c_str());
-  std::getline(inFile,line,'/'); inFile.putback('/');
-  std::getline(inFile,line,'\n');
-  PROPS.heatfile_.assign(line);
-  printf("HEAT: %s\n",PROPS.heatfile_.c_str());
-  std::getline(inFile,line,'/'); inFile.putback('/');
-  std::getline(inFile,line,'\n');
-  PROPS.betafile_.assign(line);
-  printf("BETA: %s\n",PROPS.betafile_.c_str());
-  std::getline(inFile,line,'/'); inFile.putback('/');
-  std::getline(inFile,line,'\n');
-  PROPS.outfile_.assign(line);
-  printf("OUT: %s\n",PROPS.outfile_.c_str());
+  // // Scan through headers
+  // for (int i=0; i<3; i++) {
+  //   std::getline(inFile,line);
+  // }
+  // // Get names of files
+  // std::getline(inFile,line,'/'); inFile.putback('/');
+  // std::getline(inFile,line,'\n');
+  // PROPS.gridfile_.assign(line);
+  // printf("GRID: %s\n",PROPS.gridfile_.c_str());
+  // std::getline(inFile,line,'/'); inFile.putback('/');
+  // std::getline(inFile,line,'\n');
+  // PROPS.solnfile_.assign(line);
+  // printf("SOLN: %s\n",PROPS.solnfile_.c_str());
+  // std::getline(inFile,line,'/'); inFile.putback('/');
+  // std::getline(inFile,line,'\n');
+  // PROPS.heatfile_.assign(line);
+  // printf("HEAT: %s\n",PROPS.heatfile_.c_str());
+  // std::getline(inFile,line,'/'); inFile.putback('/');
+  // std::getline(inFile,line,'\n');
+  // PROPS.betafile_.assign(line);
+  // printf("BETA: %s\n",PROPS.betafile_.c_str());
+  // std::getline(inFile,line,'/'); inFile.putback('/');
+  // std::getline(inFile,line,'\n');
+  // PROPS.outfile_.assign(line);
+  // printf("OUT: %s\n",PROPS.outfile_.c_str());
 
   // **********************************
   // DROPLET ADVECTION PARAMETERS

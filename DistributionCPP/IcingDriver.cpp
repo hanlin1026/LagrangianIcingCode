@@ -24,26 +24,37 @@
 int main(int argc, const char *argv[]) {
   
   // Check that user has specified an input filepath
-  if (argc < 2) {
+  if (argc < 4) {
     // Tell the user how to run the program
-    std::cerr << "Usage: " << argv[0] << " <InputFilePath>" << std::endl;
+    std::cerr << "Usage: " << argv[0] << "<IcingInputFile> " << "<InputDirectory> " << "<OutputDirectory>" <<  std::endl;
     return 1;
   }
   // Specify initialization files
   const char *inFileName = argv[1];
+  const char *inDir      = argv[2];
+  const char *outDir     = argv[3];
+
+  const std::string s_inFileName(argv[1]);
+  const std::string s_inDir(argv[2]);
+  const std::string s_outDir(argv[3]);
+
   // Read in initialization scalars from input file
   FluidScalars scalarsFluid;
   ParcelScalars scalarsParcel;
   readInputParams(scalarsFluid,scalarsParcel,inFileName);
   // Read in grid/flow solution files
-  const char *meshFileName = scalarsFluid.gridfile_.c_str();
-  const char *solnFileName = scalarsFluid.solnfile_.c_str();
-  const char *filenameCHCF = scalarsFluid.heatfile_.c_str();
-  const char *filenameBETA = scalarsFluid.betafile_.c_str();
-  const char *outFileName  = scalarsFluid.outfile_.c_str();
+  char buf1[256]; char buf2[256]; char buf3[256]; char buf4[256];
+  strcpy(buf1,inDir); strcat(buf1,"/MESH.P3D");          const char *meshFileName = buf1;  // inDir/MESH.P3D
+  strcpy(buf2,inDir); strcat(buf2,"/q103.0.40E+01.bin"); const char *solnFileName = buf2;
+  strcpy(buf3,inDir); strcat(buf3,"/heatflux");          const char *filenameCHCF = buf3;
+  strcpy(buf4,inDir); strcat(buf4,"/BETA.out");          const char *filenameBETA = buf4;
+
+  const std::string s_meshFileName = s_inDir + "/MESH.P3D";
+
   // Initialize plot3D object, read in basic problem data
   double chord = scalarsFluid.chord_;
   PLOT3D p3d = PLOT3D(meshFileName, solnFileName, &scalarsFluid);
+  // PLOT3D( s_meshFileName.c_str(),  
   double dY;
   if (scalarsFluid.calcImpingementLimits_ == 1) { 
     // Over-ride input screen and determine impingement limits
@@ -204,6 +215,6 @@ int main(int argc, const char *argv[]) {
   // *******************************************************
 
   // Generate input files for GAIR/HYPERG mesh generation
-  autoGridGen("XY_NEW.out",outFileName);
+  autoGridGen("XY_NEW.out",outDir);
   
 }

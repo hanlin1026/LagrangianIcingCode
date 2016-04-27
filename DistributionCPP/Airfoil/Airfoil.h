@@ -37,12 +37,14 @@ class Airfoil {
     Eigen::VectorXd panelX_;
     Eigen::VectorXd panelY_;
     Eigen::VectorXd panelS_;
+    Eigen::VectorXd DS_;
     Eigen::MatrixXd tangent_;
     Eigen::MatrixXd normal_;
     std::vector<double> FilmScoords_;
     std::vector<double> FilmMass_;
     std::vector<double> BetaBins_;
     std::vector<double> Beta_;
+    double Npanels_;
     double impingeLimitUP_;
     double impingeLimitDOWN_;
     double stagPt_;
