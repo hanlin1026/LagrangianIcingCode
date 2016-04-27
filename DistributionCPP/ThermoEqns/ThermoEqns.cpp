@@ -827,7 +827,7 @@ void ThermoEqns::LEWICEformulation(int& idx) {
   double S_kin, S_conv, S_evap, S_sens;
   double D_sens, D_kin, D_conv, DEDT;
   double T_new;
-  double m_imp = (ds*1.0)*beta_[idx]*LWC_*Uinf_;
+  double m_imp = beta_[idx]*LWC_*Uinf_;
   double m_ice, m_in, T_in;
   double E_dot;
   double rhoICE = 916.7;
@@ -867,7 +867,6 @@ void ThermoEqns::LEWICEformulation(int& idx) {
 
     // Calculate evaporation
     computeMevap(T_S,idx);
-    mevap_[idx] *= (ds*1.0);
     if (flagMass == 1) {
       mevap_[idx] = 0;
       D_mevap_[idx] = 0;
@@ -897,11 +896,11 @@ void ThermoEqns::LEWICEformulation(int& idx) {
       D_sens = -(m_imp+m_in)*cICE_;
     }
     // Calculate RHS of 0 = E_dot
-    E_dot = (ds*1.0)*(S_kin+S_conv+S_evap+S_sens);
+    E_dot = (S_kin+S_conv+S_evap+S_sens);
     // Calculate dE/dT_S (derivative of energy balance w.r.t. T_S)
     D_kin  = 0.0;
     D_conv = -cH_[idx];
-    DEDT   = (ds*1.0)*(D_kin+D_conv+D_mevap_[idx]+D_sens);
+    DEDT   = D_kin+D_conv+D_mevap_[idx]+D_sens;
     // Update guess
     T_new = T_S - E_dot/DEDT;
     D_TS = std::abs(T_S-T_new);
@@ -931,7 +930,7 @@ void ThermoEqns::LEWICEformulation(int& idx) {
   // Set final solution
   ts_[idx] = T_S;
   m_out_[idx] = m_out;
-  mice_[idx] = std::max(m_ice/ds,0.0);
+  mice_[idx] = std::max(m_ice,0.0);
   
 }
 

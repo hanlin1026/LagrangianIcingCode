@@ -1,11 +1,11 @@
 // **********************************
 // GRID/FLOW SOLUTION FILES
 // **********************************
-gridfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T0/MESH.P3D
-solnfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T0/q103.0.40E+01.bin
-heatfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T0/heatflux
-betafile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T0/BETA.out
-outfile  = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T1
+gridfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T6area/MESH.P3D
+solnfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T6area/q103.0.40E+01.bin
+heatfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T6area/heatflux
+betafile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T6area/BETA.out
+outfile  = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T7area
 // **********************************
 // DROPLET ADVECTION PARAMETERS
 // **********************************

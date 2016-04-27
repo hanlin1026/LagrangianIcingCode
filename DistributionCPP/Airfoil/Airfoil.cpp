@@ -393,14 +393,13 @@ void Airfoil::growIce(vector<double>& sTHERMO, vector<double>& mice, double DT, 
   for (int i=1; i<NL; i++) {
     sCoord = panelS_(indAIRFOIL[i]) - stagPt_;
     ip = normal_(indAIRFOIL[i],0)*normal_(indAIRFOIL[i]-1,0) + normal_(indAIRFOIL[i],1)*normal_(indAIRFOIL[i]-1,1);
-    //ip = NX_smooth[i]*NX_smooth[i-1] + NY_smooth[i]*NY_smooth[i-1];
     theta      = acos(ip);
-    //DH_area[i] = DH[i]*ds/(ds + 0.5*DH[i-1]*sin(theta));
-    DH_area[i] = DH[i];
+    DH_area[i] = DH[i]*ds/(ds + 0.5*DH_area[i-1]*sin(theta));
+    //DH_area[i] = DH[i];
   }
 
   // Implicit Laplacian smoothing
-  eps = 5.0;
+  eps = 10.0;
   vector<vector<double> > LAPL_DH(NL,vector<double>(NL));
   LAPL_DH = LaplacianMatrix(NL,eps);
   vector<double> DH_smooth(NL);
