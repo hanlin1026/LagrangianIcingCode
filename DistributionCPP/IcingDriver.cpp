@@ -29,11 +29,8 @@ int main(int argc, const char *argv[]) {
     std::cerr << "Usage: " << argv[0] << "<IcingInputFile> " << "<InputDirectory> " << "<OutputDirectory>" <<  std::endl;
     return 1;
   }
-  // Specify initialization files
-  const char *inFileName = argv[1];
-  const char *inDir      = argv[2];
-  const char *outDir     = argv[3];
 
+  // Specify initialization files
   const std::string s_inFileName(argv[1]);
   const std::string s_inDir(argv[2]);
   const std::string s_outDir(argv[3]);
@@ -41,20 +38,17 @@ int main(int argc, const char *argv[]) {
   // Read in initialization scalars from input file
   FluidScalars scalarsFluid;
   ParcelScalars scalarsParcel;
-  readInputParams(scalarsFluid,scalarsParcel,inFileName);
-  // Read in grid/flow solution files
-  char buf1[256]; char buf2[256]; char buf3[256]; char buf4[256];
-  strcpy(buf1,inDir); strcat(buf1,"/MESH.P3D");          const char *meshFileName = buf1;  // inDir/MESH.P3D
-  strcpy(buf2,inDir); strcat(buf2,"/q103.0.40E+01.bin"); const char *solnFileName = buf2;
-  strcpy(buf3,inDir); strcat(buf3,"/heatflux");          const char *filenameCHCF = buf3;
-  strcpy(buf4,inDir); strcat(buf4,"/BETA.out");          const char *filenameBETA = buf4;
+  readInputParams(scalarsFluid,scalarsParcel,s_inFileName.c_str());
 
+  // Read in grid/flow solution files
   const std::string s_meshFileName = s_inDir + "/MESH.P3D";
+  const std::string s_solnFileName = s_inDir + "/q103.0.40E+01.bin";
+  const std::string s_filenameCHCF = s_inDir + "/heatflux";
+  const std::string s_filenameBETA = s_inDir + "/BETA.out";
 
   // Initialize plot3D object, read in basic problem data
   double chord = scalarsFluid.chord_;
-  PLOT3D p3d = PLOT3D(meshFileName, solnFileName, &scalarsFluid);
-  // PLOT3D( s_meshFileName.c_str(),  
+  PLOT3D p3d = PLOT3D(s_meshFileName.c_str(), s_solnFileName.c_str(), &scalarsFluid);  
   double dY;
   if (scalarsFluid.calcImpingementLimits_ == 1) { 
     // Over-ride input screen and determine impingement limits
@@ -87,7 +81,7 @@ int main(int argc, const char *argv[]) {
       iter++;
     }
   }
-  Airfoil airfoil = Airfoil(X,Y);
+  Airfoil airfoil = Airfoil(s_inDir,X,Y);
   airfoil.calcStagnationPt(p3d);
   //airfoil.setStagPt(1.0238);
   // Advect (no splashing/fracture)
@@ -106,6 +100,7 @@ int main(int argc, const char *argv[]) {
   vector<double> YCENT;
   int indtmp = 0;
   int numSplash = 0;
+  int numIndAdv = 0;
   int maxiter = scalarsParcel.maxiter_;
   int refreshRate = scalarsParcel.refreshRate_;
   int particles = scalarsParcel.particles_;
@@ -144,11 +139,13 @@ int main(int argc, const char *argv[]) {
       }
     }
     indAdv = cloud.getIndAdv();
-    printf("ITER = %d\t%d\t%d\n",iter,particles,indAdv.size());
+    numIndAdv = indAdv.size();
+    printf("ITER = %d\t%d\t%d\n",iter,particles,numIndAdv);
     iter++;
 
   }
   // Get collection efficiency and output to file
+  const std::string s_dropName = s_inDir + "/DropletXY.out";
   double dS = 0.0025;
   airfoil.calcCollectionEfficiency(fluxFreeStream,dS);
   std::vector<double> BetaBins = airfoil.getBetaBins();
@@ -156,8 +153,8 @@ int main(int argc, const char *argv[]) {
   // Output particle state history to file
   FILE* outfileDROP;
   FILE* outfileBETA;
-  outfileDROP = fopen("DropletXY.out","w");
-  outfileBETA = fopen(filenameBETA,"w");
+  outfileDROP = fopen(s_dropName.c_str(),"w");
+  outfileBETA = fopen(s_filenameBETA.c_str(),"w");
   for (int i=0; i<x.size(); i++)
     fprintf(outfileDROP,"%lf\t%lf\n",x[i],y[i]);
   for (int i=0; i<Beta.size(); i++) 
@@ -171,14 +168,16 @@ int main(int argc, const char *argv[]) {
   
   // Solve upper surface
   printf("SOLVING UPPER SURFACE...\n\n");
-  ThermoEqns thermoUPPER = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid,cloud,p3d,"UPPER");
-  thermoUPPER.SolveLEWICEformulation();
+  ThermoEqns thermoUPPER = ThermoEqns(s_inDir,s_filenameCHCF.c_str(),s_filenameBETA.c_str(),airfoil,scalarsFluid,cloud,p3d,"UPPER");
+  //thermoUPPER.SolveLEWICEformulation();
+  thermoUPPER.SolveIcingEqns();
   printf("...DONE\n\n");
   // Solve lower surface
   printf("SOLVING LOWER SURFACE...\n\n");
-  printf("%s\n",filenameCHCF);
-  ThermoEqns thermoLOWER = ThermoEqns(filenameCHCF,filenameBETA,airfoil,scalarsFluid,cloud,p3d,"LOWER");
-  thermoLOWER.SolveLEWICEformulation();
+  printf("%s\n",s_filenameCHCF.c_str());
+  ThermoEqns thermoLOWER = ThermoEqns(s_inDir,s_filenameCHCF.c_str(),s_filenameBETA.c_str(),airfoil,scalarsFluid,cloud,p3d,"LOWER");
+  //thermoLOWER.SolveLEWICEformulation();
+  thermoLOWER.SolveIcingEqns();
   printf("...DONE\n\n");
   // Get old grid XY coordinates
   vector<double> XOLD = airfoil.getX();
@@ -193,7 +192,7 @@ int main(int argc, const char *argv[]) {
   vector<double> mice = miceLOW;
   vector<double> s    = sLOW; 
   // Update grid (grow ice)
-  double DT = 60.0*1.0;
+  double DT = scalarsFluid.DT_;
   printf("GROWING ICE FOR DT = %lf SECONDS...\n\n",DT);
   airfoil.growIce(s,mice,DT,chord,"ENTIRE");
   printf("...DONE\n\n");
@@ -201,8 +200,10 @@ int main(int argc, const char *argv[]) {
   vector<double> XNEW = airfoil.getX();
   vector<double> YNEW = airfoil.getY();
   FILE* outfileXYOLDNEW; FILE* outfileXYNEW;
-  outfileXYOLDNEW = fopen("XY_OLD_NEW.out","w");
-  outfileXYNEW = fopen("XY_NEW.out","w");
+  const std::string s_xyOldNew = s_outDir + "/XY_OLD_NEW.out";
+  const std::string s_xyNew    = s_outDir + "/XY_NEW.out";
+  outfileXYOLDNEW = fopen(s_xyOldNew.c_str(),"w");
+  outfileXYNEW = fopen(s_xyNew.c_str(),"w");
   for (int i=0; i<XNEW.size(); i++) {
     fprintf(outfileXYOLDNEW,"%lf\t%lf\t%lf\t%lf\n",XOLD[i]/chord,YOLD[i]/chord,XNEW[i]/chord,YNEW[i]/chord);
     fprintf(outfileXYNEW,"%lf\t%lf\n",XNEW[i]/chord,YNEW[i]/chord);
@@ -211,10 +212,10 @@ int main(int argc, const char *argv[]) {
   fclose(outfileXYNEW);
   
   // *******************************************************
-  // NEW GRID GENERATION
+  // INPUT FILE CREATION FOR NEW GRID GENERATION
   // *******************************************************
 
   // Generate input files for GAIR/HYPERG mesh generation
-  autoGridGen("XY_NEW.out",outDir);
+  autoGridGen(s_xyNew.c_str(),s_outDir.c_str());
   
 }

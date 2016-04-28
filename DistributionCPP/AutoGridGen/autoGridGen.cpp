@@ -19,13 +19,11 @@ void autoGridGen(const char* XYfile, const char *outDir) {
   std::ifstream inFile;
   std::ifstream header1; std::ifstream header2;
   std::ofstream outFile;
-  // Get input files for GAIR/HYPERG/FLO103 from outDir (horn.d)
   char buf[256]; 
-  strcpy(buf,"cp "); strcat(buf,outDir); strcat(buf,"/horn.d "); strcat(buf,"./");
-  std::system(buf);
   // Open filestreams used for GAIR/HYPERG (fort.30, XYfile)
   inFile.open(XYfile);
-  outFile.open("fort.30");
+  strcpy(buf,outDir); strcat(buf,"/fort.30");
+  outFile.open(buf);
 
   // **********************************
   // INPUT NEW GRID COORDINATES

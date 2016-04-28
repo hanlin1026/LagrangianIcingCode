@@ -31,6 +31,7 @@ struct FluidScalars {
   double NPts_;
   double Uinf_;
   double LWC_;
+  double DT_;
 
 };
 

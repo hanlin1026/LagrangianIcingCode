@@ -6,6 +6,65 @@
 
 using namespace std;
 
+Airfoil::Airfoil(const std::string& inDir, std::vector<double>& X, std::vector<double>& Y) {
+  // Constructor: takes grid points X,Y
+  
+  inDir_ = inDir;
+  // Set panel center points, tangent/normal vectors
+  int gridPts  = X.size();
+  int Npanels_ = gridPts-1;
+  panelX_.resize(gridPts-1);
+  panelY_.resize(gridPts-1);
+  tangent_.resize(gridPts-1,2);
+  normal_.resize(gridPts-1,2);
+  DS_.resize(gridPts-1);
+  double ds_x, ds_y;
+  for (int i=0; i<gridPts-1; i++) {
+    ds_x          = X[i+1]-X[i];
+    ds_y          = Y[i+1]-Y[i];
+    DS_[i]        = sqrt(pow(ds_x,2) + pow(ds_y,2));
+    panelX_(i)    = X[i] + 0.5*ds_x;
+    panelY_(i)    = Y[i] + 0.5*ds_y;
+    tangent_(i,0) = ds_x/sqrt( pow(ds_x,2) + pow(ds_y,2) );
+    tangent_(i,1) = ds_y/sqrt( pow(ds_x,2) + pow(ds_y,2) );
+    //normal_(i,0) = -tangent_(i,1);
+    //normal_(i,1) = tangent_(i,0);
+  }
+  // 3-point moving average normal vectors
+  normal_(0,0) = -tangent_(0,1); normal_(0,1) = tangent_(0,0);
+  normal_(gridPts-2,0) = -tangent_(gridPts-2,1); normal_(gridPts-2,1) = tangent_(gridPts-2,0);
+  for (int i=1; i<gridPts-3; i++) {
+    normal_(i,0) = -(tangent_(i-1,1)+tangent_(i,1)+tangent_(i+1,1))/3.0;
+    normal_(i,1) = (tangent_(i-1,0)+tangent_(i,0)+tangent_(i+1,0))/3.0;
+  }
+  // Set quadtree search object bounds
+  double minX, minY, maxX, maxY;
+  minX = panelX_.minCoeff() - 0.1; maxX = panelX_.maxCoeff() + 0.1;
+  minY = panelY_.minCoeff() - 0.1; maxY = panelY_.maxCoeff() + 0.1;
+  double SW[2] = {minX, minY};
+  double SE[2] = {maxX, minY};
+  double NW[2] = {minX, maxY};
+  double NE[2] = {maxX, maxY};
+  panelSearcher_.setBounds(&SW[0],&SE[0],&NW[0],&NE[0]);
+  // Create quadtree search object
+  panelSearcher_.calcQuadTree(panelX_.data(),panelY_.data(),panelX_.rows());
+  // Calculate s-coordinates of panel points
+  this->calcSCoords();
+  // Output to file
+  const std::string s_airXY   = inDir_ + "/AirfoilXY.out";
+  const std::string s_airTXTY = inDir_ + "/AirfoilTxTy.out";
+  const std::string s_airNXNY = inDir_ + "/AirfoilNxNy.out";
+  FILE* fout = fopen(s_airXY.c_str(),"w");
+  FILE* foutT = fopen(s_airTXTY.c_str(),"w");
+  FILE* foutN = fopen(s_airNXNY.c_str(),"w");
+  for (int i=0; i<gridPts-1; i++) {
+    fprintf(fout,"%f\t%f\n",panelX_[i],panelY_[i]);
+    fprintf(foutT,"%f\t%f\n",tangent_(i,0),tangent_(i,1));
+    fprintf(foutN,"%f\t%f\n",normal_(i,0),normal_(i,1));
+  }
+  fclose(fout); fclose(foutT); fclose(foutN);
+}
+
 Airfoil::Airfoil(std::vector<double>& X, std::vector<double>& Y) {
   // Constructor: takes grid points X,Y
   
@@ -49,16 +108,6 @@ Airfoil::Airfoil(std::vector<double>& X, std::vector<double>& Y) {
   panelSearcher_.calcQuadTree(panelX_.data(),panelY_.data(),panelX_.rows());
   // Calculate s-coordinates of panel points
   this->calcSCoords();
-  // Output to file
-  FILE* fout = fopen("AirfoilXY.out","w");
-  FILE* foutT = fopen("AirfoilTxTy.out","w");
-  FILE* foutN = fopen("AirfoilNxNy.out","w");
-  for (int i=0; i<gridPts-1; i++) {
-    fprintf(fout,"%f\t%f\n",panelX_[i],panelY_[i]);
-    fprintf(foutT,"%f\t%f\n",tangent_(i,0),tangent_(i,1));
-    fprintf(foutN,"%f\t%f\n",normal_(i,0),normal_(i,1));
-  }
-  fclose(fout); fclose(foutT); fclose(foutN);
 }
 
 Airfoil::~Airfoil() {

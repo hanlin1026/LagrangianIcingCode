@@ -19,6 +19,20 @@ Bucket::Bucket() {
   level_ = 0;
 }
 
+Bucket::Bucket(const std::string workDir) {
+  // Constructor + set output working directory
+  
+  workDir_ = workDir;
+  buckets_ = new Bucket*[4];
+  for (int i=0; i<4; i++) {
+    buckets_[i] = NULL;
+  }
+  // Set default bucket size
+  BucketSize_ = 20;
+  // Set level to be zero (default)
+  level_ = 0;
+}
+
 Bucket::Bucket(double* SW, double* SE, double* NW, double* NE) {
   SW_[0] = SW[0]; SW_[1] = SW[1];
   SE_[0] = SE[0]; SE_[1] = SE[1];
@@ -173,7 +187,11 @@ void Bucket::calcQuadTree(double* dataX, double* dataY, int NumPts) {
   int sizeCurrent = 1;
   int numNext = 0;
   bool flag = false;
-  FILE* fout = fopen("QuadTreeXY.dat","w");
+  FILE* fout;
+  if (!workDir_.empty()) {
+    const std::string outFile = workDir_ + "/QuadTreeXY.dat";
+    fout = fopen(outFile.c_str(),"w");
+  }
   Bucket* child;
   // Print initial bucket to file
   /**
@@ -218,7 +236,9 @@ void Bucket::calcQuadTree(double* dataX, double* dataY, int NumPts) {
     }
   
   }
-  fclose(fout);
+  if (!workDir_.empty()) {
+    fclose(fout);
+  }
   
 }
 

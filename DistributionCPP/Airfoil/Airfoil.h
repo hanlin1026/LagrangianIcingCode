@@ -8,6 +8,7 @@
 
 class Airfoil {
   public:
+    Airfoil(const std::string& inDir, std::vector<double>& X, std::vector<double>& Y);
     Airfoil(std::vector<double>& X, std::vector<double>& Y);
     ~Airfoil();
     void findPanel(std::vector<double>& XYq, std::vector<double>& XYnn, std::vector<double>& NxNy, std::vector<double>& TxTy);
@@ -52,6 +53,7 @@ class Airfoil {
     double stagPtY_;
     Bucket panelSearcher_;
     void calcSCoords();
+    std::string inDir_;
     
 };
 

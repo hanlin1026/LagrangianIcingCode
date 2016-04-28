@@ -13,9 +13,10 @@
 using namespace std;
 using namespace Eigen;
 
-ThermoEqns::ThermoEqns(const char* filenameCHCF, const char* filenameBETA, Airfoil& airfoil, FluidScalars& fluid, Cloud& cloud, PLOT3D& p3d, const char* strSurf) {
+ThermoEqns::ThermoEqns(const std::string& inDir, const char* filenameCHCF, const char* filenameBETA, Airfoil& airfoil, FluidScalars& fluid, Cloud& cloud, PLOT3D& p3d, const char* strSurf) {
   // Constructor to read in input files and initialize thermo eqns
 
+  inDir_   = inDir;
   strSurf_ = strSurf;
   // Set rhoL_,muL_
   muL_ = 1.787e-3;
@@ -395,22 +396,22 @@ vector<double> ThermoEqns::massBalance(vector<double>& x) {
   }
   // Calculate fluxes at cell faces (Roe scheme upwinding)
   for (int i=0; i<NPts_-1; i++) {
-    xFACE[i] = 0.5*(x[i]+x[i+1]);
+    xFACE[i]  = 0.5*(x[i]+x[i+1]);
     cfFACE[i] = 0.5*(cF_[i]+cF_[i+1]);
-    DF[i] = (1/muL_)*(xFACE[i]*cfFACE[i]);
-    f[i] = 0.5*(F[i]+F[i+1]) - 0.5*std::abs(DF[i])*(x[i+1]-x[i]);
+    DF[i]     = (1/muL_)*(xFACE[i]*cfFACE[i]);
+    f[i]      = 0.5*(F[i]+F[i+1]) - 0.5*std::abs(DF[i])*(x[i+1]-x[i]);
   }
   // Calculate error for internal cells
   double ds,mimp;
   for (int i=1; i<x.size()-1; i++) {
-    ds = s_[i+1]-s_[i];
-    mimp = beta_[i]*LWC_*Uinf_;
-    D_flux[i-1] = f[i]-f[i-1];
+    ds             = s_[i+1]-s_[i];
+    mimp           = beta_[i]*LWC_*Uinf_;
+    D_flux[i-1]    = f[i]-f[i-1];
     I_sources[i-1] = (1./rhoL_)*ds*(mimp-mice_[i]-mevap_[i]);
-    err[i] = D_flux[i-1] - I_sources[i-1];
+    err[i]         = D_flux[i-1] - I_sources[i-1];
   }
   // Boundary conditions
-  err[0] = x[0]-0;
+  err[0]       = x[0]-0;
   err[NPts_-1] = 2*err[NPts_-2] - err[NPts_-3]; // Extrapolation B.C.
 
   return err;
@@ -437,25 +438,27 @@ vector<double> ThermoEqns::energyBalance(vector<double>& Y) {
     F[i] = (0.5*cW_/muL_)*pow(x[i],2)*Y[i]*cF_[i];
   // Calculate fluxes at cell faces (Roe scheme upwinding)
   for (int i=0; i<NPts_-1; i++) {
-    xFACE[i] = 0.5*(x[i]+x[i+1]);
+    xFACE[i]  = 0.5*(x[i]+x[i+1]);
     cfFACE[i] = 0.5*(cF_[i]+cF_[i+1]);
-    DF[i] = (cW_/2.0/muL_)*cfFACE[i]*pow(xFACE[i],2);
-    f[i] = 0.5*(F[i]+F[i+1]) - 0.5*std::abs(DF[i])*(Y[i+1]-Y[i]);
+    DF[i]     = (cW_/2.0/muL_)*cfFACE[i]*pow(xFACE[i],2);
+    f[i]      = 0.5*(F[i]+F[i+1]) - 0.5*std::abs(DF[i])*(Y[i+1]-Y[i]);
   }
   // Calculate error for internal cells
-  double ds,mimp,RHS;
+  double ds,mimp,RHS,Trec,rec;
   double S_imp,S_ice,S_conv,S_evap,S_rad;
+  rec = pow(0.9,0.3333); // Turbulent recovery factor (Pr = 0.9)
   for (int i=1; i<NPts_-1; i++) {
-    ds = s_[i+1]-s_[i];
-    mimp = beta_[i]*LWC_*Uinf_;
-    D_flux[i-1] = f[i]-f[i-1];
-    S_imp  = (1./rhoL_)*(mimp*(cW_*(Td_-Y[i]) + 0.5*pow(ud_,2)));
-    S_ice  = (1./rhoL_)*(z[i]*(Lfus_ - cICE_*Y[i]));
-    S_conv = (1./rhoL_)*(cH_[i]*(Td_ - Y[i]));
-    S_evap = (1./rhoL_)*(-0.5*(Levap_ + Lsub_)*mevap_[i]);
-    RHS = S_imp + S_ice + S_conv + S_evap;
+    ds             = s_[i+1]-s_[i];
+    mimp           = beta_[i]*LWC_*Uinf_;
+    Trec           = Te_[i] + rec*pow(Ubound_[i],2.0)/2.0/cpAir_ - 273.15;
+    D_flux[i-1]    = f[i]-f[i-1];
+    S_imp          = (1./rhoL_)*(mimp*(cW_*(Td_-Y[i]) + 0.5*pow(ud_,2)));
+    S_ice          = (1./rhoL_)*(z[i]*(Lfus_ - cICE_*Y[i]));
+    S_conv         = (1./rhoL_)*(cH_[i]*(Trec - Y[i]));
+    S_evap         = (1./rhoL_)*(-0.5*(Levap_ + Lsub_)*mevap_[i]);
+    RHS            = S_imp + S_ice + S_conv + S_evap;
     I_sources[i-1] = ds*RHS;
-    err[i] = D_flux[i-1] - I_sources[i-1];
+    err[i]         = D_flux[i-1] - I_sources[i-1];
   }
   // Boundary conditions
   double maxZ = 0.0;
@@ -464,7 +467,7 @@ vector<double> ThermoEqns::energyBalance(vector<double>& Y) {
       maxZ = z[i];
   }
   if (z[0] < 0.01*maxZ)
-    err[0] = Y[0] - Td_;
+    err[0] = Y[0] - (TINF_-273.15);
   else
     err[0] = Y[0] - 0.0;
   err[NPts_-1] = 2*err[NPts_-2] - err[NPts_-3]; // Extrapolation B.C.
@@ -697,8 +700,8 @@ vector<double> ThermoEqns::SolveThermoForIceRate(vector<double>& X, vector<doubl
   F = (0.5*cW_/muL_)*X*X*Y*cF_;
   // Calculate fluxes at cell faces
   for (int i=0; i<NPts_-1; i++) {
-    xFACE[i] = 0.5*(X[i]+X[i+1]);
-    sFACE[i] = 0.5*(s_[i]+s_[i+1]);
+    xFACE[i]  = 0.5*(X[i]+X[i+1]);
+    sFACE[i]  = 0.5*(s_[i]+s_[i+1]);
     cfFACE[i] = 0.5*(cF_[i]+cF_[i+1]);
   }
   DF = (cW_/2/muL_)*cfFACE*xFACE*xFACE;
@@ -707,17 +710,20 @@ vector<double> ThermoEqns::SolveThermoForIceRate(vector<double>& X, vector<doubl
   f[NPts_-2] = 0.0;
   // Solve discretization for ice accretion rate
   double S_imp,S_conv,S_evap;
+  double rec = pow(0.9,0.3333); // Turbulent recovery factor (Pr = 0.9)
+  double Trec;
   for (int i=1; i<NPts_-1; i++) {
     D_flux = f[i]-f[i-1];
     dsFACE = sFACE[i]-sFACE[i-1];
-    mimp = beta_[i]*Uinf_*LWC_;
-    S_imp = mimp*(cW_*(Td_-Y[i]) + 0.5*pow(ud_,2));
-    S_conv = cH_[i]*(Td_ - Y[i]);
+    mimp   = beta_[i]*Uinf_*LWC_;
+    Trec   = Te_[i] + rec*pow(Ubound_[i],2.0)/2.0/cpAir_ - 273.15;
+    S_imp  = mimp*(cW_*(Td_-Y[i]) + 0.5*pow(ud_,2));
+    S_conv = cH_[i]*(Trec - Y[i]);
     S_evap = -0.5*(Levap_ + Lsub_)*mevap_[i];
-    RHS = S_imp + S_conv + S_evap;
-    Z[i] = ((rhoL_/dsFACE)*D_flux - RHS)/(Lfus_ - cICE_*Y[i]);
+    RHS    = S_imp + S_conv + S_evap;
+    Z[i]   = ((rhoL_/dsFACE)*D_flux - RHS)/(Lfus_ - cICE_*Y[i]);
   }
-  Z[0] = Z[1];
+  Z[0]       = Z[1];
   Z[NPts_-1] = Z[NPts_-2];
   // Reset evaporating mass
   computeMevap(ts_);
@@ -948,23 +954,23 @@ void ThermoEqns::SolveLEWICEformulation() {
   // Mirror solution if we are doing the lower surface
   vector<double> sThermo = getS();
   if (strcmp(strSurf_,"LOWER")==0) {
-    s_ = flipud(s_);
-    s_ = -1*s_;
+    s_     = flipud(s_);
+    s_     = -1*s_;
     m_out_ = flipud(m_out_);
     ts_    = flipud(ts_);
     mice_  = flipud(mice_);
-    cF_     = flipud(cF_);
-    cH_     = flipud(cH_);
+    cF_    = flipud(cF_);
+    cH_    = flipud(cH_);
   }  
 
   // Output to file
   FILE* outfile;
-  const char* thermoFileName;
+  std::string s_thermoFileName;
   if (strcmp(strSurf_,"UPPER")==0)
-    thermoFileName = "THERMO_SOLN_UPPER.out";
+    s_thermoFileName = inDir_ + "/THERMO_SOLN_UPPER.out";
   else if (strcmp(strSurf_,"LOWER")==0)
-    thermoFileName = "THERMO_SOLN_LOWER.out";
-  outfile = fopen(thermoFileName,"w");
+    s_thermoFileName = inDir_ + "/THERMO_SOLN_LOWER.out";
+  outfile = fopen(s_thermoFileName.c_str(),"w");
   for (int i=0; i<NPts_; i++)
     fprintf(outfile,"%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\n",s_[i],m_out_[i],ts_[i],mice_[i],mevap_[i],cF_[i],cH_[i]);
   fclose(outfile);
@@ -1168,6 +1174,7 @@ vector<double> ThermoEqns::movingAverage(vector<double>& X, double smooth) {
 
 void ThermoEqns::SolveIcingEqns() {
   // Main subroutine to iteratively solve mass/energy equations
+  // For use with Roe-scheme PDE solver (i.e. not LEWICE)
 
   vector<double> Xthermo(NPts_);
   vector<double> Ythermo(NPts_);
@@ -1185,7 +1192,7 @@ void ThermoEqns::SolveIcingEqns() {
   bool C_filmHeight, C_waterWarm, C_iceCold;
   double mimp;
   // Initial guess for X and Y (hf and Ts)
-  double dXthermo = (10.0e-3)/999;
+  double dXthermo = (10.0e-3)/NPts_;
   for (int i=0; i<Xthermo.size(); i++) {
     Xthermo[i] = 0.0;
     Ythermo[i] = 0.0;
@@ -1324,12 +1331,12 @@ void ThermoEqns::SolveIcingEqns() {
   // OUTPUT SOLUTION
   // ***************************
 
-  vector<double> sTMP = getS();
-  FILE* outfileTMP;
-  outfileTMP = fopen("UncorrectedSoln.out","w");
-  for (int i=0; i<NPts_; i++)
-    fprintf(outfileTMP,"%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\n",sTMP[i],Xthermo[i],Ythermo[i],Zthermo[i],cF_[i],cH_[i]);
-  fclose(outfileTMP);
+  // vector<double> sTMP = getS();
+  // FILE* outfileTMP;
+  // outfileTMP = fopen("UncorrectedSoln.out","w");
+  // for (int i=0; i<NPts_; i++)
+  //   fprintf(outfileTMP,"%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\n",sTMP[i],Xthermo[i],Ythermo[i],Zthermo[i],cF_[i],cH_[i]);
+  // fclose(outfileTMP);
 
   // ********************************
   // CHECK FOR INCREMENTAL REFINEMENT
@@ -1472,12 +1479,12 @@ void ThermoEqns::SolveIcingEqns() {
   // ***************************
 
   FILE* outfile;
-  const char* thermoFileName;
+  std::string s_thermoFileName;
   if (strcmp(strSurf_,"UPPER")==0)
-    thermoFileName = "THERMO_SOLN_UPPER.out";
+    s_thermoFileName = inDir_ + "/THERMO_SOLN_UPPER.out";
   else if (strcmp(strSurf_,"LOWER")==0)
-    thermoFileName = "THERMO_SOLN_LOWER.out";
-  outfile = fopen(thermoFileName,"w");
+    s_thermoFileName = inDir_ + "/THERMO_SOLN_LOWER.out";
+  outfile = fopen(s_thermoFileName.c_str(),"w");
   for (int i=0; i<NPts_; i++)
     fprintf(outfile,"%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\n",sThermo[i],Xthermo[i],Ythermo[i],Zthermo[i],mevap_[i],cF_[i],cH_[i]);
   fclose(outfile);

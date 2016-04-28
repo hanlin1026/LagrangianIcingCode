@@ -1,12 +1,4 @@
 // **********************************
-// GRID/FLOW SOLUTION FILES
-// **********************************
-gridfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T6area2/MESH.P3D
-solnfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T6area2/q103.0.40E+01.bin
-heatfile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T6area2/heatflux
-betafile = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T6area2/BETA.out
-outfile  = /home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404/T7area2
-// **********************************
 // DROPLET ADVECTION PARAMETERS
 // **********************************
 pinf	    R		     Tinf		rhol
@@ -22,8 +14,15 @@ Splashing   TrackSplash
 // **********************************
 // THERMO PARAMETERS
 // **********************************
-NPts        Uinf             LWC                Td		chord		mach
-1000	    102.8	     0.55e-3		256.49		0.5334		0.3205
+NPts	    Uinf	     LWC		Td		chord		mach	      DT
+1000	    102.8	     0.55e-3		256.49		0.5334		0.3205	      60.0
+
+
+
+
+
+
+
 
 
 

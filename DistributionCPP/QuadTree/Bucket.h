@@ -2,10 +2,12 @@
 #define __BUCKET_H__
 
 #include <vector>
+#include <string>
 
 class Bucket {
  public:
   Bucket();
+  Bucket(const std::string workDir);
   Bucket(double* SW, double* SE, double* NW, double* NE);
   Bucket(double* SW, double* SE, double* NW, double* NE, int level);
   ~Bucket();
@@ -23,6 +25,7 @@ class Bucket {
   void knnSearch(double* Xq, double* Yq, double* Xnn, double* Ynn, int* indnn);
 
  private:
+  std::string workDir_;
   std::vector<double> PX_;
   std::vector<double> PY_;
   std::vector<int> indData_;
