@@ -64,6 +64,7 @@ class ThermoEqns {
   std::vector<double> cF_;
   std::vector<double> cH_;
   std::vector<double> Te_;
+  std::vector<double> Trec_;
   std::vector<double> Ubound_;
   std::vector<double> beta_;
   double rhoL_, muL_, LWC_, Uinf_;

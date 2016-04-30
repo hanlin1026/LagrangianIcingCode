@@ -10,7 +10,7 @@ BASE="/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN405"
 workDir="T_ROE"
 motherDir=$(pwd)
 
-for i in {1..7}
+for i in {6..7}
 do
     # I/O directories
     inDir=$BASE/$workDir$((i-1))
