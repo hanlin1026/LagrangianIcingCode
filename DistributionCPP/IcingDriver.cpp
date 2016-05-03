@@ -109,7 +109,7 @@ int main(int argc, const char *argv[]) {
   // *******************************************************
   // DROPLET ADVECTION MODULE
   // *******************************************************
-  
+  /**
   while ((totalImpinge < particles) && (iter < maxiter)) {
     cloud.calcDtandImpinge(airfoil,p3d);
     cloud.transportSLD(p3d);
@@ -161,7 +161,7 @@ int main(int argc, const char *argv[]) {
     fprintf(outfileBETA,"%lf\t%lf\n",BetaBins[i],Beta[i]*.74/.83);
   fclose(outfileDROP);
   fclose(outfileBETA);
-  
+  **/
   // *******************************************************
   // THERMO EQUATIONS
   // *******************************************************
@@ -170,15 +170,19 @@ int main(int argc, const char *argv[]) {
   printf("SOLVING UPPER SURFACE...\n\n");
   ThermoEqns thermoUPPER = ThermoEqns(s_inDir,s_filenameCHCF.c_str(),s_filenameBETA.c_str(),airfoil,scalarsFluid,cloud,p3d,"UPPER");
   //thermoUPPER.SolveLEWICEformulation();
-  thermoUPPER.SolveIcingEqns();
+  //thermoUPPER.SolveIcingEqns();
+  thermoUPPER.explicitSolverSimultaneous(5.0e-1,1.0e-4);
   printf("...DONE\n\n");
+
   // Solve lower surface
   printf("SOLVING LOWER SURFACE...\n\n");
   printf("%s\n",s_filenameCHCF.c_str());
   ThermoEqns thermoLOWER = ThermoEqns(s_inDir,s_filenameCHCF.c_str(),s_filenameBETA.c_str(),airfoil,scalarsFluid,cloud,p3d,"LOWER");
   //thermoLOWER.SolveLEWICEformulation();
-  thermoLOWER.SolveIcingEqns();
+  //thermoLOWER.SolveIcingEqns();
+  thermoLOWER.explicitSolverSimultaneous(5.0e-1,1.0e-4);
   printf("...DONE\n\n");
+
   // Get old grid XY coordinates
   vector<double> XOLD = airfoil.getX();
   vector<double> YOLD = airfoil.getY();
@@ -191,11 +195,13 @@ int main(int argc, const char *argv[]) {
   sLOW.insert( sLOW.end(), sUP.begin(), sUP.end() );
   vector<double> mice = miceLOW;
   vector<double> s    = sLOW; 
+
   // Update grid (grow ice)
   double DT = scalarsFluid.DT_;
   printf("GROWING ICE FOR DT = %lf SECONDS...\n\n",DT);
   airfoil.growIce(s,mice,DT,chord,"ENTIRE");
   printf("...DONE\n\n");
+
   // Output new grid coordinates to file
   vector<double> XNEW = airfoil.getX();
   vector<double> YNEW = airfoil.getY();

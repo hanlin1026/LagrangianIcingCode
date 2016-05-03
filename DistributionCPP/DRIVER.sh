@@ -5,12 +5,12 @@
 # *********************************
 
 # Set up multiple runs in serial
-inFile="/home/adegenna/LagrangianIcingCode/DistributionCPP/405.inp"
-BASE="/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN405"
-workDir="T_ROE"
+inFile="/home/adegenna/LagrangianIcingCode/DistributionCPP/308.inp"
+BASE="/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN308"
+workDir="T_SIMUL_ROE"
 motherDir=$(pwd)
 
-for i in {6..7}
+for i in {1..4}
 do
     # I/O directories
     inDir=$BASE/$workDir$((i-1))
