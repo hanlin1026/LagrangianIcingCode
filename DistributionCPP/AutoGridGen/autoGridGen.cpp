@@ -47,7 +47,8 @@ void autoGridGen(const char* XYfile, const char *outDir) {
   // **********************************
   
   // Read/write header1
-  header1.open("header1");
+  strcpy(buf,outDir); strcat(buf,"/header1");
+  header1.open(buf);
   while (std::getline(header1,line,'\n')) {
     outFile << line; outFile << '\n';
   }
@@ -57,7 +58,8 @@ void autoGridGen(const char* XYfile, const char *outDir) {
     outFile << '\n';
   }
   // Read/write header2
-  header2.open("header2");
+  strcpy(buf,outDir); strcat(buf,"/header2");
+  header2.open(buf);
   while (std::getline(header2,line,'\n')) {
     outFile << line; outFile << '\n';
   }

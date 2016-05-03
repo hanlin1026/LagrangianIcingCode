@@ -893,21 +893,21 @@ void ThermoEqns::explicitSolverSimultaneous(double eps, double tol) {
     // Constraints
     Ytmp = ts_;
     for (int i=0; i<NPts_; i++) {
-      // Mass limits
+      // Mass limits (0 <= hf <= 20e-6)
       hf_[i] = std::max(hf_[i],0.0);
       hf_[i] = std::min(hf_[i],20.0e-6);
-      // Temperature limits
+      // Temperature limits (2*TINF <= ts <= 10.0)
       ts_[i] = std::max(ts_[i],2.0*(TINF_-273.15));
-      ts_[i] = std::min(ts_[i],1.0);
+      ts_[i] = std::min(ts_[i],10.0);
       // Constraints (XY>0 && YZ<0)
       XY = hf_[i]*ts_[i];
       YZ = ts_[i]*mice_[i];
       if ((XY < 0) && (ts_[i] < -0.001))
 	Ytmp[i] = 0.0;
-      if (YZ > 1.0e-5)
+      if ((YZ > 0.0) && (ts_[i] > 0.001))
 	Ytmp[i] = 0.0;    
     }
-    mice_ = SolveThermoForIceRate(hf_,ts_);
+    mice_ = SolveThermoForIceRate(hf_,Ytmp);
     // Mass limits
     for (int i=0; i<NPts_; i++) {
       if (hf_[i] < 1.0e-10)
@@ -959,7 +959,7 @@ void ThermoEqns::explicitSolverSimultaneous(double eps, double tol) {
   outfile   = fopen(s_thermoFileName.c_str(),"w");
   errorfile = fopen(s_errorFileName.c_str(),"w");
   for (int i=0; i<NPts_; i++)
-    fprintf(outfile,"%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\n",s_[i],hf_[i],ts_[i],mice_[i],mevap_[i],cF_[i],cH_[i]);
+    fprintf(outfile,"%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\n",s_[i],hf_[i],ts_[i],mice_[i],mevap_[i],cF_[i],cH_[i],Trec_[i]);
   for (int i=0; i<err.size(); i++)
     fprintf(errorfile,"%.10f\n",err[i]);
   fclose(outfile);

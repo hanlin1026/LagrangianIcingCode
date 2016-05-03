@@ -109,7 +109,7 @@ int main(int argc, const char *argv[]) {
   // *******************************************************
   // DROPLET ADVECTION MODULE
   // *******************************************************
-  /**
+  
   while ((totalImpinge < particles) && (iter < maxiter)) {
     cloud.calcDtandImpinge(airfoil,p3d);
     cloud.transportSLD(p3d);
@@ -161,7 +161,7 @@ int main(int argc, const char *argv[]) {
     fprintf(outfileBETA,"%lf\t%lf\n",BetaBins[i],Beta[i]*.74/.83);
   fclose(outfileDROP);
   fclose(outfileBETA);
-  **/
+  
   // *******************************************************
   // THERMO EQUATIONS
   // *******************************************************
@@ -176,7 +176,6 @@ int main(int argc, const char *argv[]) {
 
   // Solve lower surface
   printf("SOLVING LOWER SURFACE...\n\n");
-  printf("%s\n",s_filenameCHCF.c_str());
   ThermoEqns thermoLOWER = ThermoEqns(s_inDir,s_filenameCHCF.c_str(),s_filenameBETA.c_str(),airfoil,scalarsFluid,cloud,p3d,"LOWER");
   //thermoLOWER.SolveLEWICEformulation();
   //thermoLOWER.SolveIcingEqns();
