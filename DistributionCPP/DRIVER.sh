@@ -4,34 +4,66 @@
 # SHELL SCRIPT DRIVER
 # *********************************
 
-# Set up multiple runs in serial
-inFile="/home/adegenna/LagrangianIcingCode/DistributionCPP/404.inp"
-BASE="/home/adegenna/LagrangianIcingCode/DistributionCPP/Grid/RUN404"
-workDir="T_SIMUL_ROE"
-motherDir="/home/adegenna/LagrangianIcingCode/DistributionCPP"
+# Tab-delimited file describing multiple job submissions
+masterDir="/home/adegenna/LagrangianIcingCode/DistributionCPP"
+masterList=$masterDir/"RUNS.list"
+masterInp=$masterDir/"INP.inp"
+masterFLO=$masterDir/"FLO.d"
+masterDrive=$masterDir/"DRIVE.sh"
+runsDir=$masterDir/"RUNS"
+fort=$masterDir/"fort.30"
+header1=$masterDir/"header1"
+header2=$masterDir/"header2"
 
-for i in {1..7}
+mkdir $runsDir
+
+for k in {1..2} # Indexes over individual runs
 do
-    # I/O directories
-    inDir=$BASE/$workDir$((i-1))
-    outDir=$BASE/$workDir$i
-    mkdir $outDir
-    cp $BASE/horn.d $outDir
+    # Read in run number
+    RUN=$(awk 'FNR == '$((k+1))' { print $1 }' $masterList)
+    
+    # Make base directory for current run, copy template icing input files and template driver into it
+    BASE=$runsDir/$RUN
+    mkdir $BASE
+    inFile=$BASE/$RUN".inp"
+    cp $masterInp $inFile
+    cp $masterDrive $BASE
+    cp $masterFLO $BASE
+    cp $fort $BASE
+    cp $header1 $BASE
+    cp $header2 $BASE
 
-    # Run icing binary
-    echo INPUT:  $inFile
-    echo INDIR:  $inDir  
-    echo OUTDIR: $outDir
-    cp $motherDir/header1 $outDir
-    cp $motherDir/header2 $outDir
-    $motherDir/IcingDriver $inFile $inDir $outDir
+    # Get flow/icing input parameters for current run
+    PINF=$(awk 'FNR == '$((k+1))' { print $2 }' $masterList)
+    TINF=$(awk 'FNR == '$((k+1))' { print $3 }' $masterList)
+    RDROP=$(awk 'FNR == '$((k+1))' { print $4 }' $masterList)
+    UINF=$(awk 'FNR == '$((k+1))' { print $5 }' $masterList)
+    LWC=$(awk 'FNR == '$((k+1))' { print $6 }' $masterList)
+    CHORD=$(awk 'FNR == '$((k+1))' { print $7 }' $masterList)
+    MACH=$(awk 'FNR == '$((k+1))' { print $8 }' $masterList)
+    RE=$(awk 'FNR == '$((k+1))' { print $9 }' $masterList)
+    DT=$(awk 'FNR == '$((k+1))' { print $10 }' $masterList)
 
-    # Run GAIR/HYPERG
-    cd $outDir
-    /home/adegenna/Mesh2D/GAIR/gair
-    /home/adegenna/Mesh2D/HYPERG/hyperg
-    /home/adegenna/Flo103/flo103_sa < horn.d
+    # Fill in blanks for template icing input file
+    find $inFile -type f -print0 | xargs -0 sed -i 's/TINF/'$TINF'/g'
+    find $inFile -type f -print0 | xargs -0 sed -i 's/PINF/'$PINF'/g'
+    find $inFile -type f -print0 | xargs -0 sed -i 's/RDROP/'$RDROP'/g'
+    find $inFile -type f -print0 | xargs -0 sed -i 's/UINF/'$UINF'/g'
+    find $inFile -type f -print0 | xargs -0 sed -i 's/LWC/'$LWC'/g'
+    find $inFile -type f -print0 | xargs -0 sed -i 's/CHORD/'$CHORD'/g'
+    find $inFile -type f -print0 | xargs -0 sed -i 's/MACH/'$MACH'/g'
+    find $inFile -type f -print0 | xargs -0 sed -i 's/RE/'$RE'/g'
+    find $inFile -type f -print0 | xargs -0 sed -i 's/DT/'$DT'/g'
+    
+    # Fill in blanks for GAIR/HYPERG/FLO103 input file
+    find $BASE/"FLO.d" -type f -print0 | xargs -0 sed -i 's/mach/'$MACH'/g'
+    find $BASE/"FLO.d" -type f -print0 | xargs -0 sed -i 's/re/'$RE'/g'
+    find $BASE/"FLO.d" -type f -print0 | xargs -0 sed -i 's/tinf/'$TINF'/g'
 
-    # Go back to motherDir
-    cd $motherDir
+    # Qsub job driver scripts
+    qsub -v par_name=par_value\[,var1=$masterDir,var2=$BASE,\] $BASE/DRIVE.sh
+    #echo "$BASE/DRIVE.sh $masterDir $BASE" | qsub
+    #echo $BASE/"DRIVE.sh "$masterDir" "$BASE | qsub
+
 done
+

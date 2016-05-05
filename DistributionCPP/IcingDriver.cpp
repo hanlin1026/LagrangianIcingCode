@@ -168,18 +168,18 @@ int main(int argc, const char *argv[]) {
   
   // Solve upper surface
   printf("SOLVING UPPER SURFACE...\n\n");
-  ThermoEqns thermoUPPER = ThermoEqns(s_inDir,s_filenameCHCF.c_str(),s_filenameBETA.c_str(),airfoil,scalarsFluid,cloud,p3d,"UPPER");
-  //thermoUPPER.SolveLEWICEformulation();
+  ThermoEqns thermoUPPER = ThermoEqns(s_inDir,s_filenameCHCF.c_str(),s_filenameBETA.c_str(),airfoil,scalarsFluid,cloud,p3d,"UPPER","MULTISHOT");
+  thermoUPPER.SolveLEWICEformulation();
   //thermoUPPER.SolveIcingEqns();
-  thermoUPPER.explicitSolverSimultaneous(5.0e-1,1.0e-4);
+  //thermoUPPER.explicitSolverSimultaneous(5.0e-1,1.0e-4);
   printf("...DONE\n\n");
 
   // Solve lower surface
   printf("SOLVING LOWER SURFACE...\n\n");
-  ThermoEqns thermoLOWER = ThermoEqns(s_inDir,s_filenameCHCF.c_str(),s_filenameBETA.c_str(),airfoil,scalarsFluid,cloud,p3d,"LOWER");
-  //thermoLOWER.SolveLEWICEformulation();
+  ThermoEqns thermoLOWER = ThermoEqns(s_inDir,s_filenameCHCF.c_str(),s_filenameBETA.c_str(),airfoil,scalarsFluid,cloud,p3d,"LOWER","MULTISHOT");
+  thermoLOWER.SolveLEWICEformulation();
   //thermoLOWER.SolveIcingEqns();
-  thermoLOWER.explicitSolverSimultaneous(5.0e-1,1.0e-4);
+  //thermoLOWER.explicitSolverSimultaneous(5.0e-1,1.0e-4);
   printf("...DONE\n\n");
 
   // Get old grid XY coordinates

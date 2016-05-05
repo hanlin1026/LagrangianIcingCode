@@ -13,11 +13,12 @@
 using namespace std;
 using namespace Eigen;
 
-ThermoEqns::ThermoEqns(const std::string& inDir, const char* filenameCHCF, const char* filenameBETA, Airfoil& airfoil, FluidScalars& fluid, Cloud& cloud, PLOT3D& p3d, const char* strSurf) {
+ThermoEqns::ThermoEqns(const std::string& inDir, const char* filenameCHCF, const char* filenameBETA, Airfoil& airfoil, FluidScalars& fluid, Cloud& cloud, PLOT3D& p3d, const char* strSurf, const char* strShot) {
   // Constructor to read in input files and initialize thermo eqns
 
   inDir_   = inDir;
   strSurf_ = strSurf;
+  strShot_ = strShot;
   // Set rhoL_,muL_
   muL_ = 1.787e-3;
   cpAir_ = 1003.0;
@@ -52,6 +53,7 @@ ThermoEqns::ThermoEqns(const std::string& inDir, const char* filenameCHCF, const
   // Compute static pressure from P3D grid reference
   //computePstat(p3d);
   //interpUpperSurface(" ",airfoil,"PSTAT");
+
   // Flip things if we are doing the lower surface
   if (strcmp(strSurf_,"LOWER")==0) {
     s_ = flipud(s_);
@@ -106,6 +108,29 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     Te     = data.col(3);
     pstat  = data.col(4);
     Ubound = data.col(5);
+    // Fix s-coordinates to those used in airfoil object if we are doing single-shot
+    if (strcmp(strShot_,"SINGLESHOT")==0) {
+      char buf[256];
+      strcpy(buf,inDir_.c_str()); strcat(buf,"/AirfoilS.out");
+      FILE* fileS = fopen(buf,"r");
+      assert(fileS != NULL);
+      // Determine size of input file
+      int c;
+      int sizeS = 0;
+      while ( (c=fgetc(fileS)) != EOF ) {
+	if ( c == '\n' )
+	  sizeS++;
+      }
+      rewind(fileS);
+      // Read in s-coordinates
+      double a;
+      for (int i=0; i<sizeS; i++) {
+	fscanf(fileS,"%le",&a);
+	s[i] = a;
+      }
+      // Close file streams
+      fclose(fileS);
+    }
     // Set stagPt at s=0
     stagPt = airfoil.getStagPt();
     // Find relevant segment of ch/cf for interpolation

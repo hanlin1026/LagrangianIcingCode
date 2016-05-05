@@ -54,15 +54,18 @@ Airfoil::Airfoil(const std::string& inDir, std::vector<double>& X, std::vector<d
   const std::string s_airXY   = inDir_ + "/AirfoilXY.out";
   const std::string s_airTXTY = inDir_ + "/AirfoilTxTy.out";
   const std::string s_airNXNY = inDir_ + "/AirfoilNxNy.out";
-  FILE* fout = fopen(s_airXY.c_str(),"w");
+  const std::string s_airS    = inDir_ + "/AirfoilS.out";
+  FILE* fout  = fopen(s_airXY.c_str(),"w");
   FILE* foutT = fopen(s_airTXTY.c_str(),"w");
   FILE* foutN = fopen(s_airNXNY.c_str(),"w");
+  FILE* foutS = fopen(s_airS.c_str(),"w");
   for (int i=0; i<gridPts-1; i++) {
     fprintf(fout,"%f\t%f\n",panelX_[i],panelY_[i]);
     fprintf(foutT,"%f\t%f\n",tangent_(i,0),tangent_(i,1));
     fprintf(foutN,"%f\t%f\n",normal_(i,0),normal_(i,1));
+    fprintf(foutS,"%f\n",panelS_(i));
   }
-  fclose(fout); fclose(foutT); fclose(foutN);
+  fclose(fout); fclose(foutT); fclose(foutN); fclose(foutS);
 }
 
 Airfoil::Airfoil(std::vector<double>& X, std::vector<double>& Y) {
@@ -181,7 +184,7 @@ void Airfoil::calcSCoords() {
   double dx,dy,ds;
   int numPts = panelX_.size();
   panelS_.resize(numPts);
-  panelS_(0) = 0;
+  panelS_(0) = sqrt( pow(panelX_(1)-panelX_(0),2) + pow(panelY_(1)-panelY_(0),2) );
   for (int i=0; i<numPts-1; i++) {
     dx = panelX_(i+1) - panelX_(i);
     dy = panelY_(i+1) - panelY_(i);
