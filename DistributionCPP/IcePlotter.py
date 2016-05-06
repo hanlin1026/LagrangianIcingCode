@@ -165,18 +165,18 @@ figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'k',linewidth=3);
 # RUN 409
 # ******************************************************
 
-XY = genfromtxt("./Grid/RUN409/T_SIMUL_ROE1/XY_NEW.out", delimiter = "\t");
-figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'b',linewidth=3);
-XY = genfromtxt("./Grid/RUN409/T_SIMUL_ROE2/XY_NEW.out", delimiter = "\t");
-figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'b',linewidth=3);
-XY = genfromtxt("./Grid/RUN409/T_SIMUL_ROE3/XY_NEW.out", delimiter = "\t");
-figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'b',linewidth=3);
-XY = genfromtxt("./Grid/RUN409/T_SIMUL_ROE4/XY_NEW.out", delimiter = "\t");
-figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'b',linewidth=3);
-XY = genfromtxt("./Grid/RUN409/T_SIMUL_ROE5/XY_NEW.out", delimiter = "\t");
-figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'b',linewidth=3);
-XY = genfromtxt("./Grid/RUN409/T_SIMUL_ROE6/XY_NEW.out", delimiter = "\t");
-figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'b',linewidth=3);
+# XY = genfromtxt("./Grid/RUN409/T_SIMUL_ROE1/XY_NEW.out", delimiter = "\t");
+# figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'b',linewidth=3);
+# XY = genfromtxt("./Grid/RUN409/T_SIMUL_ROE2/XY_NEW.out", delimiter = "\t");
+# figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'b',linewidth=3);
+# XY = genfromtxt("./Grid/RUN409/T_SIMUL_ROE3/XY_NEW.out", delimiter = "\t");
+# figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'b',linewidth=3);
+# XY = genfromtxt("./Grid/RUN409/T_SIMUL_ROE4/XY_NEW.out", delimiter = "\t");
+# figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'b',linewidth=3);
+# XY = genfromtxt("./Grid/RUN409/T_SIMUL_ROE5/XY_NEW.out", delimiter = "\t");
+# figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'b',linewidth=3);
+# XY = genfromtxt("./Grid/RUN409/T_SIMUL_ROE6/XY_NEW.out", delimiter = "\t");
+# figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'b',linewidth=3);
 
 # XY = genfromtxt("./Grid/RUN409/T_singleShot1/XY_NEW.out", delimiter = "\t");
 # figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'m',linewidth=3);
@@ -189,13 +189,19 @@ figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'b',linewidth=3);
 # XY = genfromtxt("./Grid/RUN409/T_singleShot5/XY_NEW.out", delimiter = "\t");
 # figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'m',linewidth=3);
 
-# Current iteration
-# XY = genfromtxt("XY_NEW.out", delimiter="\t");
-# plot(XY[:,0]*chord,XY[:,1]*chord,lw=3,c='r');
+# ******************************************************
+# TEMPORARY RUNS
+# ******************************************************
+
+XY = genfromtxt("DAKOTA/workdir.1/T1/XY_NEW.out", delimiter = "\t");
+figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'m',linewidth=3);
+XY = genfromtxt("DAKOTA/workdir.1/T2/XY_NEW.out", delimiter = "\t");
+figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'m',linewidth=3);
+
+
 plt.xlim([-0.05,0.2])
 axis('equal')
 plt.grid(b=True)
-#legend(['230 K','240 K','250 K','260 K','270 K','NACA0012'])
 
 # Compare to LEWICE results
 # RUN404 = genfromtxt("/home/adegenna/LagrangianIcingCode/Validations/LewiceIceshapes/Run404.csv", delimiter = ",");

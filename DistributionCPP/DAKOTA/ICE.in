@@ -1,0 +1,44 @@
+# Dakota Input File: ICE.in
+environment
+    graphics
+    tabular_graphics_data
+	tabular_graphics_file = 'ICE.dat'
+
+method
+  polynomial_chaos
+    p_refinement  dimension_adaptive  generalized
+    max_iterations = 1000
+    max_function_evaluations = 1000
+    convergence_tolerance = 5.0e-4
+    sparse_grid_level = 1
+    samples = 10000
+    seed = 12347 rng rnum2
+    probability_levels =
+    .05 .1 .2 .3 .4 .5 .6 .7 .8 .9 .95
+    .05 .1 .2 .3 .4 .5 .6 .7 .8 .9 .95
+    variance_based_decomp #interaction_order = 1
+    export_expansion_file = 'PCEOutputCoeffs.dat'
+
+variables
+  uniform_uncertain = 2
+    lower_bounds        =  250.0 0.30e-3
+    upper_bounds        =  270.0 1.00e-3
+    descriptors         = 'TINF' 'LWC'
+
+interface
+	system
+	  asynchronous  #evaluation_concurrency = 10 # is this needed?
+	  analysis_driver = 'MeshFlowIce.sh'
+	  parameters_file = 'params.in'
+	  results_file    = 'results.out'
+	  work_directory directory_tag named 'workdir'   # creates a temporary directory for each solution,
+	  template_directory = 'templatedir' copy  # and copies the contents of templatedir to it.
+	  directory_save  # don't delete the temp directory
+          file_tag
+          file_save	
+
+responses
+  response_functions = 2
+  descriptors = 'CL' 'CD'
+  no_gradients
+  no_hessians

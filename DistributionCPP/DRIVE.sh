@@ -12,11 +12,10 @@ BASE=$var2
 workDir="T"
 inFile=$BASE/*.inp
 
-# Create initial directory/solution
+# Create initial directory/solution (use initial fort.30 file)
 inDir="$BASE/T0"
 outDir=$BASE/T1
 mkdir $inDir
-cp $BASE/"FLO.d" $inDir
 cp $BASE/"fort.30" $inDir
 
 for i in {1..7}
@@ -26,6 +25,7 @@ do
     outDir=$BASE/$workDir$i
     mkdir $outDir
     cp $inFile $inDir
+    cp $BASE/"FLO.d" $inDir
 
     # Run GAIR/HYPERG
     cd $inDir
