@@ -57,12 +57,22 @@ do
 
 done
 
+# For last iteration, only need mesh/flow solver
+# I/O directories
+i=5
+inDir=$BASE/$step$i
+cp "$BASE/FLO.d" $inDir
+cp "$BASE/INP.inp" $inDir
+
+# Run GAIR/HYPERG/FLO103
+cd $inDir
+/home/adegenna/Mesh2D/GAIR/gair
+/home/adegenna/Mesh2D/HYPERG/hyperg
+/home/adegenna/Flo103/flo103_sa < FLO.d
+
 # *********************************
 # OUTPUT
 # *********************************
-
-# Go to last timestep directory
-cd $BASE/$step/5
 
 # Parse out results from fort.66 (CL,CD)
 CL=$(awk 'FNR==1 { print $2 }' fort.66)

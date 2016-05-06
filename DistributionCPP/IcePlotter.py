@@ -193,10 +193,10 @@ figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'k',linewidth=3);
 # TEMPORARY RUNS
 # ******************************************************
 
-XY = genfromtxt("DAKOTA/workdir.1/T1/XY_NEW.out", delimiter = "\t");
-figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'m',linewidth=3);
-XY = genfromtxt("DAKOTA/workdir.1/T2/XY_NEW.out", delimiter = "\t");
-figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,'m',linewidth=3);
+for k in range(1,6):
+    for i in range(1,6):
+        XY = genfromtxt("DAKOTA/workdir." + str(i) + "/T" + str(k) + "/XY_NEW.out", delimiter = "\t");
+        figure(1); plot(XY[:,0]*chord,XY[:,1]*chord,color=cm.coolwarm(0.2*i),linewidth=3);
 
 
 plt.xlim([-0.05,0.2])
@@ -214,16 +214,16 @@ plt.grid(b=True)
 # plt.scatter(RUN405[:,0]/21.0*chord,RUN405[:,1]/21.0*chord,c='g',s=50);
 # RUN402 = genfromtxt("/home/adegenna/LagrangianIcingCode/Validations/LewiceIceshapes/Run402.csv", delimiter = ",");
 # plt.scatter(RUN402[:,0]/21.0*chord,RUN402[:,1]/21.0*chord,c='b',s=50);
-RUN409 = genfromtxt("/home/adegenna/LagrangianIcingCode/Validations/LewiceIceshapes/Run409.csv", delimiter = ",");
-plt.scatter(RUN409[:,0]/21.0*chord,RUN409[:,1]/21.0*chord,c='b',s=50);
+# RUN409 = genfromtxt("/home/adegenna/LagrangianIcingCode/Validations/LewiceIceshapes/Run409.csv", delimiter = ",");
+# plt.scatter(RUN409[:,0]/21.0*chord,RUN409[:,1]/21.0*chord,c='b',s=50);
 
-UPPER = genfromtxt("./Grid/RUN409/T_singleShot0/THERMO_SOLN_UPPER.out", delimiter = "\t");
-LOWER = genfromtxt("./Grid/RUN409/T_singleShot0/THERMO_SOLN_LOWER.out", delimiter = "\t");
-BETA = genfromtxt("./Grid/RUN409/T_singleShot0/BETA.out", delimiter = "\t");
-LWC = 1.3e-3; Uinf = 67.1; 
-figure(2);
-subplot(311); plot(UPPER[:,0],UPPER[:,1],'b.-'); plot(LOWER[:,0],LOWER[:,1],'r.-'); #plt.xlim([-0.06,0.03])
-subplot(312); plot(UPPER[:,0],UPPER[:,2],'b.-'); plot(LOWER[:,0],LOWER[:,2],'r.-'); #plt.xlim([-0.06,0.03])
-subplot(313); plot(UPPER[:,0],UPPER[:,3],'b.-'); plot(LOWER[:,0],LOWER[:,3],'r.-'); plot(BETA[:,0],LWC*Uinf*BETA[:,1],'--',c='k'); #plt.xlim([-0.06,0.03])
+# UPPER = genfromtxt("./Grid/RUN409/T_singleShot0/THERMO_SOLN_UPPER.out", delimiter = "\t");
+# LOWER = genfromtxt("./Grid/RUN409/T_singleShot0/THERMO_SOLN_LOWER.out", delimiter = "\t");
+# BETA = genfromtxt("./Grid/RUN409/T_singleShot0/BETA.out", delimiter = "\t");
+# LWC = 1.3e-3; Uinf = 67.1; 
+# figure(2);
+# subplot(311); plot(UPPER[:,0],UPPER[:,1],'b.-'); plot(LOWER[:,0],LOWER[:,1],'r.-'); #plt.xlim([-0.06,0.03])
+# subplot(312); plot(UPPER[:,0],UPPER[:,2],'b.-'); plot(LOWER[:,0],LOWER[:,2],'r.-'); #plt.xlim([-0.06,0.03])
+# subplot(313); plot(UPPER[:,0],UPPER[:,3],'b.-'); plot(LOWER[:,0],LOWER[:,3],'r.-'); plot(BETA[:,0],LWC*Uinf*BETA[:,1],'--',c='k'); #plt.xlim([-0.06,0.03])
 
 show()
