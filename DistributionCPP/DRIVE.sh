@@ -9,6 +9,7 @@
 # Files/directories
 masterDir=$var1
 BASE=$var2
+steps=$var3
 workDir="T"
 inFile=$BASE/*.inp
 
@@ -18,7 +19,7 @@ outDir=$BASE/T1
 mkdir $inDir
 cp $BASE/"fort.30" $inDir
 
-for i in {1..7}
+for (( i=8; i<=$steps; i++ ))
 do
     # I/O directories
     inDir=$BASE/$workDir$((i-1))
@@ -31,7 +32,7 @@ do
     cd $inDir
     /home/adegenna/Mesh2D/GAIR/gair
     /home/adegenna/Mesh2D/HYPERG/hyperg
-    /home/adegenna/Flo103/flo103_sa < "FLO.d"
+    /home/adegenna/Flo103/flo103_sa < "FLO.d" > "FLO.out"
 
     # Go back to masterDir
     cd $masterDir
@@ -42,6 +43,6 @@ do
     echo OUTDIR: $outDir
     cp $masterDir/header1 $outDir
     cp $masterDir/header2 $outDir
-    $masterDir/IcingDriver $inFile $inDir $outDir
+    $masterDir/CATFISH $inFile $inDir $outDir > $inDir/"CATFISH.out"
 
 done

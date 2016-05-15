@@ -184,7 +184,8 @@ void Airfoil::calcSCoords() {
   double dx,dy,ds;
   int numPts = panelX_.size();
   panelS_.resize(numPts);
-  panelS_(0) = sqrt( pow(panelX_(1)-panelX_(0),2) + pow(panelY_(1)-panelY_(0),2) );
+  //panelS_(0) = sqrt( pow(panelX_(1)-panelX_(0),2) + pow(panelY_(1)-panelY_(0),2) );
+  panelS_(0) = 0.0;
   for (int i=0; i<numPts-1; i++) {
     dx = panelX_(i+1) - panelX_(i);
     dy = panelY_(i+1) - panelY_(i);

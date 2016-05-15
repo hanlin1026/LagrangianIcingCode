@@ -66,6 +66,7 @@ class ThermoEqns {
   // Auxiliary parameters
   std::vector<double> cF_;
   std::vector<double> cH_;
+  std::vector<double> Qdot_;
   std::vector<double> Te_;
   std::vector<double> Trec_;
   std::vector<double> Ubound_;

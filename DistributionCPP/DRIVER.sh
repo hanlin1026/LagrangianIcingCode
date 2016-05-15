@@ -15,9 +15,7 @@ fort=$masterDir/"fort.30"
 header1=$masterDir/"header1"
 header2=$masterDir/"header2"
 
-mkdir $runsDir
-
-for k in {1..2} # Indexes over individual runs
+for k in {23..26} # Indexes over individual runs
 do
     # Read in run number
     RUN=$(awk 'FNR == '$((k+1))' { print $1 }' $masterList)
@@ -43,6 +41,8 @@ do
     MACH=$(awk 'FNR == '$((k+1))' { print $8 }' $masterList)
     RE=$(awk 'FNR == '$((k+1))' { print $9 }' $masterList)
     DT=$(awk 'FNR == '$((k+1))' { print $10 }' $masterList)
+    ROUGH=$(awk 'FNR == '$((k+1))' { print $11 }' $masterList)
+    TIME=$(awk 'FNR == '$((k+1))' { print $12 }' $masterList)
 
     # Fill in blanks for template icing input file
     find $inFile -type f -print0 | xargs -0 sed -i 's/TINF/'$TINF'/g'
@@ -59,9 +59,10 @@ do
     find $BASE/"FLO.d" -type f -print0 | xargs -0 sed -i 's/mach/'$MACH'/g'
     find $BASE/"FLO.d" -type f -print0 | xargs -0 sed -i 's/re/'$RE'/g'
     find $BASE/"FLO.d" -type f -print0 | xargs -0 sed -i 's/tinf/'$TINF'/g'
+    find $BASE/"FLO.d" -type f -print0 | xargs -0 sed -i 's/rough/'$ROUGH'/g'
 
     # Qsub job driver scripts
-    qsub -v par_name=par_value\[,var1=$masterDir,var2=$BASE,\] $BASE/DRIVE.sh
+    qsub -v par_name=par_value\[,var1=$masterDir,var2=$BASE,var3=$TIME,\] $BASE/DRIVE.sh
     #echo "$BASE/DRIVE.sh $masterDir $BASE" | qsub
     #echo $BASE/"DRIVE.sh "$masterDir" "$BASE | qsub
 

@@ -17,12 +17,69 @@
 #include <iterator>
 #include <findAll.h>
 
-// *******************************************************
-// AIRFOIL ICING CODE DRIVER PROGRAM
-// *******************************************************
+// ***********************************************************
+// COUPLED AERO-THERMODYNAMICS FOR ICING SIMULATIONS (CATFISh)
+// ***********************************************************
 
 int main(int argc, const char *argv[]) {
-  
+
+  const std::string banner =
+R"(#                  -+/:-.                     `                  `-://:`                      `:o:   #)" "\n"
+R"(#                /o/--:/oyyy+-          `+ymNMMMNmhssso/:.   .+ymNhhhmMMd-                      `dm- #)" "\n"
+R"(#              +s-   `.-.` `:ohy:      -NMMs//+ymd-   .-/shhydd+.     .yMN.                      `mM:#)" "\n"
+R"(#            :y-        `:/+.-/smh+++++omM:  +hdo-oyo-      .-   .sdmd+ yMo                       /Mm#)" "\n"
+R"(#          `y+    `--:/++soo/-`         `ss-dMMMMh  .+s+`      `oNMMMMM/:Mo                       :MM#)" "\n"
+R"(#         -h.  `..`-oys/.                 .omMMMMM::/+oyo`     `/ymMMMM-yM:                       yMy#)" "\n"
+R"(#        /h`  ``:hd+.                                              .odMyMm    `-+syys+/-`       .hMm`#)" "\n"
+R"(#       /y `.-sds.                         -ohNMMMMMmhs/`             .+hNo:sdMMMMmdmNMMMNdhyyhmMNs` #)" "\n"
+R"(#      -y `.od+                          -dMMMMmdhhdmMMMMmhhhh-          `+NMMmo-     .:+shhdhhs/`   #)" "\n"
+R"(#     `d``om+                           oMMNo-        .:+oyyhh-           `/NMmmmds`                 #)" "\n"
+R"(#     s:.dy`                           sMMy`  oddmNMMMMNNmddhyso+/::/osydNMMMMMMMMMy                 #)" "\n"
+R"(#    `h/m:                            /MMs      +NMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMs                 #)" "\n"
+R"(#    /dm.                             mMh        `:---:/+shdNMMMMMMMMMMMMMMmddNMMMd`                 #)" "\n"
+R"(#    hd`                             /MM.                    `.-:///////-.    hMNo                   #)" "\n"
+R"(#   om`                              dMs                                      Ny`                    #)" "\n"
+R"(#  -M-                              /MN`                     `       -`   /d+sN`                     #)" "\n"
+R"(#  ds                              .NM:   `                 oMN.    NMd   .mMm-                      #)" "\n"
+R"(# /N`                             /NM+    `+yyo/-.`        `MMy     sMM-`/ydhM+                      #)" "\n"
+R"(# ds           -+:.            -+mMN/        -+ydNMMMNNNmdhhMMh++++osMMMy/.  /Nh.                    #)" "\n"
+R"(#-M.            `/hNdhsoooosydMMMd+`              .mMMMh+-``mMN:---.` :mm.     +my-                  #)" "\n"
+R"(#od +y+/.           -+shddmdhyo:`                 :NMMd     .NMo        :y+      -oo:                #)" "\n"
+R"(#ds oy `:++++/:-....`                         `/hmMs`No      .hM/         `-`        .               #)" "\n"
+R"(#N/ .N.   `` `....` `.                      -yhN+.M` /d        /d+                                   #)" "\n"
+R"(#M:  -d.   `--:////:.-.                   -hM+ d. d-  :y.        -:                                  #)" "\n"
+R"(#M:   .h+    `.-:////:- `-               sN/m: y: .d:  `+o+.                                         #)" "\n"
+R"(#m+     :yo.   `-:/++--o/               hd` /o .h` `+` `+s/                                          #)" "\n"
+R"(#yy       .oss/:--:+yh+`               sN`   y` .. `:+o+.                                            #)" "\n"
+R"(#/N           .:/+/:`                  Mo    `ooooo/-                                                #)" "\n"
+R"(# m+                                  .M+                                                            #)" "\n"
+R"(# :N`                                  Nd                                         `:oyhhhhhhhdhs.    #)" "\n"
+R"(#  sd                                  +My                                     .ohh+:`     :yh/      #)" "\n"
+R"(#   hh                                  yMh-                                `/hy:``:+ssyhNNs.        #)" "\n"
+R"(#    yd`                                 yyyh:                            -sh+`.+oo:`  +Ny.          #)" "\n"
+R"(#     +m/                                 +o.sds:`                     -ohs-`/+:`    `hm-            #)" "\n"
+R"(#      .hh.                                .+` -+yhyo/:.`       `.-/oyhs:`.--      `/md`             #)" "\n"
+R"(#        :dy-                                .`    `-:+osyyyyyysso/:.           .++/sN.              #)" "\n"
+R"(#          -yd+`                                                   .`      `.://:`  dy               #)" "\n"
+R"(#            `/hho-                                                :d      `        hy               #)" "\n"
+R"(#               `:shho:`                                          :Nm       `.-:/+/-/N.              #)" "\n"
+R"(#                   `-+yhhs+/-`                               .:smNy.             `:/dm`             #)" "\n"
+R"(#                         .-/oshhhyyssoo+++//////+++oosssyyddmmhs/.         ``.--`    oN:            #)" "\n"
+R"(#                                   `.--:://////////::--------::/+ossssss+:.    `:/+/` :No           #)" "\n"
+R"(#                                                                        .:+syyo:`  .+o:.my          #)" "\n"
+R"(#                                                                              -+yhs:  -o/Ns         #)" "\n"
+R"(#                                                                                  -smy- -yM-        #)" "\n"
+R"(#                                                                                     :yd/`my        #)" "\n"
+R"(#                                                                                       .sdhh        #)" "\n"
+R"(#                                                                                         .h+        #)" "\n"
+R"(#                           ______ ___   ______ ______ ____ _____  __                                #)" "\n"
+R"(#                          / ____//   | /_  __// ____//  _// ___/ / /_                               #)" "\n"
+R"(#                         / /    / /| |  / /  / /_    / /  \__ \ / __ \                              #)" "\n"
+R"(#                        / /___ / ___ | / /  / __/  _/ /  ___/ // / / /                              #)" "\n"
+R"(#                        \____//_/  |_|/_/  /_/    /___/ /____//_/ /_/                               #)" "\n";
+
+  printf("\n\n%s\n\n\n",banner.c_str());
+
   // Check that user has specified an input filepath
   if (argc < 4) {
     // Tell the user how to run the program
@@ -186,9 +243,9 @@ int main(int argc, const char *argv[]) {
   vector<double> XOLD = airfoil.getX();
   vector<double> YOLD = airfoil.getY();
   // Concatenate upper/lower surface ice growth rates
-  vector<double> sUP        = thermoUPPER.getS(); sUP[0] = 0.0;
+  vector<double> sUP        = thermoUPPER.getS(); //sUP[0] = 0.0;
   vector<double> miceUP     = thermoUPPER.getMICE();
-  vector<double> sLOW       = thermoLOWER.getS(); sLOW[sLOW.size()-1] = 0.0;
+  vector<double> sLOW       = thermoLOWER.getS(); //sLOW[sLOW.size()-1] = 0.0;
   vector<double> miceLOW    = thermoLOWER.getMICE();
   miceLOW.insert( miceLOW.end(), miceUP.begin(), miceUP.end() );
   sLOW.insert( sLOW.end(), sUP.begin(), sUP.end() );

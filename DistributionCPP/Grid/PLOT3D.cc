@@ -11,16 +11,18 @@ PLOT3D::PLOT3D(const char *meshfname, const char *solnfname, FluidScalars* scala
 
   double chord = scalars->chord_;
   // Read in size of mesh
-  int nx, ny, n;
+  int nx, ny, n, tmp;
   ifstream meshfile;
   meshfile.open(meshfname);
   meshfile >> nx; meshfile >> ny;
+  meshfile >> tmp; meshfile >> tmp; // EDIT: for use with P3D file with 4 header ints
   nx_ = nx; ny_ = ny; n = nx*ny;
   // Read in mesh coordinates
   double* xy = new double[2*n];
   for (int i=0; i<2*n; i++) {
     meshfile >> xy[i];
   }
+  printf("%lf\t%lf\t%lf\n",xy[2*n-3],xy[2*n-2],xy[2*n-1]);
   x_.resize(nx_,ny_);
   y_.resize(nx_,ny_);
   int iter = 0;

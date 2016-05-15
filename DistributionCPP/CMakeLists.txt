@@ -22,8 +22,8 @@ add_library( IcingLib
   findAll.cpp )
 
 
-add_executable( IcingDriver IcingDriver.cpp )
-target_link_libraries( IcingDriver 
+add_executable( CATFISH IcingDriver.cpp )
+target_link_libraries( CATFISH 
                        IcingLib
                        /usr/lib/libgsl.a 
 		       /usr/lib/SparseLib++/1.7/lib/libmv.a

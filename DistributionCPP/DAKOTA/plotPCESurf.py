@@ -120,8 +120,6 @@ def samplePCE(coeffs,x):
 
     return Y;
 
-
-
 # **********************************
 # MAIN SCRIPT
 # **********************************
@@ -130,6 +128,9 @@ def samplePCE(coeffs,x):
 basedir = "/home/adegenna/LagrangianIcingCode/DistributionCPP/DAKOTA";
 PCEfile = basedir + "/ICE.out";
 coeffs  = parseDakotaOutfile(PCEfile);
+
+# Load clean airfoil coordinates
+xy0 = genfromtxt(basedir + "/../Grid/NACA0012/NACA0012-SP", delimiter = "\t");
 
 # Load quadrature point
 data = genfromtxt(basedir + "/ICE.dat");
@@ -162,7 +163,7 @@ plt.colorbar(ticks=[0.32,0.50])
 plt.xticks([250,260,270])
 plt.yticks([0.3,0.65,1.0])
 plt.xlabel(r'$T_{\infty}$ (K)');
-plt.ylabel(r'LWC');
+plt.ylabel(r'LWC ($g/m^3$)');
 plt.tight_layout()
 
 # Plot quadrature points
@@ -181,7 +182,7 @@ gca().set_ylim([0.3,1.0]);
 plt.xticks([250,260,270])
 plt.yticks([0.3,0.65,1.0])
 plt.xlabel(r'$T_{\infty}$ (K)');
-plt.ylabel(r'LWC');
+plt.ylabel(r'LWC ($g/m^3$)');
 plt.tight_layout()
 
 # Approximate statistics
@@ -198,5 +199,30 @@ plt.xticks([0.32,0.40,0.48])
 plt.xlabel(r'$C_L$');
 plt.ylabel(r'PDF($C_L$)');
 plt.tight_layout()
+
+# Divide shapes into groups
+zhigh = []; zlow = [];
+limhigh = np.percentile(Z,75);
+limlow  = np.percentile(Z,25);
+print(limhigh); print(limlow);
+figure(12); plt.scatter(xq,yq*(1e3),s=50,facecolors='none',edgecolors='k'); 
+gca().set_xlim([250,270]); gca().set_ylim([0.3,1.0]);
+plt.xticks([250,260,270]); plt.yticks([0.3,0.65,1.0])
+plt.xlabel(r'$T_{\infty}$ (K)');
+plt.ylabel(r'LWC ($g/m^3$)');
+plt.tight_layout()
+for i in range(0,np.size(zq)):
+    if (zq[i] >= limhigh):
+        xy = genfromtxt(basedir + '/RESULTS/workdir.' + str(i+1) + '/T5/XY_NEW.out');
+        figure(11); plt.plot(xy[:,0],xy[:,1],'r',lw=1); 
+        figure(12); plt.scatter(xq[i],yq[i]*(1e3),s=50,c='r');
+    elif (zq[i] <= limlow):
+        xy = genfromtxt(basedir + '/RESULTS/workdir.' + str(i+1) + '/T5/XY_NEW.out');
+        figure(11); plt.plot(xy[:,0],xy[:,1],'b',lw=1);
+        figure(12); plt.scatter(xq[i],yq[i]*(1e3),s=50,c='b');
+
+figure(11); plot(xy0[:,0],xy0[:,1],'k',lw=2);
+figure(11); axis('equal'); plt.xlim([-0.05,0.05]);
+plt.xlabel(r'$X/c$'); plt.ylabel(r'$Y/c$'); plt.tight_layout()
 
 show();

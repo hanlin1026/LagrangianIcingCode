@@ -196,6 +196,7 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
     }
     gsl_interp_accel *acc = gsl_interp_accel_alloc();
     cH_.resize(NPts_);
+    Qdot_.resize(NPts_);
     cF_.resize(NPts_);
     Te_.resize(NPts_);
     Trec_.resize(NPts_);
@@ -224,6 +225,7 @@ void ThermoEqns::interpUpperSurface(const char* filename, Airfoil& airfoil, cons
 	// Calculate cH based on Ubound (velocity at boundary layer edge)
 	Trec       = Te_[i] + rec*pow(Ubound_[i],2.0)/2.0/cpAir_;
 	Trec_[i]   = Trec;
+	//Qdot_[i]   = cH_[i]*rhoINF_*pow(pINF_/rhoINF_,1.5);
 	cH_[i]     = cH_[i]*rhoINF_*pow(pINF_/rhoINF_,1.5)/(Trec-273.15);
       }
       else {
@@ -497,6 +499,7 @@ vector<double> ThermoEqns::energyBalance(vector<double>& Y) {
     S_imp          = (1./rhoL_)*(mimp*(cW_*(Td_-Y[i]) + 0.5*pow(ud_,2)));
     S_ice          = (1./rhoL_)*(z[i]*(Lfus_ - cICE_*Y[i]));
     S_conv         = (-1./rhoL_)*std::abs(cH_[i]*(Trec - Y[i]));
+    //S_conv         = std::max( -std::abs(Qdot_[i]) , S_conv );
     S_evap         = (1./rhoL_)*(-0.5*(Levap_ + Lsub_)*mevap_[i]);
     RHS            = S_imp + S_ice + S_conv + S_evap;
     I_sources[i-1] = ds*RHS;
@@ -762,6 +765,7 @@ vector<double> ThermoEqns::SolveThermoForIceRate(vector<double>& X, vector<doubl
     Trec   = Te_[i] + rec*pow(Ubound_[i],2.0)/2.0/cpAir_ - 273.15;
     S_imp  = mimp*(cW_*(Td_-Y[i]) + 0.5*pow(ud_,2));
     S_conv = -1.0*std::abs(cH_[i]*(Trec-Y[i]));
+    //S_conv = std::max( -std::abs(Qdot_[i]) , S_conv );
     S_evap = -0.5*(Levap_ + Lsub_)*mevap_[i];
     RHS    = S_imp + S_conv + S_evap;
     Z[i]   = ((rhoL_/dsFACE)*D_flux - RHS)/(Lfus_ - cICE_*Y[i]);
