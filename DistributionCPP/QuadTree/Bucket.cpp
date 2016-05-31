@@ -194,12 +194,12 @@ void Bucket::calcQuadTree(double* dataX, double* dataY, int NumPts) {
   }
   Bucket* child;
   // Print initial bucket to file
-  /**
-  fprintf(fout,"%f\t%f\n", this->SW_[0], this->SW_[1]);
-  fprintf(fout,"%f\t%f\n", this->SE_[0], this->SE_[1]);
-  fprintf(fout,"%f\t%f\n", this->NE_[0], this->NE_[1]);
-  fprintf(fout,"%f\t%f\n", this->NW_[0], this->NW_[1]);
-  **/
+  if (!workDir_.empty()) {
+    fprintf(fout,"%f\t%f\n", this->SW_[0], this->SW_[1]);
+    fprintf(fout,"%f\t%f\n", this->SE_[0], this->SE_[1]);
+    fprintf(fout,"%f\t%f\n", this->NE_[0], this->NE_[1]);
+    fprintf(fout,"%f\t%f\n", this->NW_[0], this->NW_[1]);
+  }
   
   while(flag==false) {
     // Divide current
@@ -213,12 +213,12 @@ void Bucket::calcQuadTree(double* dataX, double* dataY, int NumPts) {
 	  numNext++;
 	}
 	// Print to file
-        /**
-	fprintf(fout,"%f\t%f\n", child->SW_[0], child->SW_[1]);
-	fprintf(fout,"%f\t%f\n", child->SE_[0], child->SE_[1]);
-	fprintf(fout,"%f\t%f\n", child->NE_[0], child->NE_[1]);
-	fprintf(fout,"%f\t%f\n", child->NW_[0], child->NW_[1]);
-        **/
+        if (!workDir_.empty()) {
+	  fprintf(fout,"%f\t%f\n", child->SW_[0], child->SW_[1]);
+	  fprintf(fout,"%f\t%f\n", child->SE_[0], child->SE_[1]);
+	  fprintf(fout,"%f\t%f\n", child->NE_[0], child->NE_[1]);
+	  fprintf(fout,"%f\t%f\n", child->NW_[0], child->NW_[1]);
+        }
       }
     }
     if (numNext>0) {
@@ -312,4 +312,8 @@ void Bucket::knnSearch(double* Xq, double* Yq, double* Xnn, double* Ynn, int* in
 
   delete[] dist;
 
+}
+
+void Bucket::setOutDir(const std::string workDir) {
+  workDir_ = workDir;
 }

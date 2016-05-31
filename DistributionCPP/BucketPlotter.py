@@ -15,11 +15,11 @@ width = 1000
 height = 800
 fig_size = [width*inches_per_pt,height*inches_per_pt]
 
-params = {   #'axes.labelsize': 30,
+params = {   'axes.labelsize': 40,
              #'text.fontsize': 40,
              #'legend.fontsize': 20,
-             'xtick.labelsize': 18,
-             'ytick.labelsize': 18,             
+             'xtick.labelsize': 25,
+             'ytick.labelsize': 25,             
              'figure.figsize':fig_size,
              #'figure.markersize': 50}
 }
@@ -27,13 +27,18 @@ pylab.rcParams.update(params)
 
 fig = plt.figure()
 ax = fig.gca()
-XY = genfromtxt("QuadTreeXY.dat", delimiter = '\t')
+XY = genfromtxt("/home/adegenna/LagrangianIcingCode/DistributionCPP/VALIDATIONS_2/TEST/T0/QuadTreeXY.dat", delimiter = '\t')
 #plt.scatter(XY[:,0],XY[:,1])
+chord = 0.5334;
 for i in xrange(0,size(XY,0)/4):
     ind = 4*i
     X = np.append(XY[ind:ind+4,0], XY[ind,0]);
     Y = np.append(XY[ind:ind+4,1], XY[ind,1]);
-    plt.plot(X,Y,color='k');
+    ax.plot(X/chord,Y/chord,color='k');
+ax.set_xlabel(r'$X/c$');
+ax.set_ylabel(r'$Y/c$');
+ax.set_xlim([-0.1,1.1]);
+ax.set_ylim([-0.6,0.6]);
 
 #pylab.savefig('temp2.png',bbox_inches=0)
 

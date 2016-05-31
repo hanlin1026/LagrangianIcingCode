@@ -329,20 +329,20 @@ void Cloud::transportSLD(PLOT3D& grid) {
       // Sutherland's law
       muG = C1*pow(Tinf,1.5)/(Tinf+S);
       // Force parameter calculations
-      Re = 2*rhoG*r/muG*sqrt( pow(u-uG,2) + pow(v-vG,2) );
-      CD = 24/Re*(1 + 0.15*pow(Re,0.687));
+      Re = 2.0*rhoG*r/muG*sqrt( pow(u-uG,2) + pow(v-vG,2) );
+      CD = 24.0/Re*(1.0 + 0.15*pow(Re,0.687));
       if (Re==0) {
         tau = 0;
       }
       else {
-        tau = 24/Re/CD*(2*rhoL_*pow(r,2)/9/muG);
+        tau = 24.0/Re/CD*(2*rhoL_*pow(r,2)/9.0/muG);
       }
-      m = 4/3*rhoL_*M_PI*pow(r,3);
+      m = 4.0/3.0*rhoL_*M_PI*pow(r,3);
       // Advection equations
-      xnp1 = x + uG*dt + (u-uG)*(1-exp(-dt/tau))*tau;
-      ynp1 = y + vG*dt + (v-vG)*(1-exp(-dt/tau))*tau + (dt-(1-exp(-dt/tau))*tau)*tau*g;
+      xnp1 = x + uG*dt + (u-uG)*(1.0-exp(-dt/tau))*tau;
+      ynp1 = y + vG*dt + (v-vG)*(1.0-exp(-dt/tau))*tau + (dt-(1.0-exp(-dt/tau))*tau)*tau*g;
       unp1 = uG + exp(-dt/tau)*(u-uG);
-      vnp1 = vG + exp(-dt/tau)*(v-vG) + (1-exp(-dt/tau))*tau*g;
+      vnp1 = vG + exp(-dt/tau)*(v-vG) + (1.0-exp(-dt/tau))*tau*g;
       // Update particle states
       state_.x_(indAdv_[i]) = xnp1;
       state_.y_(indAdv_[i]) = ynp1;
@@ -400,16 +400,16 @@ void Cloud::computeImpingementRegimes(Airfoil& airfoil) {
     vNormSq_[i] = vNormSq;
     vTang = u*TxTy[0] + v*TxTy[1];
     vTang_[i] = vTang;
-    We = 2*rhoL_*r*vNormSq/sigma_;
-    Oh = sqrt( muL/2/rhoL_/sigma_/r );
+    We = 2.0*rhoL_*r*vNormSq/sigma_;
+    Oh = muL/sqrt(2.0*r*rhoL_*sigma_);
     K  = We*pow(Oh,-0.4);
     K_[i] = K;
     // Intermediate parameter calculations
     R = (hr/2.0)/r; // Dimensionless wall roughness height
     delta = (hf/2.0)/r; // Dimensionless film thickness
     R_tilda = pow(R,2)/(R+delta); // Modified wall roughness due to presence of film
-    fs = (1 + pow(R_tilda,2))*(1 + pow(delta,2))/(1 + wsr*pow(R_tilda,2))/(1 + wsf*pow(delta,2));
-    fb = (1 + pow(R_tilda,2))*(1 + pow(delta,2))/(1 + wsr*pow(R_tilda,2))/(1 + wbr*pow(R_tilda,4))/(1 + wbf*pow(delta,2));
+    fs = (1 + pow(R_tilda,2))*(1 + pow(delta,2))/(1.0 + wsr*pow(R_tilda,2))/(1 + wsf*pow(delta,2));
+    fb = (1 + pow(R_tilda,2))*(1 + pow(delta,2))/(1.0 + wsr*pow(R_tilda,2))/(1 + wbr*pow(R_tilda,4))/(1 + wbf*pow(delta,2));
     fs_[i] = fs;
     fb_[i] = fb;
     // Calculate impingement regime

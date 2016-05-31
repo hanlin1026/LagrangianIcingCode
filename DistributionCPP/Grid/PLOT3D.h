@@ -15,7 +15,7 @@ using namespace std;
 class PLOT3D {
  public:
   // Constructor: read in mesh/soln
-  PLOT3D(const char *meshfname, const char *solnfname, FluidScalars* scalars);
+  PLOT3D(const char *meshfname, const char *solnfname, FluidScalars* scalars, const std::string workdir);
   ~PLOT3D();
   // Get methods
   Eigen::MatrixXd getX();      double getX(int ind);

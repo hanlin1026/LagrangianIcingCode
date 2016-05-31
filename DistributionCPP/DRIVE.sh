@@ -19,7 +19,7 @@ outDir=$BASE/T1
 mkdir $inDir
 cp $BASE/"fort.30" $inDir
 
-for (( i=8; i<=$steps; i++ ))
+for (( i=1; i<=$steps; i++ ))
 do
     # I/O directories
     inDir=$BASE/$workDir$((i-1))

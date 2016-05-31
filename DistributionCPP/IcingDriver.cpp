@@ -99,13 +99,13 @@ R"(#                        \____//_/  |_|/_/  /_/    /___/ /____//_/ /_/       
 
   // Read in grid/flow solution files
   const std::string s_meshFileName = s_inDir + "/MESH.P3D";
-  const std::string s_solnFileName = s_inDir + "/q103.0.40E+01.bin";
+  const std::string s_solnFileName = s_inDir + "/q103.bin";
   const std::string s_filenameCHCF = s_inDir + "/heatflux";
   const std::string s_filenameBETA = s_inDir + "/BETA.out";
 
   // Initialize plot3D object, read in basic problem data
   double chord = scalarsFluid.chord_;
-  PLOT3D p3d = PLOT3D(s_meshFileName.c_str(), s_solnFileName.c_str(), &scalarsFluid);  
+  PLOT3D p3d = PLOT3D(s_meshFileName.c_str(), s_solnFileName.c_str(), &scalarsFluid, s_inDir);  
   double dY;
   if (scalarsFluid.calcImpingementLimits_ == 1) { 
     // Over-ride input screen and determine impingement limits
@@ -226,26 +226,26 @@ R"(#                        \____//_/  |_|/_/  /_/    /___/ /____//_/ /_/       
   // Solve upper surface
   printf("SOLVING UPPER SURFACE...\n\n");
   ThermoEqns thermoUPPER = ThermoEqns(s_inDir,s_filenameCHCF.c_str(),s_filenameBETA.c_str(),airfoil,scalarsFluid,cloud,p3d,"UPPER","MULTISHOT");
-  thermoUPPER.SolveLEWICEformulation();
+  //thermoUPPER.SolveLEWICEformulation();
   //thermoUPPER.SolveIcingEqns();
-  //thermoUPPER.explicitSolverSimultaneous(5.0e-1,1.0e-4);
+  thermoUPPER.explicitSolverSimultaneous(5.0e-1,1.0e-4);
   printf("...DONE\n\n");
 
   // Solve lower surface
   printf("SOLVING LOWER SURFACE...\n\n");
   ThermoEqns thermoLOWER = ThermoEqns(s_inDir,s_filenameCHCF.c_str(),s_filenameBETA.c_str(),airfoil,scalarsFluid,cloud,p3d,"LOWER","MULTISHOT");
-  thermoLOWER.SolveLEWICEformulation();
+  //thermoLOWER.SolveLEWICEformulation();
   //thermoLOWER.SolveIcingEqns();
-  //thermoLOWER.explicitSolverSimultaneous(5.0e-1,1.0e-4);
+  thermoLOWER.explicitSolverSimultaneous(5.0e-1,1.0e-4);
   printf("...DONE\n\n");
 
   // Get old grid XY coordinates
   vector<double> XOLD = airfoil.getX();
   vector<double> YOLD = airfoil.getY();
   // Concatenate upper/lower surface ice growth rates
-  vector<double> sUP        = thermoUPPER.getS(); //sUP[0] = 0.0;
+  vector<double> sUP        = thermoUPPER.getS(); sUP[0] = 0.0;
   vector<double> miceUP     = thermoUPPER.getMICE();
-  vector<double> sLOW       = thermoLOWER.getS(); //sLOW[sLOW.size()-1] = 0.0;
+  vector<double> sLOW       = thermoLOWER.getS(); sLOW[sLOW.size()-1] = 0.0;
   vector<double> miceLOW    = thermoLOWER.getMICE();
   miceLOW.insert( miceLOW.end(), miceUP.begin(), miceUP.end() );
   sLOW.insert( sLOW.end(), sUP.begin(), sUP.end() );

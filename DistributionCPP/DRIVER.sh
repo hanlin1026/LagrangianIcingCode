@@ -5,7 +5,7 @@
 # *********************************
 
 # Tab-delimited file describing multiple job submissions
-masterDir="/home/adegenna/LagrangianIcingCode/DistributionCPP"
+masterDir="/home/adegenna/CATFISH/Validations"
 masterList=$masterDir/"RUNS.list"
 masterInp=$masterDir/"INP.inp"
 masterFLO=$masterDir/"FLO.d"
@@ -15,7 +15,7 @@ fort=$masterDir/"fort.30"
 header1=$masterDir/"header1"
 header2=$masterDir/"header2"
 
-for k in {23..26} # Indexes over individual runs
+for k in {1..26} # Indexes over individual runs
 do
     # Read in run number
     RUN=$(awk 'FNR == '$((k+1))' { print $1 }' $masterList)
@@ -63,8 +63,6 @@ do
 
     # Qsub job driver scripts
     qsub -v par_name=par_value\[,var1=$masterDir,var2=$BASE,var3=$TIME,\] $BASE/DRIVE.sh
-    #echo "$BASE/DRIVE.sh $masterDir $BASE" | qsub
-    #echo $BASE/"DRIVE.sh "$masterDir" "$BASE | qsub
 
 done
 

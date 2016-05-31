@@ -272,13 +272,17 @@ void Airfoil::calcStagnationPt(PLOT3D& grid) {
   Eigen::MatrixXd X = grid.getXCENT();
   Eigen::MatrixXd Y = grid.getYCENT();
   double u; double v;
-  int i1 = floor(0.45*I);
-  int i2 = floor(0.55*I);
+  int i1 = floor(0.35*I);
+  int i2 = floor(0.50*I);
   vector<double> VelMagSq(i2-i1);
   // Get first wrap of (u,v)
+  double LIM = 1.0e10;
   for (int i=i1; i<i2; i++) {
     u = U(i,0); v = V(i,0);
-    VelMagSq[i-i1] = pow(u,2) + pow(v,2);
+    if ((X(i,0) >= 0.01) || (Y(i,0) >= 0.01))
+      VelMagSq[i-i1] = LIM;
+    else
+      VelMagSq[i-i1] = pow(u,2) + pow(v,2);
   }
   // Minimize velMag to find stagnation point
   int indMin = min_element(VelMagSq.begin(),VelMagSq.end()) - VelMagSq.begin();

@@ -6,7 +6,7 @@
 using namespace std;
 using namespace Eigen;
 
-PLOT3D::PLOT3D(const char *meshfname, const char *solnfname, FluidScalars* scalars) {
+PLOT3D::PLOT3D(const char *meshfname, const char *solnfname, FluidScalars* scalars, const std::string workdir) {
   // Constructor: read in mesh/soln file data
 
   double chord = scalars->chord_;
@@ -77,6 +77,7 @@ PLOT3D::PLOT3D(const char *meshfname, const char *solnfname, FluidScalars* scala
     }
   }
   // Initialize searcher object
+  QT_.setOutDir(workdir);
   this->computeCellCenters();
   this->computeCellAreas();
   this->computeGridMetrics();

@@ -23,6 +23,7 @@ class Bucket {
   void divideBucket();
   void calcQuadTree(double* dataX, double* dataY, int NumPts);
   void knnSearch(double* Xq, double* Yq, double* Xnn, double* Ynn, int* indnn);
+  void setOutDir(const std::string workDir);
 
  private:
   std::string workDir_;
