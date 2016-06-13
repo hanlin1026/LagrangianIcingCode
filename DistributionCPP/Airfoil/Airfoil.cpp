@@ -279,7 +279,7 @@ void Airfoil::calcStagnationPt(PLOT3D& grid) {
   double LIM = 1.0e10;
   for (int i=i1; i<i2; i++) {
     u = U(i,0); v = V(i,0);
-    if ((X(i,0) >= 0.01) || (Y(i,0) >= 0.01))
+    if ((X(i,0) >= 0.01) || (Y(i,0) >= 0.01) || ((X(i,0) > 0) && (Y(i,0) < -0.015)) )
       VelMagSq[i-i1] = LIM;
     else
       VelMagSq[i-i1] = pow(u,2) + pow(v,2);

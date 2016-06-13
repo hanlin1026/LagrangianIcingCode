@@ -201,22 +201,23 @@ R"(#                        \____//_/  |_|/_/  /_/    /___/ /____//_/ /_/       
     iter++;
 
   }
-  // Get collection efficiency and output to file
+  // Output particle state history to file
   const std::string s_dropName = s_inDir + "/DropletXY.out";
+  FILE* outfileDROP;
+  outfileDROP = fopen(s_dropName.c_str(),"w");
+  for (int i=0; i<x.size(); i++)
+    fprintf(outfileDROP,"%lf\t%lf\n",x[i],y[i]);
+  fclose(outfileDROP);
+  // Get collection efficiency and output to file
   double dS = 0.0025;
   airfoil.calcCollectionEfficiency(fluxFreeStream,dS);
   std::vector<double> BetaBins = airfoil.getBetaBins();
   std::vector<double> Beta = airfoil.getBeta();
-  // Output particle state history to file
-  FILE* outfileDROP;
   FILE* outfileBETA;
-  outfileDROP = fopen(s_dropName.c_str(),"w");
   outfileBETA = fopen(s_filenameBETA.c_str(),"w");
-  for (int i=0; i<x.size(); i++)
-    fprintf(outfileDROP,"%lf\t%lf\n",x[i],y[i]);
   for (int i=0; i<Beta.size(); i++) 
-    fprintf(outfileBETA,"%lf\t%lf\n",BetaBins[i],Beta[i]*.74/.83);
-  fclose(outfileDROP);
+    fprintf(outfileBETA,"%lf\t%lf\n",BetaBins[i],Beta[i]);
+    //fprintf(outfileBETA,"%lf\t%lf\n",BetaBins[i],Beta[i]*.74/.83);
   fclose(outfileBETA);
   
   // *******************************************************

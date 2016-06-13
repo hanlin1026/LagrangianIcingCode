@@ -498,7 +498,8 @@ vector<double> ThermoEqns::energyBalance(vector<double>& Y) {
     D_flux[i-1]    = f[i]-f[i-1];
     S_imp          = (1./rhoL_)*(mimp*(cW_*(Td_-Y[i]) + 0.5*pow(ud_,2)));
     S_ice          = (1./rhoL_)*(z[i]*(Lfus_ - cICE_*Y[i]));
-    S_conv         = (-1./rhoL_)*std::abs(cH_[i]*(Trec - Y[i]));
+    S_conv         = (1./rhoL_)*cH_[i]*(Trec - Y[i]);
+    //S_conv         = (-1./rhoL_)*std::abs(cH_[i]*(Trec - Y[i])); // Gives decent results
     //S_conv         = std::max( -std::abs(Qdot_[i]) , S_conv );
     S_evap         = (1./rhoL_)*(-0.5*(Levap_ + Lsub_)*mevap_[i]);
     RHS            = S_imp + S_ice + S_conv + S_evap;
@@ -896,6 +897,22 @@ void ThermoEqns::explicitSolverSimultaneous(double eps, double tol) {
   vector<double> ERRDY;
   double ERR;
 
+  // Setup output files
+  FILE* outfile;
+  FILE* errorfile;
+  std::string s_thermoFileName;
+  std::string s_errorFileName;
+  if (strcmp(strSurf_,"UPPER")==0) {
+    s_thermoFileName = inDir_ + "/THERMO_SOLN_UPPER.out";
+    s_errorFileName  = inDir_ + "/THERMO_UPPER_CONV.out";
+  }
+  else if (strcmp(strSurf_,"LOWER")==0) {
+    s_thermoFileName = inDir_ + "/THERMO_SOLN_LOWER.out";
+    s_errorFileName  = inDir_ + "/THERMO_LOWER_CONV.out";
+  }
+  outfile   = fopen(s_thermoFileName.c_str(),"w");
+  errorfile = fopen(s_errorFileName.c_str(),"w");
+
   // Initialize variables
   hf_.resize(NPts_);
   ts_.resize(NPts_);
@@ -954,12 +971,32 @@ void ThermoEqns::explicitSolverSimultaneous(double eps, double tol) {
 
     if (iter == 1)
       ERR0 = ERR;
+
+    // Output intermediate solution
+    if (iter % 1000 == 0) {
+      for (int i=0; i<NPts_; i++) {
+	fprintf(outfile,"%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\n",
+		s_[i],hf_[i],ts_[i],mice_[i],mevap_[i],cF_[i],cH_[i],Trec_[i]);
+      }
+      for (int i=0; i<err.size(); i++)
+	fprintf(errorfile,"%.10f\n",err[i]);
+    }
+
   }
   
+  // Test convergence
   if (iter < CEIL)
     printf("Explicit solver converged after %d iterations... ",iter);
   else
     printf("Explicit solver not converged after %d iterations... ", iter);
+
+  // Output final solution
+  for (int i=0; i<NPts_; i++)
+    fprintf(outfile,"%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\n",s_[i],hf_[i],ts_[i],mice_[i],mevap_[i],cF_[i],cH_[i],Trec_[i]);
+  for (int i=0; i<err.size(); i++)
+    fprintf(errorfile,"%.10f\n",err[i]);
+  fclose(outfile);
+  fclose(errorfile);
 
   // Mirror solution if we are doing the lower surface
   if (strcmp(strSurf_,"LOWER")==0) {
@@ -971,28 +1008,6 @@ void ThermoEqns::explicitSolverSimultaneous(double eps, double tol) {
     cF_    = flipud(cF_);
     cH_    = flipud(cH_);
   }  
-
-  // Output to file
-  FILE* outfile;
-  FILE* errorfile;
-  std::string s_thermoFileName;
-  std::string s_errorFileName;
-  if (strcmp(strSurf_,"UPPER")==0) {
-    s_thermoFileName = inDir_ + "/THERMO_SOLN_UPPER.out";
-    s_errorFileName  = inDir_ + "/THERMO_UPPER_CONV.out";
-  }
-  else if (strcmp(strSurf_,"LOWER")==0) {
-    s_thermoFileName = inDir_ + "/THERMO_SOLN_LOWER.out";
-    s_errorFileName  = inDir_ + "/THERMO_LOWER_CONV.out";
-  }
-  outfile   = fopen(s_thermoFileName.c_str(),"w");
-  errorfile = fopen(s_errorFileName.c_str(),"w");
-  for (int i=0; i<NPts_; i++)
-    fprintf(outfile,"%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\t%.10f\n",s_[i],hf_[i],ts_[i],mice_[i],mevap_[i],cF_[i],cH_[i],Trec_[i]);
-  for (int i=0; i<err.size(); i++)
-    fprintf(errorfile,"%.10f\n",err[i]);
-  fclose(outfile);
-  fclose(errorfile);
 
 }
 

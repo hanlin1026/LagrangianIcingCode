@@ -260,6 +260,7 @@ void Cloud::computeNewCellLocations(PLOT3D& grid) {
 void Cloud::calcDtandImpinge(Airfoil& airfoil, PLOT3D& grid) {
   // Function to set local timesteps based on CFL condition
 
+  double tmin;
   this->findInSimulation();
   if (!indAdv_.empty()) {
     impinge_.clear();
